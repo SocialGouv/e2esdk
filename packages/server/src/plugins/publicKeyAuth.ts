@@ -7,6 +7,7 @@ import {
 import type { FastifyPluginAsync, FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
 import { getPublicIdentity } from '../database/models/identity.js'
+import { env } from '../env.js'
 import type { App } from '../types'
 
 type PublicKeyAuthOptions = {
@@ -27,12 +28,8 @@ declare module 'fastify' {
 }
 
 const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
-  const serverPrivateKey = app.sodium.from_base64(
-    process.env.SIGNATURE_PRIVATE_KEY
-  )
-  const serverPublicKey = app.sodium.from_base64(
-    process.env.SIGNATURE_PUBLIC_KEY
-  )
+  const serverPrivateKey = app.sodium.from_base64(env.SIGNATURE_PRIVATE_KEY)
+  const serverPublicKey = app.sodium.from_base64(env.SIGNATURE_PUBLIC_KEY)
 
   app.decorate(
     'usePublicKeyAuth',
@@ -77,7 +74,7 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
               {
                 timestamp,
                 method: req.method,
-                url: `${process.env.DEPLOYMENT_URL}${req.url}`,
+                url: `${env.DEPLOYMENT_URL}${req.url}`,
                 body: JSON.stringify(req.body),
                 serverPublicKey,
                 clientPublicKey: identity.signaturePublicKey,
@@ -102,10 +99,10 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
       const signature = signResponse(app.sodium, serverPrivateKey, {
         timestamp,
         method: req.method,
-        url: `${process.env.DEPLOYMENT_URL}${req.url}`,
+        url: `${env.DEPLOYMENT_URL}${req.url}`,
         body,
         userId: req.identity?.userId,
-        serverPublicKey: process.env.SIGNATURE_PUBLIC_KEY,
+        serverPublicKey: env.SIGNATURE_PUBLIC_KEY,
         clientPublicKey: req.identity?.signaturePublicKey,
       })
       if (req.identity?.userId) {
@@ -113,7 +110,7 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
       }
       res.header('x-e2esdk-timestamp', timestamp)
       res.header('x-e2esdk-signature', signature)
-      res.header('x-e2esdk-server-pubkey', process.env.SIGNATURE_PUBLIC_KEY)
+      res.header('x-e2esdk-server-pubkey', env.SIGNATURE_PUBLIC_KEY)
       return body
     }
   )

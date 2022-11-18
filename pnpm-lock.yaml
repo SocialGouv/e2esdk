@@ -152,6 +152,7 @@ importers:
       '@e2esdk/api': workspace:*
       '@e2esdk/core': workspace:*
       '@e2esdk/crypto': workspace:*
+      '@fastify/cors': ^8.2.0
       '@fastify/sensible': '*'
       '@swc/cli': ^0.1.57
       '@swc/core': ^1.3.10
@@ -176,6 +177,7 @@ importers:
       '@e2esdk/api': link:../api
       '@e2esdk/core': link:../core
       '@e2esdk/crypto': link:../crypto
+      '@fastify/cors': 8.2.0
       dotenv: 16.0.3
       fastify: 4.10.0
       fastify-micro: 4.0.0-beta.1_fastify@4.10.0
@@ -542,6 +544,13 @@ packages:
     resolution: {integrity: sha512-BiNyQ7FnM5zlVDC4JhbxKsMa9QxxUMgoMFrZ86l8m3HpHX3cvNWDdwMWmA32TDJJkzWnKoZE6HHBFPb0+Fu1Rw==}
     dependencies:
       pkg-up: 3.1.0
+    dev: false
+
+  /@fastify/cors/8.2.0:
+    resolution: {integrity: sha512-qDgwpmg6C4D0D3nh8MTMuRXWyEwPnDZDBODaJv90FP2o9ukbahJByW4FtrM5Bpod5KbTf1oIExBmpItbUTQmHg==}
+    dependencies:
+      fastify-plugin: 4.3.0
+      mnemonist: 0.39.5
     dev: false
 
   /@fastify/deepmerge/1.1.0:

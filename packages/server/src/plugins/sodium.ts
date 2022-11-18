@@ -6,6 +6,7 @@ import {
 import type { FastifyPluginAsync } from 'fastify'
 import fp from 'fastify-plugin'
 import '../env.js'
+import { env } from '../env.js'
 import type { App } from '../types'
 
 declare module 'fastify' {
@@ -17,8 +18,8 @@ declare module 'fastify' {
 const sodiumPlugin: FastifyPluginAsync = async (app: App) => {
   const sodium = await initializeSodium()
   // Verify server signature key pair
-  const publicKey = sodium.from_base64(process.env.SIGNATURE_PUBLIC_KEY)
-  const privateKey = sodium.from_base64(process.env.SIGNATURE_PRIVATE_KEY)
+  const publicKey = sodium.from_base64(env.SIGNATURE_PUBLIC_KEY)
+  const privateKey = sodium.from_base64(env.SIGNATURE_PRIVATE_KEY)
   if (!checkSignaturePublicKey(sodium, publicKey, privateKey)) {
     app.log.fatal({
       msg: 'Mismatching signature public & private keys',

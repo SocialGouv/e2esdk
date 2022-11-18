@@ -17,12 +17,28 @@ const envSchema = z.object({
   RELEASE_TAG: z.string(),
   SIGNATURE_PUBLIC_KEY: z.string().regex(/^[\w-]{43}$/),
   SIGNATURE_PRIVATE_KEY: z.string().regex(/^[\w-]{86}$/),
+  CORS_ALLOWED_ORIGINS: z
+    .string()
+    .default('*')
+    .transform(urls =>
+      urls.split(',').map(url => {
+        if (url.startsWith('/') && url.endsWith('$/')) {
+          return new RegExp(url.slice(1, url.length - 1))
+        }
+        return url
+      })
+    ),
 
   // Optional variables
-  DEBUG: booleanSchema.optional().default('false'),
+  DEBUG: booleanSchema.default('false'),
+  CORS_FORCE_ENABLE: booleanSchema.default('false'),
+  DATABASE_MAX_SIZE_BYTES: z
+    .string()
+    .default('0')
+    .transform(value => parseInt(value)),
 })
 
-envSchema.parse(process.env)
+export const env = envSchema.parse(process.env)
 
 declare global {
   namespace NodeJS {

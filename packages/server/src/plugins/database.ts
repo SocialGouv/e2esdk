@@ -3,6 +3,7 @@ import fp from 'fastify-plugin'
 import postgres from 'postgres'
 import { databaseConnectionOptions } from '../database/connectionOptions.js'
 import '../env.js'
+import { env } from '../env.js'
 import type { App } from '../types'
 
 declare module 'fastify' {
@@ -14,10 +15,10 @@ declare module 'fastify' {
 const databasePlugin: FastifyPluginAsync = async (app: App) => {
   app.decorate(
     'db',
-    postgres(process.env.POSTGRESQL_URL!, {
+    postgres(env.POSTGRESQL_URL, {
       ...databaseConnectionOptions,
       debug:
-        process.env.DEBUG &&
+        env.DEBUG &&
         function debugDatabaseQuery(connection, query, parameters, paramTypes) {
           if (
             query ===

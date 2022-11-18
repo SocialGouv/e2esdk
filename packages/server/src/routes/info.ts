@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
+import { env } from '../env.js'
 import type { App } from '../types'
 
 const infoResponseBody = z.object({
@@ -22,9 +23,9 @@ export default async function infoRoutes(app: App) {
     },
     async function info(_, res) {
       return res.send({
-        release: process.env.RELEASE_TAG,
-        deploymentURL: process.env.DEPLOYMENT_URL,
-        signaturePublicKey: process.env.SIGNATURE_PUBLIC_KEY,
+        release: env.RELEASE_TAG,
+        deploymentURL: env.DEPLOYMENT_URL,
+        signaturePublicKey: env.SIGNATURE_PUBLIC_KEY,
       })
     }
   )

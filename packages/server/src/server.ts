@@ -3,6 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
+import { env } from './env.js'
 import type { App } from './types'
 
 export { startServer } from 'fastify-micro'
@@ -29,10 +30,10 @@ const healthCheckReply = z.object({
 type HealthCheckReply = z.infer<typeof healthCheckReply>
 
 export function createServer() {
-  const __PROD__ = process.env.NODE_ENV === 'production'
+  const __PROD__ = env.NODE_ENV === 'production'
 
   const app = createFastifyServer({
-    name: ['e2esdk', process.env.RELEASE_TAG].join(':'),
+    name: ['e2esdk', env.RELEASE_TAG].join(':'),
 
     redactEnv: __PROD__ ? ['POSTGRESQL_URL', 'SIGNATURE_PRIVATE_KEY'] : [],
     // Give Next.js time to setup in development
@@ -45,13 +46,13 @@ export function createServer() {
       dir: path.resolve(__dirname, 'routes'),
       forceESM: true,
       options: {
-        prefix: '/api',
+        prefix: '/v1',
       },
     },
     printRoutes: __PROD__ ? 'logger' : false,
     // sentry: {
-    //   release: process.env.RELEASE_TAG,
-    //   environment: getSentryEnvironment(process.env.RELEASE_TAG),
+    //   release: env.RELEASE_TAG,
+    //   environment: getSentryEnvironment(env.RELEASE_TAG),
     //   getUser: getUserForSentry,
     //   getExtra: getExtrasForSentry,
     // },
@@ -72,7 +73,7 @@ export function createServer() {
             { sizeUsed: string }[]
           >`SELECT pg_database_size(current_database()::name) AS size_used`
           const sizeUsed = parseInt(result[0].sizeUsed)
-          const sizeMax = parseInt(process.env.DATABASE_MAX_SIZE_BYTES || '0')
+          const sizeMax = env.DATABASE_MAX_SIZE_BYTES
           const sizeRatio = sizeMax > 0 ? sizeUsed / sizeMax : 0
           return {
             services: {
@@ -106,7 +107,7 @@ export function createServer() {
   })
 
   app.ready(() => {
-    if (process.env.DEBUG) {
+    if (env.DEBUG) {
       app.log.info(
         'Plugins loaded:\n' +
           app
@@ -131,9 +132,9 @@ export function createServer() {
     }
     app.log.info(
       {
-        release: process.env.RELEASE_TAG,
-        deploymentURL: process.env.DEPLOYMENT_URL,
-        signaturePublicKey: process.env.SIGNATURE_PUBLIC_KEY,
+        release: env.RELEASE_TAG,
+        deploymentURL: env.DEPLOYMENT_URL,
+        signaturePublicKey: env.SIGNATURE_PUBLIC_KEY,
       },
       'Server info'
     )
