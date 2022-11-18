@@ -34,6 +34,7 @@ import {
   SecretBoxCipher,
   sign as signClientRequest,
   signHash,
+  sodium,
   verify as verifyServerSignature,
   verifySignedHash,
   _serializeCipher,
@@ -46,7 +47,6 @@ export type ClientConfig<KeyType = string> = {
   serverURL: string
   serverPublicKey: KeyType // todo: Make this an array to allow server key rotation
   pollingInterval?: number
-  onKeyReceived?: (key: KeychainItem) => unknown
 }
 
 type Config = Omit<ClientConfig<Key>, 'pollingInterval'> &
@@ -77,11 +77,11 @@ const keychainItemSchema = z.object({
   payloadFingerprint: z.string(),
   cipher: z
     .string()
-    .transform((input) => cipherParser.parse(JSON.parse(input.trim()))),
-  createdAt: z.string().transform((value) => new Date(value)),
+    .transform(input => cipherParser.parse(JSON.parse(input.trim()))),
+  createdAt: z.string().transform(value => new Date(value)),
   expiresAt: z
     .string()
-    .transform((value) => new Date(value))
+    .transform(value => new Date(value))
     .nullable(),
   sharedBy: z.string().nullable(),
 })
@@ -103,7 +103,7 @@ export type KeychainItemMetadata = Pick<
 
 // --
 
-const keychainSchema = z.array(keychainItemSchema).transform((array) =>
+const keychainSchema = z.array(keychainItemSchema).transform(array =>
   array.reduce((map, item) => {
     map.set(
       item.name,
@@ -164,6 +164,7 @@ type State = z.infer<typeof stateSchema>
 type Events = {
   identityUpdated: PublicUserIdentity | null
   keychainUpdated: null
+  keyReceived: KeychainItemMetadata
 }
 
 // --
@@ -182,12 +183,11 @@ export class Client {
   #sync: LocalStateSync<State>
   #pollingHandle?: ReturnType<typeof setInterval>
 
-  constructor(sodium: Sodium, config: ClientConfig) {
+  constructor(config: ClientConfig) {
     this.sodium = sodium
     this.config = Object.freeze({
-      serverURL: config.serverURL,
+      serverURL: config.serverURL + '/v1',
       serverPublicKey: this.decode(config.serverPublicKey),
-      onKeyReceived: config.onKeyReceived,
       pollingInterval: config.pollingInterval ?? DEFAULT_POLLING_INTERVAL,
     })
     this.#state = {
@@ -196,8 +196,8 @@ export class Client {
     this.#mitt = mitt()
     this.#sync = new LocalStateSync({
       encryptionKey: 'HPJPr237wkeRQlbk3pC7tEugFLxGrvafTs6dvuXPWwY',
-      namespace: 'e2esdk:sandbox',
-      onStateUpdated: (state) => {
+      namespace: 'e2esdk:client:default',
+      onStateUpdated: state => {
         if (state.state === 'idle') {
           this.clearState()
           return
@@ -466,26 +466,12 @@ export class Client {
       return {}
     }
     const out: Record<string, KeychainItemMetadata[]> = {}
-    this.#state.keychain.forEach((items) => {
+    this.#state.keychain.forEach(items => {
       if (items.length === 0) {
         return
       }
       out[items[0][indexBy]] = items
-        .map(({ cipher, ...item }) => {
-          const publicKeyBuffer =
-            cipher.algorithm === 'box'
-              ? cipher.publicKey
-              : cipher.algorithm === 'sealedBox'
-              ? cipher.publicKey
-              : undefined
-          return {
-            ...item,
-            algorithm: cipher.algorithm,
-            publicKey: publicKeyBuffer
-              ? this.encode(publicKeyBuffer)
-              : undefined,
-          }
-        })
+        .map(getKeychainItemMetadata)
         .sort(byCreatedAtMostRecentFirst)
     })
     return out
@@ -603,7 +589,7 @@ export class Client {
         'GET',
         `/identities/${userIds.join(',')}`
       )
-      return res.map((identity) => this.decodeIdentity(identity))
+      return res.map(identity => this.decodeIdentity(identity))
     } catch (error) {
       console.error(error)
       return []
@@ -851,7 +837,7 @@ export class Client {
           throw new Error('Invalid shared key payload fingerprint')
         }
         await this.addKey(item)
-        await this.config.onKeyReceived?.(item)
+        this.#mitt.emit('keyReceived', getKeychainItemMetadata(item))
       } catch (error) {
         console.error(error)
         continue
@@ -1005,8 +991,8 @@ export class Client {
     this.sodium.memzero(this.#state.personalKey)
     this.sodium.memzero(this.#state.identity.sharing.privateKey)
     this.sodium.memzero(this.#state.identity.signature.privateKey)
-    this.#state.keychain.forEach((items) =>
-      items.forEach((item) => memzeroCipher(this.sodium, item.cipher))
+    this.#state.keychain.forEach(items =>
+      items.forEach(item => memzeroCipher(this.sodium, item.cipher))
     )
     this.#state.keychain.clear()
     this.#state = {
@@ -1055,7 +1041,7 @@ function stateSerializer(state: State) {
     personalKey: base64UrlEncode(state.personalKey),
     keychain: Array.from(state.keychain.values())
       .flat()
-      .map((item) => ({
+      .map(item => ({
         ...item,
         cipher: _serializeCipher(item.cipher),
       })),
@@ -1089,7 +1075,7 @@ function addToKeychain(keychain: Keychain, newItem: KeychainItem) {
   }
   const serialized = serializeKeychainItem(newItem)
   if (
-    items.findIndex((item) => serializeKeychainItem(item) === serialized) >= 0
+    items.findIndex(item => serializeKeychainItem(item) === serialized) >= 0
   ) {
     return // Already in there
   }
@@ -1099,6 +1085,22 @@ function addToKeychain(keychain: Keychain, newItem: KeychainItem) {
 
 function byCreatedAtMostRecentFirst<T extends { createdAt: Date }>(a: T, b: T) {
   return b.createdAt.valueOf() - a.createdAt.valueOf()
+}
+
+function getKeychainItemMetadata(item: KeychainItem): KeychainItemMetadata {
+  return {
+    algorithm: item.cipher.algorithm,
+    createdAt: item.createdAt,
+    expiresAt: item.expiresAt,
+    name: item.name,
+    nameFingerprint: item.nameFingerprint,
+    payloadFingerprint: item.payloadFingerprint,
+    sharedBy: item.sharedBy,
+    publicKey:
+      item.cipher.algorithm !== 'secretBox'
+        ? base64UrlEncode(item.cipher.publicKey)
+        : undefined,
+  }
 }
 
 // --

@@ -1,0 +1,25 @@
+{
+  "name": "@e2esdk/devtools-host",
+  "private": true,
+  "version": "0.0.0-internal",
+  "description": "Single-page app to host the client & devtools for development",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@e2esdk/client": "workspace:*",
+    "@e2esdk/react": "workspace:*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.25",
+    "@types/react-dom": "^18.0.9",
+    "@vitejs/plugin-react": "^2.2.0",
+    "typescript": "^4.9.3",
+    "vite": "^3.2.4"
+  }
+}
