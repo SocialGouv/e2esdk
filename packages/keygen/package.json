@@ -1,0 +1,46 @@
+{
+  "name": "@e2esdk/keygen",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "description": "Cryptographic key generator for e2eSDK",
+  "author": {
+    "name": "François Best",
+    "email": "npm.e2esdk@francoisbest.com",
+    "url": "https://francoisbest.com"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "/dist"
+  ],
+  "bin": {
+    "keygen": "dist/keygen.cjs"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "main": "dist/keygen.cjs",
+  "tsup": {
+    "entry": [
+      "src/keygen.ts"
+    ],
+    "format": [
+      "cjs"
+    ],
+    "treeshake": true
+  },
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup --clean"
+  },
+  "dependencies": {
+    "@e2esdk/crypto": "workspace:*",
+    "zod": "^3.19.1",
+    "zx": "^7.1.1"
+  },
+  "devDependencies": {
+    "tsconfig": "workspace:*",
+    "tsup": "^6.5.0",
+    "typescript": "^4.9.3"
+  }
+}

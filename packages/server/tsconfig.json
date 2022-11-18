@@ -1,0 +1,10 @@
+{
+  "extends": "tsconfig/tsconfig.base.json",
+  "ts-node": {
+    "swc": true,
+    "esm": true,
+    "pretty": true,
+    "logError": true // Not logging silently skips fastify-autoload errors
+  },
+  "include": ["src/**/*.ts"]
+}

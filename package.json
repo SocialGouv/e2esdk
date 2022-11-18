@@ -1,0 +1,31 @@
+{
+  "name": "e2esdk",
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "description": "End-to-end encryption SDK",
+  "author": {
+    "name": "François Best",
+    "email": "e2esdk@francoisbest.com",
+    "url": "https://francoisbest.com"
+  },
+  "scripts": {
+    "dev": "FORCE_COLOR=3 turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "keygen": "./packages/keygen/dist/keygen.cjs"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.2.3",
+    "prettier": "^2.7.1",
+    "turbo": "^1.6.3"
+  },
+  "prettier": {
+    "arrowParens": "avoid",
+    "semi": false,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "useTabs": false
+  }
+}

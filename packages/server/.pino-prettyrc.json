@@ -1,0 +1,6 @@
+{
+  "singleLine": false,
+  "levelFirst": true,
+  "translateTime": "SYS:yyyy-mm-dd HH:MM:ss",
+  "ignore": "from,instance,commit"
+}

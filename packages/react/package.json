@@ -1,0 +1,55 @@
+{
+  "name": "@e2esdk/react",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "description": "React components & hooks for e2eSDK client",
+  "author": {
+    "name": "François Best",
+    "email": "npm.e2esdk@francoisbest.com",
+    "url": "https://francoisbest.com"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js"
+    }
+  },
+  "tsup": {
+    "entry": [
+      "src/index.tsx"
+    ],
+    "format": [
+      "esm",
+      "cjs"
+    ],
+    "dts": true,
+    "treeshake": true
+  },
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup --clean"
+  },
+  "peerDependencies": {
+    "@e2esdk/client": "workspace:*",
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0"
+  },
+  "devDependencies": {
+    "@e2esdk/client": "workspace:*",
+    "@types/node": "^18.11.9",
+    "@types/react": "^18.0.25",
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0",
+    "tsconfig": "workspace:*",
+    "tsup": "^6.5.0",
+    "typescript": "^4.9.3"
+  }
+}

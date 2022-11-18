@@ -1,0 +1,7 @@
+node_modules/
+dist/
+build/
+.turbo/
+.volumes/
+.next/
+*.env
