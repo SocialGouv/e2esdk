@@ -199,7 +199,7 @@ export class Client {
       namespace: 'e2esdk:client:default',
       onStateUpdated: state => {
         if (state.state === 'idle') {
-          this.clearState()
+          this.#clearState()
           return
         }
         const initialize = this.#state.state === 'idle'
@@ -208,10 +208,10 @@ export class Client {
         this.#mitt.emit('keychainUpdated', null)
         if (initialize) {
           this.sodium.ready
-            .then(() => this.loadKeychain())
+            .then(() => this.#loadKeychain())
             .then(() => {
-              this.startMessagePolling()
-              return this.processIncomingSharedKeys()
+              this.#startMessagePolling()
+              return this.#processIncomingSharedKeys()
             })
             .catch(console.error)
         }
@@ -222,7 +222,7 @@ export class Client {
     if (typeof window !== 'undefined') {
       window.addEventListener(
         'visibilitychange',
-        this._handleVisibilityChange.bind(this)
+        this.#handleVisibilityChange.bind(this)
       )
     }
   }
@@ -279,21 +279,25 @@ export class Client {
       keychain: new Map(),
     }
     try {
-      await this.apiCall('POST', '/signup', body)
-      this.startMessagePolling()
+      await this.#apiCall('POST', '/signup', body)
+      this.#startMessagePolling()
       this.#mitt.emit('identityUpdated', this.publicIdentity)
       this.#sync.setState(this.#state)
       return this.publicIdentity
     } catch (error) {
-      this.clearState() // Cleanup on failure
+      this.#clearState() // Cleanup on failure
       throw error
     }
   }
 
   public async login(userId: string, personalKey: Uint8Array) {
     await this.sodium.ready
-    this.clearState()
+    this.#clearState()
     const res = await fetch(`${this.config.serverURL}/login`, {
+      mode: 'cors',
+      cache: 'no-store',
+      credentials: 'omit',
+      referrerPolicy: 'origin',
       headers: {
         'content-type': 'application/json',
         'x-e2esdk-user-id': userId,
@@ -346,7 +350,7 @@ export class Client {
     ) {
       throw new Error('Invalid sharing key pair')
     }
-    this.startMessagePolling()
+    this.#startMessagePolling()
     this.#state = {
       state: 'loaded',
       identity,
@@ -354,15 +358,15 @@ export class Client {
       keychain: new Map(),
     }
     // Load keychain & incoming shared keys in the background
-    this.loadKeychain().catch(console.error)
-    this.processIncomingSharedKeys().catch(console.error)
+    this.#loadKeychain().catch(console.error)
+    this.#processIncomingSharedKeys().catch(console.error)
     this.#mitt.emit('identityUpdated', this.publicIdentity)
     this.#sync.setState(this.#state)
     return this.publicIdentity
   }
 
   public logout() {
-    this.clearState()
+    this.#clearState()
     this.#sync.setState(this.#state)
   }
 
@@ -396,7 +400,7 @@ export class Client {
         throw new Error('This key is already in your keychain')
       }
     }
-    const withPersonalKey = this.usePersonalKey()
+    const withPersonalKey = this.#usePersonalKey()
     const nameFingerprint = fingerprint(this.sodium, name)
     const payloadFingerprint = fingerprint(this.sodium, serializedCipher)
     const createdAtISO = createdAt.toISOString()
@@ -433,7 +437,7 @@ export class Client {
         )
       ),
     }
-    await this.apiCall('POST', '/keychain', body)
+    await this.#apiCall('POST', '/keychain', body)
     // todo: Handle API errors
     addToKeychain(this.#state.keychain, {
       name,
@@ -542,7 +546,7 @@ export class Client {
         )
       ),
     }
-    return this.apiCall('POST', '/shared-keys', body)
+    return this.#apiCall('POST', '/shared-keys', body)
   }
 
   // User Ops --
@@ -563,7 +567,7 @@ export class Client {
   ): Promise<PublicUserIdentity | null> {
     await this.sodium.ready
     try {
-      const res = await this.apiCall<GetSingleIdentityResponseBody>(
+      const res = await this.#apiCall<GetSingleIdentityResponseBody>(
         'GET',
         `/identity/${userId}`
       )
@@ -573,7 +577,7 @@ export class Client {
       if (res.userId !== userId) {
         throw new Error('Mismatching user IDs')
       }
-      return this.decodeIdentity(res)
+      return this.#decodeIdentity(res)
     } catch (error) {
       console.error(error)
       return null
@@ -585,11 +589,11 @@ export class Client {
   ): Promise<PublicUserIdentity[]> {
     await this.sodium.ready
     try {
-      const res = await this.apiCall<GetMultipleIdentitiesResponseBody>(
+      const res = await this.#apiCall<GetMultipleIdentitiesResponseBody>(
         'GET',
         `/identities/${userIds.join(',')}`
       )
-      return res.map(identity => this.decodeIdentity(identity))
+      return res.map(identity => this.#decodeIdentity(identity))
     } catch (error) {
       console.error(error)
       return []
@@ -608,7 +612,7 @@ export class Client {
       nameFingerprint: fingerprint(this.sodium, keyName),
       ...permissions,
     }
-    await this.apiCall('POST', '/permissions', body)
+    await this.#apiCall('POST', '/permissions', body)
   }
 
   public async banUser(userId: string, keyName: string) {
@@ -616,7 +620,7 @@ export class Client {
       userId,
       nameFingerprint: fingerprint(this.sodium, keyName),
     }
-    await this.apiCall('POST', '/ban', body)
+    await this.#apiCall('POST', '/ban', body)
   }
 
   // Encryption / Decryption --
@@ -680,13 +684,13 @@ export class Client {
 
   // Internal APIs --
 
-  private async loadKeychain() {
+  async #loadKeychain() {
     await this.sodium.ready
     if (this.#state.state !== 'loaded') {
       throw new Error('Account must be unlocked before calling API')
     }
-    const res = await this.apiCall<GetKeychainResponseBody>('GET', '/keychain')
-    const withPersonalKey = this.usePersonalKey()
+    const res = await this.#apiCall<GetKeychainResponseBody>('GET', '/keychain')
+    const withPersonalKey = this.#usePersonalKey()
     for (const lockedItem of res) {
       if (lockedItem.ownerId !== this.#state.identity.userId) {
         console.warn('Got a key belonging to someone else', lockedItem)
@@ -755,7 +759,7 @@ export class Client {
     }
   }
 
-  private async processIncomingSharedKeys() {
+  async #processIncomingSharedKeys() {
     await this.sodium.ready
     if (this.#state.state !== 'loaded') {
       console.error('Account must be unlocked before receiving keys')
@@ -763,7 +767,7 @@ export class Client {
     }
     let sharedKeys: GetSharedKeysResponseBody = []
     try {
-      sharedKeys = await this.apiCall<GetSharedKeysResponseBody>(
+      sharedKeys = await this.#apiCall<GetSharedKeysResponseBody>(
         'GET',
         '/shared-keys/incoming'
       )
@@ -845,28 +849,28 @@ export class Client {
     }
   }
 
-  private startMessagePolling() {
+  #startMessagePolling() {
     clearInterval(this.#pollingHandle)
     this.#pollingHandle = setInterval(
-      this.processIncomingSharedKeys.bind(this),
+      this.#processIncomingSharedKeys.bind(this),
       this.config.pollingInterval
     )
   }
 
   // API Layer --
 
-  private async apiCall<ResponseType>(
+  async #apiCall<ResponseType>(
     method: 'GET' | 'DELETE',
     path: string
   ): Promise<ResponseType>
 
-  private async apiCall<BodyType, ReponseType>(
+  async #apiCall<BodyType, ReponseType>(
     method: 'POST',
     path: string,
     body: BodyType
   ): Promise<ResponseType>
 
-  private async apiCall<BodyType, ResponseType>(
+  async #apiCall<BodyType, ResponseType>(
     method: HTTPMethod,
     path: string,
     body?: BodyType
@@ -893,6 +897,10 @@ export class Client {
     )
     const res = await fetch(url, {
       method,
+      mode: 'cors',
+      cache: 'no-store',
+      credentials: 'omit',
+      referrerPolicy: 'origin',
       headers: {
         'content-type': 'application/json',
         'x-e2esdk-user-id': this.#state.identity.userId,
@@ -905,14 +913,14 @@ export class Client {
       const { error: statusText, statusCode, message } = await res.json()
       throw new APIError(statusCode, statusText, message)
     }
-    return this.verifyServerResponse<ResponseType>(
+    return this.#verifyServerResponse<ResponseType>(
       method,
       res,
       this.#state.identity
     )
   }
 
-  private async verifyServerResponse<Output>(
+  async #verifyServerResponse<Output>(
     method: HTTPMethod,
     res: Response,
     identity: PartialIdentity
@@ -960,7 +968,7 @@ export class Client {
 
   // --
 
-  private usePersonalKey(): SecretBoxCipher {
+  #usePersonalKey(): SecretBoxCipher {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked')
     }
@@ -970,7 +978,7 @@ export class Client {
     }
   }
 
-  private decodeIdentity(
+  #decodeIdentity(
     identity: PublicUserIdentity<string>
   ): PublicUserIdentity<Key> {
     return {
@@ -982,7 +990,7 @@ export class Client {
 
   // Persistance & cross-tab communication --
 
-  private clearState() {
+  #clearState() {
     clearTimeout(this.#pollingHandle)
     this.#pollingHandle = undefined
     if (this.#state.state !== 'loaded') {
@@ -1002,7 +1010,7 @@ export class Client {
     this.#mitt.emit('keychainUpdated', null)
   }
 
-  private _handleVisibilityChange() {
+  #handleVisibilityChange() {
     if (this.#state.state !== 'loaded') {
       return
     }
@@ -1010,7 +1018,7 @@ export class Client {
       return
     }
     if (document.visibilityState === 'visible') {
-      this.startMessagePolling()
+      this.#startMessagePolling()
     }
     if (document.visibilityState === 'hidden') {
       clearTimeout(this.#pollingHandle)
