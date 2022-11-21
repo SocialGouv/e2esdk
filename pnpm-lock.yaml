@@ -51,7 +51,7 @@ importers:
       '@e2esdk/api': workspace:*
       '@e2esdk/core': workspace:*
       '@e2esdk/crypto': workspace:*
-      local-state-sync: 1.0.0-beta.5
+      local-state-sync: 1.0.0-beta.6
       mitt: ^3.0.0
       tsconfig: workspace:*
       tsup: ^6.5.0
@@ -61,7 +61,7 @@ importers:
       '@e2esdk/api': link:../api
       '@e2esdk/core': link:../core
       '@e2esdk/crypto': link:../crypto
-      local-state-sync: 1.0.0-beta.5
+      local-state-sync: 1.0.0-beta.6
       mitt: 3.0.0
       zod: 3.19.1
     devDependencies:
@@ -3487,8 +3487,8 @@ packages:
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     dev: true
 
-  /local-state-sync/1.0.0-beta.5:
-    resolution: {integrity: sha512-2to+fmvT181f7KlujGHXWT2ii4jgNhvIEJBiHC24heDhaoMi39lP4KEOU1ek1BjSt144LVMDiikoL6Sp7Uwarw==}
+  /local-state-sync/1.0.0-beta.6:
+    resolution: {integrity: sha512-RZlgjAph/Ytjl2ldAzC0KHMYeo9sVWzdGuCij3UyW1w6GR9FZpnZ6E9hUDdDjizo6j9mH+aI+Zvavp2vK98xvA==}
     dev: false
 
   /locate-path/3.0.0:
