@@ -1,3 +1,5 @@
 .volumes/
 node_modules/
+
+# https://github.com/vercel/turbo/issues/1997
 **/node_modules
