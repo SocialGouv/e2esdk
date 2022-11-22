@@ -16,7 +16,8 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "keygen": "./packages/keygen/dist/keygen.cjs",
-    "db": "pnpm --filter server db"
+    "db": "pnpm --filter server db",
+    "build:docker": "docker build . -f packages/server/Dockerfile -t e2esdk:local"
   },
   "devDependencies": {
     "@types/jest": "^29.2.3",

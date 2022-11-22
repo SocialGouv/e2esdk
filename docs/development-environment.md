@@ -2,25 +2,37 @@
 
 To configure the monorepo in a development environment:
 
-1. Start the Docker compose stack:
+Install dependencies:
+
+```
+$ pnpm install
+```
+
+Setup environment files:
+
+```shell
+$ cp ./packages/server/.env.example ./packages/server/.env
+```
+
+Start the Docker compose stack:
 
 ```shell
 $ docker compose up -d
 ```
 
-2. Build the dependencies to setup the database
+Build the server and its dependencies to setup the database:
 
 ```shell
 $ pnpm build --filter server
 ```
 
-3. Setup your database by applying pending migrations:
+Setup the database by applying pending migrations:
 
 ```shell
 $ pnpm db migrations apply
 ```
 
-4. Start the `dev` script:
+Start the `dev` script:
 
 ```shell
 $ pnpm dev
