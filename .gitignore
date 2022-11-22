@@ -6,3 +6,4 @@ build/
 .next/
 .vite/
 *.env
+.vscode
