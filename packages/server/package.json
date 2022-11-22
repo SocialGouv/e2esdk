@@ -19,8 +19,7 @@
     "dev:build": "swc src --copy-files --include-dotfiles -d build --watch",
     "dev:start": "nodemon ./build/main.js | tee -i ../../.volumes/logs/@e2esdk/server/$(date +%Y-%m-%d_%H.%M.%S).ndjson | pino-pretty",
     "start": "NODE_ENV=production node ./build/main.js",
-    "build": "swc src --copy-files --include-dotfiles -d build",
-    "postbuild": "chmod +x ./build/database/operations.js",
+    "build:server": "swc src --copy-files --include-dotfiles -d build",
     "typecheck": "tsc",
     "db": "zx ./build/database/operations.js"
   },
@@ -35,7 +34,8 @@
     "fastify-plugin": "^4.3.0",
     "postgres": "^3.3.2",
     "zod": "^3.19.1",
-    "zod-to-json-schema": "^3.19.0"
+    "zod-to-json-schema": "^3.19.0",
+    "zx": "^7.1.1"
   },
   "devDependencies": {
     "@fastify/sensible": "*",
@@ -49,8 +49,7 @@
     "pino-pretty": "^9.1.1",
     "ts-node": "^10.9.1",
     "tsconfig": "workspace:*",
-    "typescript": "^4.9.3",
-    "zx": "^7.1.1"
+    "typescript": "^4.9.3"
   },
   "nodemonConfig": {
     "watch": [

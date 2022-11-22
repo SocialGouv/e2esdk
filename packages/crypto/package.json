@@ -21,7 +21,8 @@
   "exports": {
     ".": {
       "require": "./dist/index.cjs",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     },
     "./lite": {
       "require": "./dist/lite.cjs",
@@ -34,16 +35,12 @@
       "src/index.ts",
       "src/lite.ts"
     ],
-    "format": [
-      "esm",
-      "cjs"
-    ],
-    "dts": true,
     "treeshake": true
   },
   "scripts": {
-    "dev": "tsup --watch",
-    "build": "tsup --clean",
+    "dev": "tsup --format esm --dts --watch",
+    "build:npm": "tsup --clean --format esm,cjs --dts",
+    "build:server": "tsup --clean --format esm",
     "typecheck": "tsc",
     "test": "jest --color"
   },

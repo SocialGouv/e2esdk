@@ -3,6 +3,7 @@
 **/build
 **/.vite
 **/.turbo
+**/.env*
 
 # https://github.com/vercel/turbo/issues/1997
 **/node_modules

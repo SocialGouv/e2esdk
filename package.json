@@ -11,13 +11,13 @@
   },
   "scripts": {
     "dev": "FORCE_COLOR=3 turbo run dev",
-    "build": "turbo run build",
+    "build:npm": "turbo run build:npm",
+    "build:docker": "docker build . -f packages/server/Dockerfile -t e2esdk:local",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "keygen": "./packages/keygen/dist/keygen.cjs",
-    "db": "pnpm --filter server db",
-    "build:docker": "docker build . -f packages/server/Dockerfile -t e2esdk:local"
+    "db": "pnpm --filter server db"
   },
   "devDependencies": {
     "@types/jest": "^29.2.3",

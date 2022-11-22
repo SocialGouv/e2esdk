@@ -15,23 +15,24 @@
     "/dist"
   ],
   "bin": {
-    "keygen": "dist/keygen.cjs"
+    "keygen": "dist/keygen.js"
   },
   "type": "module",
   "sideEffects": false,
-  "main": "dist/keygen.cjs",
+  "main": "dist/keygen.js",
   "tsup": {
     "entry": [
       "src/keygen.ts"
     ],
     "format": [
-      "cjs"
+      "esm"
     ],
+    "dts": true,
     "treeshake": true
   },
   "scripts": {
     "dev": "tsup --watch",
-    "build": "tsup --clean",
+    "build:npm": "tsup --clean",
     "typecheck": "tsc"
   },
   "dependencies": {

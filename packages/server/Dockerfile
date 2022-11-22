@@ -7,6 +7,7 @@ FROM node:16-alpine AS slicer
 RUN apk add --no-cache libc6-compat
 # Set working directory
 WORKDIR /app
+# Though the rest of the monorepo uses pnpm, we can use yarn here to save one layer.
 RUN yarn global add turbo
 COPY . .
 RUN turbo prune --scope=@e2esdk/server --docker --out-dir docker-dist
@@ -20,21 +21,34 @@ RUN apk add --no-cache libc6-compat
 RUN corepack enable
 WORKDIR /app
 
-# First install the dependencies (as they change less often)
 COPY .gitignore .
-COPY --from=slicer /app/docker-dist/json/ .
+
+# First install the dependencies (as they change less often) in a virtual cache
+# which can itself be cached in a Docker layer. See https://pnpm.io/cli/fetch
 COPY --from=slicer /app/docker-dist/pnpm-lock.yaml .
-RUN pnpm install --frozen-lockfile
+RUN pnpm fetch --frozen-lockfile
+
+# Import the various package.json to list deps
+COPY --from=slicer /app/docker-dist/json/ .
+
+# Install from in-memory cache
+RUN pnpm install --offline
 
 # Build the project
 COPY --from=slicer /app/docker-dist/full/ .
-COPY turbo.json turbo.json
-RUN pnpm build --filter=@e2esdk/server
+COPY turbo.json .
+RUN pnpm turbo build:server
+
+# Only keep runtime dependencies
+RUN rm -rf node_modules **/node_modules **/.turbo
+RUN pnpm install --offline --prod
 
 # ------------------------------------------------------------------------------
 
 FROM node:16-alpine AS runner
 WORKDIR /app
+
+RUN corepack enable
 
 ENV NODE_ENV production
 ENV PORT 3000

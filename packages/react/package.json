@@ -25,10 +25,6 @@
     "entry": [
       "src/index.tsx"
     ],
-    "format": [
-      "esm",
-      "cjs"
-    ],
     "dts": true,
     "treeshake": true
   },
@@ -36,8 +32,8 @@
     "/dist"
   ],
   "scripts": {
-    "dev": "tsup --watch",
-    "build": "tsup --clean",
+    "dev": "tsup --format esm --watch",
+    "build:npm": "tsup --clean --format esm,cjs",
     "typecheck": "tsc"
   },
   "peerDependencies": {

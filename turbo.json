@@ -1,9 +1,13 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "pipeline": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**", "build/**", ".next/**", ".vite/**"]
+    "build:npm": {
+      "dependsOn": ["^build:npm"],
+      "outputs": ["dist/**", "build/**", ".vite/**"]
+    },
+    "build:server": {
+      "dependsOn": ["^build:server"],
+      "outputs": ["dist/**", "build/**"]
     },
     "typecheck": {
       "outputs": []
