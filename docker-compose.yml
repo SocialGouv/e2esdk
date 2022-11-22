@@ -1,10 +1,12 @@
 version: '3'
 
+name: e2esdk-dev
+
 services:
-  db-sdk:
+  db:
     image: postgres:14.1
     ports:
-      - '5432:5432'
+      - '3002:5432'
     environment:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=e2esdk
