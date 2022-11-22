@@ -44,6 +44,7 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup --clean",
+    "typecheck": "tsc",
     "test": "jest --color"
   },
   "dependencies": {

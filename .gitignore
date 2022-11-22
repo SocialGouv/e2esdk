@@ -4,4 +4,5 @@ build/
 .turbo/
 .volumes/
 .next/
+.vite/
 *.env

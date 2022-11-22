@@ -31,7 +31,8 @@
   },
   "scripts": {
     "dev": "tsup --watch",
-    "build": "tsup --clean"
+    "build": "tsup --clean",
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@e2esdk/crypto": "workspace:*",

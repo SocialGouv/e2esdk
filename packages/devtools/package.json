@@ -1,0 +1,67 @@
+{
+  "name": "@e2esdk/devtools",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "description": "Developer tools panel to inspect and interact with an e2esdk client",
+  "author": {
+    "name": "François Best",
+    "email": "npm.e2esdk@francoisbest.com",
+    "url": "https://francoisbest.com"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "dev": "vite --port 3001 --host --clearScreen false",
+    "build": "vite build",
+    "typecheck": "tsc"
+  },
+  "peerDependencies": {
+    "@e2esdk/client": "workspace:*",
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.4.1",
+    "@chakra-ui/styled-system": ">=2.0.0",
+    "@chakra-ui/theme-tools": "^2.0.13",
+    "@e2esdk/react": "workspace:*",
+    "@emotion/cache": "^11.10.5",
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
+    "framer-motion": "^7.6.7",
+    "react-hook-form": "^7.39.4",
+    "react-icons": "^4.6.0",
+    "zod": "^3.19.1"
+  },
+  "devDependencies": {
+    "@babel/core": ">=7.0.0 <8.0.0",
+    "@e2esdk/client": "workspace:*",
+    "@e2esdk/crypto": "workspace:*",
+    "@e2esdk/server": "workspace:*",
+    "@types/node": "^18.11.9",
+    "@types/react": "^18.0.25",
+    "@types/react-dom": "^18.0.9",
+    "@vitejs/plugin-react": "^2.2.0",
+    "dotenv": "^16.0.3",
+    "react": "^18.2.0",
+    "react-dom": ">=18.0.0 <19.0.0",
+    "rollup-plugin-visualizer": "^5.8.3",
+    "typescript": "^4.9.3",
+    "vite": "^3.2.4"
+  }
+}

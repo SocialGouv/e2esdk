@@ -3,6 +3,8 @@ import { zodToJsonSchema } from 'zod-to-json-schema'
 import { env } from '../env.js'
 import type { App } from '../types'
 
+export const prefixOverride = '/'
+
 const infoResponseBody = z.object({
   release: z.string(),
   deploymentURL: z.string(),
@@ -13,7 +15,7 @@ export default async function infoRoutes(app: App) {
   app.get<{
     Reply: z.infer<typeof infoResponseBody>
   }>(
-    '/info',
+    '/',
     {
       schema: {
         response: {

@@ -12,7 +12,7 @@ const corsPlugin: FastifyPluginAsync = async (app: App) => {
         ? env.CORS_ALLOWED_ORIGINS
         : '*',
     methods: ['GET', 'POST', 'DELETE'],
-    allowedHeaders: publicKeyAuthHeaders.keyof().options,
+    allowedHeaders: ['content-type', ...publicKeyAuthHeaders.keyof().options],
     exposedHeaders: [
       ...publicKeyAuthHeaders.keyof().options,
       'x-e2esdk-server-pubkey',

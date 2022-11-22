@@ -38,7 +38,8 @@
   },
   "scripts": {
     "dev": "tsup --watch",
-    "build": "tsup --clean"
+    "build": "tsup --clean",
+    "typecheck": "tsc"
   },
   "dependencies": {
     "zod": "^3.19.1"

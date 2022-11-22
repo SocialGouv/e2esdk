@@ -37,7 +37,8 @@
   ],
   "scripts": {
     "dev": "tsup --watch",
-    "build": "tsup --clean"
+    "build": "tsup --clean",
+    "typecheck": "tsc"
   },
   "peerDependencies": {
     "@e2esdk/client": "workspace:*",

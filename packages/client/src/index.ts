@@ -127,7 +127,7 @@ type Identity = z.infer<typeof identitySchema>
 
 type PartialIdentity = Optional<Identity, 'sharing' | 'signature'>
 
-export type PublicUserIdentity<KeyType = Key> = {
+export type PublicUserIdentity<KeyType = string> = {
   userId: string
   signaturePublicKey: KeyType
   sharingPublicKey: KeyType
@@ -186,7 +186,7 @@ export class Client {
   constructor(config: ClientConfig) {
     this.sodium = sodium
     this.config = Object.freeze({
-      serverURL: config.serverURL + '/v1',
+      serverURL: config.serverURL,
       serverPublicKey: this.decode(config.serverPublicKey),
       pollingInterval: config.pollingInterval ?? DEFAULT_POLLING_INTERVAL,
     })
@@ -195,8 +195,8 @@ export class Client {
     }
     this.#mitt = mitt()
     this.#sync = new LocalStateSync({
-      encryptionKey: 'HPJPr237wkeRQlbk3pC7tEugFLxGrvafTs6dvuXPWwY',
-      namespace: 'e2esdk:client:default',
+      encryptionKey: 'E2ESDKDevtoolsLocalStateSyncEncryptionKey01',
+      namespace: [config.serverURL, config.serverPublicKey].join(':'),
       onStateUpdated: state => {
         if (state.state === 'idle') {
           this.#clearState()
@@ -279,7 +279,7 @@ export class Client {
       keychain: new Map(),
     }
     try {
-      await this.#apiCall('POST', '/signup', body)
+      await this.#apiCall('POST', '/v1/signup', body)
       this.#startMessagePolling()
       this.#mitt.emit('identityUpdated', this.publicIdentity)
       this.#sync.setState(this.#state)
@@ -293,7 +293,7 @@ export class Client {
   public async login(userId: string, personalKey: Uint8Array) {
     await this.sodium.ready
     this.#clearState()
-    const res = await fetch(`${this.config.serverURL}/login`, {
+    const res = await fetch(`${this.config.serverURL}/v1/login`, {
       mode: 'cors',
       cache: 'no-store',
       credentials: 'omit',
@@ -437,7 +437,7 @@ export class Client {
         )
       ),
     }
-    await this.#apiCall('POST', '/keychain', body)
+    await this.#apiCall('POST', '/v1/keychain', body)
     // todo: Handle API errors
     addToKeychain(this.#state.keychain, {
       name,
@@ -499,7 +499,7 @@ export class Client {
     const sendTo: BoxCipher = {
       algorithm: 'box',
       privateKey: this.#state.identity.sharing.privateKey,
-      publicKey: to.sharingPublicKey,
+      publicKey: this.decode(to.sharingPublicKey),
     }
     const serializedCipher = _serializeCipher(keychainItem.cipher)
     const nameFingerprint = fingerprint(this.sodium, keychainItem.name)
@@ -546,7 +546,7 @@ export class Client {
         )
       ),
     }
-    return this.#apiCall('POST', '/shared-keys', body)
+    return this.#apiCall('POST', '/v1/shared-keys', body)
   }
 
   // User Ops --
@@ -555,11 +555,11 @@ export class Client {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked')
     }
-    return {
+    return this.#encodeIdentity({
       userId: this.#state.identity.userId,
       sharingPublicKey: this.#state.identity.sharing.publicKey,
       signaturePublicKey: this.#state.identity.signature.publicKey,
-    }
+    })
   }
 
   public async getUserIdentity(
@@ -569,7 +569,7 @@ export class Client {
     try {
       const res = await this.#apiCall<GetSingleIdentityResponseBody>(
         'GET',
-        `/identity/${userId}`
+        `/v1/identity/${userId}`
       )
       if (!res) {
         return null
@@ -577,7 +577,7 @@ export class Client {
       if (res.userId !== userId) {
         throw new Error('Mismatching user IDs')
       }
-      return this.#decodeIdentity(res)
+      return res
     } catch (error) {
       console.error(error)
       return null
@@ -589,11 +589,10 @@ export class Client {
   ): Promise<PublicUserIdentity[]> {
     await this.sodium.ready
     try {
-      const res = await this.#apiCall<GetMultipleIdentitiesResponseBody>(
+      return this.#apiCall<GetMultipleIdentitiesResponseBody>(
         'GET',
-        `/identities/${userIds.join(',')}`
+        `/v1/identities/${userIds.join(',')}`
       )
-      return res.map(identity => this.#decodeIdentity(identity))
     } catch (error) {
       console.error(error)
       return []
@@ -612,7 +611,7 @@ export class Client {
       nameFingerprint: fingerprint(this.sodium, keyName),
       ...permissions,
     }
-    await this.#apiCall('POST', '/permissions', body)
+    await this.#apiCall('POST', '/v1/permissions', body)
   }
 
   public async banUser(userId: string, keyName: string) {
@@ -620,7 +619,7 @@ export class Client {
       userId,
       nameFingerprint: fingerprint(this.sodium, keyName),
     }
-    await this.#apiCall('POST', '/ban', body)
+    await this.#apiCall('POST', '/v1/ban', body)
   }
 
   // Encryption / Decryption --
@@ -689,7 +688,10 @@ export class Client {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account must be unlocked before calling API')
     }
-    const res = await this.#apiCall<GetKeychainResponseBody>('GET', '/keychain')
+    const res = await this.#apiCall<GetKeychainResponseBody>(
+      'GET',
+      '/v1/keychain'
+    )
     const withPersonalKey = this.#usePersonalKey()
     for (const lockedItem of res) {
       if (lockedItem.ownerId !== this.#state.identity.userId) {
@@ -769,7 +771,7 @@ export class Client {
     try {
       sharedKeys = await this.#apiCall<GetSharedKeysResponseBody>(
         'GET',
-        '/shared-keys/incoming'
+        '/v1/shared-keys/incoming'
       )
     } catch (error) {
       console.error(error)
@@ -978,13 +980,13 @@ export class Client {
     }
   }
 
-  #decodeIdentity(
-    identity: PublicUserIdentity<string>
-  ): PublicUserIdentity<Key> {
+  #encodeIdentity(
+    identity: PublicUserIdentity<Key>
+  ): PublicUserIdentity<string> {
     return {
       userId: identity.userId,
-      sharingPublicKey: this.decode(identity.sharingPublicKey),
-      signaturePublicKey: this.decode(identity.signaturePublicKey),
+      sharingPublicKey: this.encode(identity.sharingPublicKey),
+      signaturePublicKey: this.encode(identity.signaturePublicKey),
     }
   }
 
