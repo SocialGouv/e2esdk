@@ -14,8 +14,8 @@
     "node": ">=16"
   },
   "scripts": {
-    "predev": "mkdir -p ../../.volumes/logs/@e2esdk/server",
     "dev": "run-p dev:*",
+    "dev:mkdir-logs": "mkdir -p ../../.volumes/logs/@e2esdk/server",
     "dev:build": "swc src --copy-files --include-dotfiles -d build --watch",
     "dev:start": "nodemon ./build/main.js | tee -i ../../.volumes/logs/@e2esdk/server/$(date +%Y-%m-%d_%H.%M.%S).ndjson | pino-pretty",
     "start": "NODE_ENV=production node ./build/main.js",
