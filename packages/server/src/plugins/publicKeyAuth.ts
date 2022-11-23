@@ -1,8 +1,8 @@
 import type { PublicIdentity } from '@e2esdk/api'
 import { isFarFromCurrentTime } from '@e2esdk/core'
 import {
-  sign as signResponse,
-  verify as verifyClientSignature,
+  signAuth as signResponse,
+  verifyAuth as verifyClientSignature,
 } from '@e2esdk/crypto'
 import type { FastifyPluginAsync, FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
@@ -76,8 +76,7 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
                 method: req.method,
                 url: `${env.DEPLOYMENT_URL}${req.url}`,
                 body: JSON.stringify(req.body),
-                serverPublicKey,
-                clientPublicKey: identity.signaturePublicKey,
+                recipientPublicKey: serverPublicKey,
                 userId: identity.userId,
               }
             )
@@ -96,21 +95,21 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
     'onSend',
     async function signServerResponse(req, res, body: string) {
       const timestamp = new Date().toISOString()
+      res.header('x-e2esdk-server-pubkey', env.SIGNATURE_PUBLIC_KEY)
+      if (!req.identity) {
+        return body
+      }
       const signature = signResponse(app.sodium, serverPrivateKey, {
         timestamp,
         method: req.method,
         url: `${env.DEPLOYMENT_URL}${req.url}`,
         body,
-        userId: req.identity?.userId,
-        serverPublicKey: env.SIGNATURE_PUBLIC_KEY,
-        clientPublicKey: req.identity?.signaturePublicKey,
+        userId: req.identity.userId,
+        recipientPublicKey: req.identity.signaturePublicKey,
       })
-      if (req.identity?.userId) {
-        res.header('x-e2esdk-user-id', req.identity.userId)
-      }
+      res.header('x-e2esdk-user-id', req.identity.userId)
       res.header('x-e2esdk-timestamp', timestamp)
       res.header('x-e2esdk-signature', signature)
-      res.header('x-e2esdk-server-pubkey', env.SIGNATURE_PUBLIC_KEY)
       return body
     }
   )

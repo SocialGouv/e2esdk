@@ -32,10 +32,10 @@ import {
   memzeroCipher,
   randomPad,
   SecretBoxCipher,
-  sign as signClientRequest,
+  signAuth as signClientRequest,
   signHash,
   sodium,
-  verify as verifyServerSignature,
+  verifyAuth as verifyServerSignature,
   verifySignedHash,
   _serializeCipher,
 } from '@e2esdk/crypto'
@@ -892,8 +892,7 @@ export class Client {
         method,
         url,
         body: json,
-        serverPublicKey: this.config.serverPublicKey,
-        clientPublicKey: this.#state.identity.signature.publicKey,
+        recipientPublicKey: this.config.serverPublicKey,
         userId: this.#state.identity.userId,
       }
     )
@@ -925,9 +924,8 @@ export class Client {
   async #verifyServerResponse<Output>(
     method: HTTPMethod,
     res: Response,
-    identity: PartialIdentity
+    identity: Identity
   ): Promise<Output> {
-    await this.sodium.ready
     const now = Date.now()
     const signature = res.headers.get('x-e2esdk-signature')
     if (!signature) {
@@ -949,8 +947,7 @@ export class Client {
         method,
         url: res.url,
         body,
-        serverPublicKey: this.config.serverPublicKey,
-        clientPublicKey: identity.signature?.publicKey,
+        recipientPublicKey: identity.signature.publicKey,
         userId,
       }
     )

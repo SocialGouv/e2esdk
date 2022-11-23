@@ -7,11 +7,15 @@ export type PublicKeyAuthArgs = {
   url: string
   body?: string
   userId?: string
-  serverPublicKey: string | Uint8Array
-  clientPublicKey?: string | Uint8Array
+
+  // Note: Ed25519 already includes the signature public key
+  // in the signature calculation (exclusive ownership),
+  // so we only need to authenticate the recipient.
+  // This makes signing anonymous responses pointless, which it is, really.
+  recipientPublicKey: string | Uint8Array
 }
 
-export function sign(
+export function signAuth(
   sodium: Sodium,
   privateKey: Uint8Array,
   args: PublicKeyAuthArgs
@@ -21,7 +25,7 @@ export function sign(
   )
 }
 
-export function verify(
+export function verifyAuth(
   sodium: Sodium,
   publicKey: Uint8Array,
   signature: string,
@@ -45,8 +49,7 @@ function getSignatureElements(
     url,
     body,
     userId,
-    serverPublicKey,
-    clientPublicKey,
+    recipientPublicKey,
   }: PublicKeyAuthArgs
 ) {
   return [
@@ -55,11 +58,8 @@ function getSignatureElements(
     sodium.from_string(url),
     body ? sodium.from_string(body) : null,
     userId ? sodium.from_string(userId) : null,
-    typeof serverPublicKey === 'string'
-      ? sodium.from_base64(serverPublicKey)
-      : serverPublicKey,
-    typeof clientPublicKey === 'string'
-      ? sodium.from_base64(clientPublicKey)
-      : clientPublicKey,
+    typeof recipientPublicKey === 'string'
+      ? sodium.from_base64(recipientPublicKey)
+      : recipientPublicKey,
   ].filter(Boolean) as Uint8Array[]
 }
