@@ -14,7 +14,7 @@ describe('signHash', () => {
     const b = sodium.from_hex('80cc62c261b30c32')
     const c = sodium.from_hex('bfe93254c419de3c')
     const signature = sodium.from_hex(
-      '5951e14531b3cd88a3705a7c1ec579a32cf2af323aca5fe802ad334b3a0b6000ecd1e42ebed8cfb8e329c800008c4bce20a60a97e7ea1a8a6a7695a12e6e6403'
+      '46674374c89beccb9b8db41da11ce9856fd1c711d9eb4a72133d2cbe71410cf232760479b36b47ae91446d2907b58e17606cd4b6b63cc1c819a827aa44d7a40d'
     )
     const verified = verifySignedHash(sodium, publicKey, signature, a, b, c)
     expect(verified).toBe(true)
@@ -119,6 +119,29 @@ describe('signHash', () => {
         c,
         a,
         b
+      )
+      expect(verified).toBe(false)
+    })
+
+    test('resistance to canonicalisation attacks', async () => {
+      const alice = sodium.crypto_sign_keypair()
+      const a = sodium.randombytes_buf(getBlockLength())
+      const b = sodium.randombytes_buf(getBlockLength())
+      const c = sodium.randombytes_buf(getBlockLength())
+      const signature = signHash(sodium, alice.privateKey, a, b, c)
+      // Canonicalisation attack:
+      // legit    [aaaaaa][bbbbbb][cccccc]
+      // tampered [aaaaa][abbbbbbc][ccccc]
+      const a_ = new Uint8Array(a.slice(0, a.byteLength - 1))
+      const b_ = new Uint8Array([a[a.byteLength - 1]!, ...b.slice(), c[0]])
+      const c_ = new Uint8Array(c.slice(1))
+      const verified = verifySignedHash(
+        sodium,
+        alice.publicKey,
+        signature,
+        a_,
+        b_,
+        c_
       )
       expect(verified).toBe(false)
     })

@@ -1,4 +1,5 @@
 import { hashItems } from './hash'
+import { generateManifest } from './manifest'
 import type { Sodium } from './sodium'
 
 export function generateSignatureKeyPair(sodium: Sodium) {
@@ -18,7 +19,7 @@ export function signHash(
   privateKey: Uint8Array,
   ...items: Uint8Array[]
 ) {
-  const hash = hashItems(sodium, ...items)
+  const hash = hashItems(sodium, generateManifest(items), ...items)
   return sodium.crypto_sign_detached(hash, privateKey)
 }
 
@@ -36,6 +37,6 @@ export function verifySignedHash(
   signature: Uint8Array,
   ...items: Uint8Array[]
 ) {
-  const hash = hashItems(sodium, ...items)
+  const hash = hashItems(sodium, generateManifest(items), ...items)
   return sodium.crypto_sign_verify_detached(signature, hash, publicKey)
 }
