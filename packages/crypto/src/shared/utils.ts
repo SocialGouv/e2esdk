@@ -5,7 +5,7 @@ export function concat(...items: Uint8Array[]) {
     items.reduce((sum, item) => sum + item.length, 0)
   )
   let index = 0
-  items.forEach((item) => {
+  items.forEach(item => {
     buffer.set(item, index)
     index += item.length
   })
@@ -35,14 +35,8 @@ export function isEncryptable(
  * When receiving one of our own signature public keys from a server,
  * make sure it matches our associated private key.
  *
- * We could theoretically derive the public key from the private key,
- * but this uses functions not available in the standard libsodium-wrappers
- * library (available in the Sumo version).
- * Since servers usually need public keys to distribute them, we can ask it
- * to send it back to us, and we use this method to verify they match,
- * by signing a random buffer and verifying it.
- *
- * Works on Sodium signature key pairs generated with `sodium.crypto_sign_keypair()`
+ * In Ed25519, the public key is located in the
+ * right-most 32 bytes of the private key:
  *
  * @param publicKey The public key received from the outside
  * @param privateKey The associated private key
@@ -52,9 +46,8 @@ export function checkSignaturePublicKey(
   publicKey: Uint8Array,
   privateKey: Uint8Array
 ) {
-  const randomBuffer = sodium.randombytes_buf(32)
-  const signature = sodium.crypto_sign_detached(randomBuffer, privateKey)
-  return sodium.crypto_sign_verify_detached(signature, randomBuffer, publicKey)
+  const embeddedPublicKey = privateKey.slice(32)
+  return sodium.compare(embeddedPublicKey, publicKey) === 0
 }
 
 /**
