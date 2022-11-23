@@ -50,12 +50,22 @@ export function createServer() {
       },
     },
     printRoutes: __PROD__ ? 'logger' : false,
-    // sentry: {
-    //   release: env.RELEASE_TAG,
-    //   environment: getSentryEnvironment(env.RELEASE_TAG),
-    //   getUser: getUserForSentry,
-    //   getExtra: getExtrasForSentry,
-    // },
+    sentry: {
+      release: env.RELEASE_TAG,
+      getUser(_app, request) {
+        return Promise.resolve({
+          id: request.identity?.userId,
+        })
+      },
+      getExtra(_app, req) {
+        return Promise.resolve({
+          tags: {
+            sharingPublicKey: req?.identity?.sharingPublicKey ?? 'N.A.',
+            signaturePublicKey: req?.identity?.signaturePublicKey ?? 'N.A.',
+          },
+        })
+      },
+    },
     underPressure: {
       exposeStatusRoute: {
         url: '/_health',
