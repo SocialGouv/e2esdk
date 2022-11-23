@@ -34,10 +34,18 @@ export function createServer() {
 
   const app = createFastifyServer({
     name: ['e2esdk', env.RELEASE_TAG].join(':'),
-
     redactEnv: __PROD__ ? ['POSTGRESQL_URL', 'SIGNATURE_PRIVATE_KEY'] : [],
-    // Give Next.js time to setup in development
-    pluginTimeout: __PROD__ ? 10_000 : 60_000,
+    redactLogPaths: env.DEBUG
+      ? []
+      : [
+          // Redact personal information:
+          'req.headers["user-agent"]',
+          'req.headers["accept-language"]',
+          // IP-containing headers:
+          'req.headers["cf-connecting-ip"]',
+          'req.headers["x-forwarded-for"]',
+          'req.headers["forwarded"]',
+        ],
     plugins: {
       dir: path.resolve(__dirname, 'plugins'),
       forceESM: true,
