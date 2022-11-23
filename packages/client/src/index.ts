@@ -1,8 +1,10 @@
-import type {
+import {
   GetKeychainResponseBody,
   GetMultipleIdentitiesResponseBody,
   GetSharedKeysResponseBody,
   GetSingleIdentityResponseBody,
+  loginResponseBody,
+  permissionFlags,
   PermissionFlags,
   PostBanRequestBody,
   PostKeychainItemRequestBody,
@@ -10,7 +12,6 @@ import type {
   PostSharedKeyBody,
   SignupRequestBody,
 } from '@e2esdk/api'
-import { loginResponseBody } from '@e2esdk/api'
 import type { Optional } from '@e2esdk/core'
 import { isFarFromCurrentTime } from '@e2esdk/core'
 import type { Sodium } from '@e2esdk/crypto'
@@ -124,8 +125,6 @@ const identitySchema = z.object({
 })
 
 type Identity = z.infer<typeof identitySchema>
-
-type PartialIdentity = Optional<Identity, 'sharing' | 'signature'>
 
 export type PublicUserIdentity<KeyType = string> = {
   userId: string
@@ -601,14 +600,19 @@ export class Client {
 
   // Permissions --
 
+  public async getPermissions(nameFingerpint: string) {
+    const url = `/v1/permissions/${nameFingerpint}`
+    return permissionFlags.parse(await this.#apiCall('GET', url))
+  }
+
   public async setPermissions(
     userId: string,
-    keyName: string,
+    nameFingerprint: string,
     permissions: Partial<PermissionFlags>
   ) {
     const body: PostPermissionRequestBody = {
       userId,
-      nameFingerprint: fingerprint(this.sodium, keyName),
+      nameFingerprint,
       ...permissions,
     }
     await this.#apiCall('POST', '/v1/permissions', body)

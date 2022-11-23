@@ -12,6 +12,8 @@ import createCache from '@emotion/cache'
 import { CacheProvider } from '@emotion/react'
 import * as React from 'react'
 import { createRoot } from 'react-dom/client'
+import { QueryClient, QueryClientProvider } from 'react-query'
+import { ReactQueryDevtools } from 'react-query/devtools'
 import { E2ESdkDevtoolsView } from './view'
 
 export class E2ESDKDevtoolsElement extends HTMLElement {
@@ -77,14 +79,19 @@ export class E2ESDKDevtoolsElement extends HTMLElement {
     })
     const ForceColorMode = colorMode === 'light' ? LightMode : DarkMode
 
+    const queryClient = new QueryClient()
+
     root.render(
       <CacheProvider value={cache}>
         <ChakraProvider theme={theme} cssVarsRoot={`#e2esdk-devtools`}>
-          <E2ESDKClientProvider client={client}>
-            <ForceColorMode>
-              <E2ESdkDevtoolsView />
-            </ForceColorMode>
-          </E2ESDKClientProvider>
+          <QueryClientProvider client={queryClient}>
+            <E2ESDKClientProvider client={client}>
+              <ForceColorMode>
+                <E2ESdkDevtoolsView />
+              </ForceColorMode>
+              {colorMode === 'dark' && <ReactQueryDevtools />}
+            </E2ESDKClientProvider>
+          </QueryClientProvider>
         </ChakraProvider>
       </CacheProvider>
     )

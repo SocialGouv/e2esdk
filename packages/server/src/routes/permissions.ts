@@ -1,9 +1,13 @@
 import {
+  fingerprintSchema,
+  permissionFlags,
+  PermissionFlags,
   postPermissionRequestBody,
   PostPermissionRequestBody,
   PublicKeyAuthHeaders,
   publicKeyAuthHeaders,
 } from '@e2esdk/api'
+import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import {
   getPermission,
@@ -12,6 +16,43 @@ import {
 import type { App } from '../types'
 
 export default async function permissionsRoutes(app: App) {
+  const getPermissionsUrlParams = z.object({
+    nameFingerprint: fingerprintSchema,
+  })
+  type GetPermissionsUrlParams = z.infer<typeof getPermissionsUrlParams>
+
+  app.get<{
+    Params: GetPermissionsUrlParams
+    Headers: PublicKeyAuthHeaders
+    Reply: PermissionFlags
+  }>(
+    '/permissions/:nameFingerprint',
+    {
+      preValidation: app.usePublicKeyAuth(),
+      schema: {
+        params: zodToJsonSchema(getPermissionsUrlParams),
+        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        response: {
+          200: zodToJsonSchema(permissionFlags),
+        },
+      },
+    },
+    async function getPermissions(req, res) {
+      const flags = await getPermission(
+        app.db,
+        req.identity.userId,
+        req.params.nameFingerprint
+      )
+      req.log.debug({
+        msg: 'retrived permissions from database',
+        nameFingerprint: req.params.nameFingerprint,
+        identity: req.identity,
+        flags,
+      })
+      return res.send(flags)
+    }
+  )
+
   app.post<{
     Headers: PublicKeyAuthHeaders
     Body: PostPermissionRequestBody

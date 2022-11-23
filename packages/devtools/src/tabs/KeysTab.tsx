@@ -9,8 +9,10 @@ import {
   FormLabel,
   Grid,
   Icon,
+  IconProps,
   Input,
   Select,
+  Spinner,
   Stack,
   Table,
   TableContainer,
@@ -29,7 +31,15 @@ import {
 } from '@e2esdk/crypto'
 import { useE2ESDKClient, useE2ESDKClientKeys } from '@e2esdk/react'
 import React from 'react'
-import { FiInbox, FiPlusCircle, FiShuffle, FiUsers } from 'react-icons/fi'
+import {
+  FiCheckCircle,
+  FiInbox,
+  FiPlusCircle,
+  FiShuffle,
+  FiUsers,
+  FiXCircle,
+} from 'react-icons/fi'
+import { useQuery } from 'react-query'
 import { AlgorithmBadge, algorithmColors } from '../components/AlgorithmBadge'
 import {
   Section,
@@ -274,7 +284,13 @@ type KeyDetailsPanelProps = {
 }
 
 const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
+  const client = useE2ESDKClient()
   const currentKey = keys[0]
+  const { data: permissions } = useQuery({
+    queryKey: ['key', currentKey?.nameFingerprint, 'permissions'] as const,
+    queryFn: ({ queryKey }) => client.getPermissions(queryKey[1]),
+    enabled: Boolean(currentKey),
+  })
   if (!currentKey) {
     return (
       <Center h="100%" color="gray.500" fontSize="sm">
@@ -282,9 +298,10 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
       </Center>
     )
   }
+
   return (
     <>
-      <SectionHeader mt={0}>Metadata</SectionHeader>
+      <SectionHeader>Metadata</SectionHeader>
       <Grid
         templateColumns="8rem 1fr"
         px={4}
@@ -318,6 +335,23 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
         <Text fontFamily="mono" color="gray.500">
           {currentKey.sharedBy ?? <em>null</em>}
         </Text>
+      </Grid>
+      <SectionHeader mt={8}>Permissions</SectionHeader>
+      <Grid
+        templateColumns="8rem 1fr"
+        px={4}
+        rowGap={2}
+        fontSize="sm"
+        alignItems="center"
+      >
+        <Text fontWeight="semibold">Share</Text>
+        <PermissionIcon allowed={permissions?.allowSharing} />
+        <Text fontWeight="semibold">Rotate</Text>
+        <PermissionIcon allowed={permissions?.allowRotation} />
+        <Text fontWeight="semibold">Delete</Text>
+        <PermissionIcon allowed={permissions?.allowDeletion} />
+        <Text fontWeight="semibold">Manage</Text>
+        <PermissionIcon allowed={permissions?.allowManagement} />
       </Grid>
       {keys.length > 1 && (
         <>
@@ -363,3 +397,28 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
     </>
   )
 }
+
+// --
+
+type PermissionIconProps = IconProps & {
+  allowed: boolean | undefined
+}
+
+const PermissionIcon: React.FC<PermissionIconProps> = ({
+  allowed,
+  ...props
+}) => (
+  <Icon
+    as={allowed === undefined ? Spinner : allowed ? FiCheckCircle : FiXCircle}
+    color={
+      allowed === undefined ? undefined : allowed ? 'green.600' : 'red.600'
+    }
+    _dark={{
+      color:
+        allowed === undefined ? undefined : allowed ? 'green.400' : 'red.400',
+    }}
+    strokeWidth={2.5}
+    transform="translateY(1.5px)"
+    {...props}
+  />
+)

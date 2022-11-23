@@ -57,7 +57,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
       fontSize="md"
       px={4}
       py={2}
-      my={4}
+      mb={4}
       _light={{
         bg: 'gray.50',
       }}
