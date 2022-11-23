@@ -5,7 +5,9 @@ import {
   generateBoxKeyPair,
   generateSecretBoxCipher,
   generateSignatureKeyPair,
+  signHash,
   sodium,
+  verifySignedHash,
 } from '@e2esdk/crypto'
 
 async function main() {
@@ -36,7 +38,10 @@ async function main() {
   Options:
     --help             Show this message
     --compact          Single-line JSON output
-    --userId           Set the user ID in the returned Identity ${chalk.italic.dim(
+    --seed [seed]      Create a seeded signature key pair       ${chalk.italic.dim(
+      "(only for `signature` and don't use for production!)"
+    )}
+    --userId [userId]  Set the user ID in the returned Identity ${chalk.italic.dim(
       '(only for `identity`)'
     )}
   `)
@@ -63,8 +68,41 @@ async function main() {
     console.log(JSON.stringify({ publicKey, privateKey }, null, indentation))
   }
   if (['sign', 'signature'].includes(argv._[0])) {
-    const { publicKey, privateKey } = sodium.crypto_sign_keypair('base64')
-    console.log(JSON.stringify({ publicKey, privateKey }, null, indentation))
+    if (argv.seed) {
+      // Construct a human-readable but base64-compatible 32 byte string
+      const seed =
+        (
+          '___' + (argv.seed as string).trim().replace(/\W/g, '-').slice(0, 38)
+        ).padEnd(42, '_') + 'w'
+      const { publicKey, privateKey } = sodium.crypto_sign_seed_keypair(
+        sodium.from_base64(seed),
+        'base64'
+      )
+      const input = sodium.randombytes_buf(32)
+      const signature = signHash(sodium, sodium.from_base64(privateKey), input)
+      const verified = verifySignedHash(
+        sodium,
+        sodium.from_base64(publicKey),
+        signature,
+        input
+      )
+      if (!verified) {
+        console.error('Failed to generate key pair with this seed')
+      }
+      console.log(
+        JSON.stringify(
+          {
+            publicKey,
+            privateKey,
+          },
+          null,
+          indentation
+        )
+      )
+    } else {
+      const { publicKey, privateKey } = sodium.crypto_sign_keypair('base64')
+      console.log(JSON.stringify({ publicKey, privateKey }, null, indentation))
+    }
   }
 
   if (argv._[0] === 'identity') {

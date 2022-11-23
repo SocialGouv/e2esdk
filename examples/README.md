@@ -10,8 +10,8 @@ All examples use the following server signature key pair:
 ```bash
 # packages/server/.env
 
-SIGNATURE_PUBLIC_KEY=Hg7oGCfCx_BRPgFbUQPvzULbuDobmumApVeYi5PHdAE
-SIGNATURE_PRIVATE_KEY=6FypuotXSjYKkMw2aL1X0N4lIqGxXPYzfFjXMbsvCCEeDugYJ8LH8FE-AVtRA-_NQtu4Ohua6YClV5iLk8d0AQ
+SIGNATURE_PUBLIC_KEY=gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE
+SIGNATURE_PRIVATE_KEY=___examples-server-signkey__NOT-FOR-PROD__yCwTsHrcRO00MjMDBcSndfUe_XZYIoYfqHtutXdT00oQ
 ```
 
 ## Progress
