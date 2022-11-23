@@ -212,7 +212,7 @@ importers:
       chokidar: ^3.5.3
       dotenv: ^16.0.3
       fastify: ^4.10.2
-      fastify-micro: 4.0.0-beta.1
+      fastify-micro: 4.0.0-beta.2
       fastify-plugin: ^4.3.0
       nodemon: ^2.0.20
       npm-run-all: ^4.1.5
@@ -231,7 +231,7 @@ importers:
       '@fastify/cors': 8.2.0
       dotenv: 16.0.3
       fastify: 4.10.2
-      fastify-micro: 4.0.0-beta.1_fastify@4.10.2
+      fastify-micro: 4.0.0-beta.2_fastify@4.10.2
       fastify-plugin: 4.3.0
       postgres: 3.3.2
       zod: 3.19.1
@@ -3751,8 +3751,8 @@ packages:
     resolution: {integrity: sha512-qKRta6N7BWEFVlyonVY/V+BMLgFqktCUV0QjT259ekAIlbVrMaFnFLxJ4s/JPl4tou56S1BzPufI60bLe29fHA==}
     dev: false
 
-  /fastify-micro/4.0.0-beta.1_fastify@4.10.2:
-    resolution: {integrity: sha512-07CRWbpTM8ac7xTlhVsdhvePneYuAsvcaIpMc0tliYWJz7zy3J9mw2fx979oxtAhKctZDjtBw0abVQ1o9vab4Q==}
+  /fastify-micro/4.0.0-beta.2_fastify@4.10.2:
+    resolution: {integrity: sha512-a2rnoiEH1aUA6tpAjgvw4Byiza8ZDHbFdbsmHNpoTUg5xkEdnXPxm8mrUcL/FsxwMuzYIYmHbzzjuCrTiR5oEQ==}
     peerDependencies:
       fastify: ^4
     dependencies:
@@ -3763,7 +3763,7 @@ packages:
       '@sentry/node': 7.20.1
       fastify: 4.10.2
       fastify-plugin: 4.3.0
-      get-port: 6.1.2
+      get-port: 5.1.1
       pino-abstract-transport: 1.0.0
       redact-env: 1.0.0
       sonic-boom: 3.2.0
@@ -3975,9 +3975,9 @@ packages:
     engines: {node: '>=8.0.0'}
     dev: true
 
-  /get-port/6.1.2:
-    resolution: {integrity: sha512-BrGGraKm2uPqurfGVj/z97/zv8dPleC6x9JBNRTrDNtCkkRF4rPwrQXFgL7+I+q8QSdU4ntLQX2D7KIxSy8nGw==}
-    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+  /get-port/5.1.1:
+    resolution: {integrity: sha512-g/Q1aTSDOxFpchXC4i8ZWvxA1lnPqx/JHqcpIw0/LX9T8x/GBbi6YnlN5nhaKIFkT8oFsscUKgDJYxfwfS6QsQ==}
+    engines: {node: '>=8'}
     dev: false
 
   /get-stream/6.0.1:
