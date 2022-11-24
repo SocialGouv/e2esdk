@@ -38,6 +38,7 @@ async function main() {
   Options:
     --help             Show this message
     --compact          Single-line JSON output
+    --env [name]       Output in .env format, using [name] as prefix
     --seed [seed]      Create a seeded signature key pair       ${chalk.italic.dim(
       "(only for `signature` and don't use for production!)"
     )}
@@ -52,20 +53,34 @@ async function main() {
 
   const indentation = argv.compact ? 0 : 2
 
-  if (argv._[0] === 'secretBox') {
-    console.log(
-      JSON.stringify(
-        {
-          key: sodium.crypto_secretbox_keygen('base64'),
-        },
-        null,
-        indentation
-      )
-    )
+  function envName(name: string) {
+    return [argv.env, name].join('_').toUpperCase().replace(/\W/g, '_')
   }
-  if (['box', 'sealedBox'].includes(argv._[0])) {
+
+  if (argv._[0].toLowerCase() === 'secretbox') {
+    const key = sodium.crypto_secretbox_keygen('base64')
+    if (argv.env) {
+      console.log(`${envName('SECRET_KEY')}=${key}`)
+    } else {
+      console.log(
+        JSON.stringify(
+          {
+            key,
+          },
+          null,
+          indentation
+        )
+      )
+    }
+  }
+  if (['box', 'sealedbox'].includes(argv._[0].toLowerCase())) {
     const { publicKey, privateKey } = sodium.crypto_box_keypair('base64')
-    console.log(JSON.stringify({ publicKey, privateKey }, null, indentation))
+    if (argv.env) {
+      console.log(`${envName('PUBLIC_KEY')}=${publicKey}
+${envName('PRIVATE_KEY')}=${privateKey}`)
+    } else {
+      console.log(JSON.stringify({ publicKey, privateKey }, null, indentation))
+    }
   }
   if (['sign', 'signature'].includes(argv._[0])) {
     if (argv.seed) {
@@ -89,19 +104,31 @@ async function main() {
       if (!verified) {
         console.error('Failed to generate key pair with this seed')
       }
-      console.log(
-        JSON.stringify(
-          {
-            publicKey,
-            privateKey,
-          },
-          null,
-          indentation
+      if (argv.env) {
+        console.log(`${envName('PUBLIC_KEY')}=${publicKey}
+${envName('PRIVATE_KEY')}=${privateKey}`)
+      } else {
+        console.log(
+          JSON.stringify(
+            {
+              publicKey,
+              privateKey,
+            },
+            null,
+            indentation
+          )
         )
-      )
+      }
     } else {
       const { publicKey, privateKey } = sodium.crypto_sign_keypair('base64')
-      console.log(JSON.stringify({ publicKey, privateKey }, null, indentation))
+      if (argv.env) {
+        console.log(`${envName('PUBLIC_KEY')}=${publicKey}
+${envName('PRIVATE_KEY')}=${privateKey}`)
+      } else {
+        console.log(
+          JSON.stringify({ publicKey, privateKey }, null, indentation)
+        )
+      }
     }
   }
 
