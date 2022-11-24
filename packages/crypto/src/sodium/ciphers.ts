@@ -1,5 +1,5 @@
+import { decode as hexDecode, encode as hexEncode } from '@stablelib/hex'
 import { z } from 'zod'
-import { base64UrlDecode, base64UrlEncode } from '../shared/codec'
 import { Sodium } from './sodium'
 
 export type BoxCipher<DataType = Uint8Array> = {
@@ -57,7 +57,7 @@ export function generateSecretBoxCipher(sodium: Sodium): SecretBoxCipher {
 
 // Serializer --
 
-export const CIPHER_MAX_PADDED_LENGTH = 150
+export const CIPHER_MAX_PADDED_LENGTH = 190
 
 /**
  * @internal Exported for tests - Stringify the given cipher
@@ -69,23 +69,23 @@ export function _serializeCipher(cipher: Cipher) {
   if (cipher.algorithm === 'box') {
     const payload: Omit<BoxCipher<string>, 'nonce'> = {
       algorithm: cipher.algorithm,
-      publicKey: base64UrlEncode(cipher.publicKey),
-      privateKey: base64UrlEncode(cipher.privateKey),
+      publicKey: hexEncode(cipher.publicKey),
+      privateKey: hexEncode(cipher.privateKey),
     }
     return JSON.stringify(payload)
   }
   if (cipher.algorithm === 'sealedBox') {
     const payload: SealedBoxCipher<string> = {
       algorithm: cipher.algorithm,
-      publicKey: base64UrlEncode(cipher.publicKey),
-      privateKey: base64UrlEncode(cipher.privateKey),
+      publicKey: hexEncode(cipher.publicKey),
+      privateKey: hexEncode(cipher.privateKey),
     }
     return JSON.stringify(payload)
   }
   if (cipher.algorithm === 'secretBox') {
     const payload: Omit<SecretBoxCipher<string>, 'nonce'> = {
       algorithm: cipher.algorithm,
-      key: base64UrlEncode(cipher.key),
+      key: hexEncode(cipher.key),
     }
     return JSON.stringify(payload)
   }
@@ -94,26 +94,26 @@ export function _serializeCipher(cipher: Cipher) {
 
 // Parsers --
 
-const thirtyTwoBytesInBase64Parser = z
+const thirtyTwoBytesInHexParser = z
   .string()
-  .regex(/^[\w-]{43}$/)
-  .transform(base64UrlDecode)
+  .regex(/^[0-9a-f]{64}$/i)
+  .transform(hexDecode)
 
 const boxCipherParser = z.object({
   algorithm: z.literal('box'),
-  publicKey: thirtyTwoBytesInBase64Parser,
-  privateKey: thirtyTwoBytesInBase64Parser,
+  publicKey: thirtyTwoBytesInHexParser,
+  privateKey: thirtyTwoBytesInHexParser,
 })
 
 const sealedBoxCipherParser = z.object({
   algorithm: z.literal('sealedBox'),
-  publicKey: thirtyTwoBytesInBase64Parser,
-  privateKey: thirtyTwoBytesInBase64Parser,
+  publicKey: thirtyTwoBytesInHexParser,
+  privateKey: thirtyTwoBytesInHexParser,
 })
 
 const secretBoxCipherParser = z.object({
   algorithm: z.literal('secretBox'),
-  key: thirtyTwoBytesInBase64Parser,
+  key: thirtyTwoBytesInHexParser,
 })
 
 export const cipherParser = z.discriminatedUnion('algorithm', [

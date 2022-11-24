@@ -1,3 +1,4 @@
+import { concat } from '../shared/utils'
 import { signHash, verifySignedHash } from './signHash'
 import { ready, sodium } from './sodium'
 
@@ -135,6 +136,7 @@ describe('signHash', () => {
       const a_ = new Uint8Array(a.slice(0, a.byteLength - 1))
       const b_ = new Uint8Array([a[a.byteLength - 1]!, ...b.slice(), c[0]])
       const c_ = new Uint8Array(c.slice(1))
+      expect(concat(a, b, c)).toEqual(concat(a_, b_, c_))
       const verified = verifySignedHash(
         sodium,
         alice.publicKey,

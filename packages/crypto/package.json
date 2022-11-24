@@ -46,6 +46,7 @@
   },
   "dependencies": {
     "@stablelib/blake2b": "^1.0.1",
+    "@stablelib/hex": "^1.0.1",
     "libsodium-wrappers": "^0.7.10",
     "tweetnacl": "^1.0.3",
     "zod": "^3.19.1"
