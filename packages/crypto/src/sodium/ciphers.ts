@@ -60,12 +60,10 @@ export function generateSecretBoxCipher(sodium: Sodium): SecretBoxCipher {
 export const CIPHER_MAX_PADDED_LENGTH = 190
 
 /**
- * @internal Exported for tests - Stringify the given cipher
- *
- * @warning This will not encrypt the keys, they will only be base64 encoded as-is.
+ * @warning This will not encrypt the keys, they will only be hex-encoded.
  * This should only be used to feed to the `encrypt` function.
  */
-export function _serializeCipher(cipher: Cipher) {
+export function serializeCipher(cipher: Cipher) {
   if (cipher.algorithm === 'box') {
     const payload: Omit<BoxCipher<string>, 'nonce'> = {
       algorithm: cipher.algorithm,

@@ -33,12 +33,12 @@ import {
   memzeroCipher,
   randomPad,
   SecretBoxCipher,
+  serializeCipher,
   signAuth as signClientRequest,
   signHash,
   sodium,
   verifyAuth as verifyServerSignature,
   verifySignedHash,
-  _serializeCipher,
 } from '@e2esdk/crypto'
 import { LocalStateSync } from 'local-state-sync'
 import mitt, { Emitter } from 'mitt'
@@ -385,7 +385,7 @@ export class Client {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked')
     }
-    const serializedCipher = _serializeCipher(cipher)
+    const serializedCipher = serializeCipher(cipher)
     if (this.#state.keychain.has(name)) {
       // Make sure the cipher algorithm remains the same,
       // but the key itself is different, for rotations.
@@ -394,7 +394,7 @@ export class Client {
         throw new Error(`Cannot rotate key ${name} with different algorithm`)
       }
       if (
-        serializedCipher.trim() === _serializeCipher(existingKey.cipher).trim()
+        serializedCipher.trim() === serializeCipher(existingKey.cipher).trim()
       ) {
         throw new Error('This key is already in your keychain')
       }
@@ -500,7 +500,7 @@ export class Client {
       privateKey: this.#state.identity.sharing.privateKey,
       publicKey: this.decode(to.sharingPublicKey),
     }
-    const serializedCipher = _serializeCipher(keychainItem.cipher)
+    const serializedCipher = serializeCipher(keychainItem.cipher)
     const nameFingerprint = fingerprint(this.sodium, keychainItem.name)
     // Remove padding for payload fingerprint as it is not deterministic
     const payloadFingerprint = fingerprint(this.sodium, serializedCipher)
@@ -753,7 +753,7 @@ export class Client {
         continue
       }
       if (
-        fingerprint(this.sodium, _serializeCipher(item.cipher)) !==
+        fingerprint(this.sodium, serializeCipher(item.cipher)) !==
         item.payloadFingerprint
       ) {
         console.warn('Invalid payload fingerprint', lockedItem)
@@ -841,7 +841,7 @@ export class Client {
           throw new Error('Invalid shared key name fingerprint')
         }
         if (
-          fingerprint(this.sodium, _serializeCipher(item.cipher)) !==
+          fingerprint(this.sodium, serializeCipher(item.cipher)) !==
           item.payloadFingerprint
         ) {
           throw new Error('Invalid shared key payload fingerprint')
@@ -1054,7 +1054,7 @@ function stateSerializer(state: State) {
       .flat()
       .map(item => ({
         ...item,
-        cipher: _serializeCipher(item.cipher),
+        cipher: serializeCipher(item.cipher),
       })),
   }
   return JSON.stringify(payload)
@@ -1074,7 +1074,7 @@ function stateParser(input: string): State {
 function serializeKeychainItem(item: KeychainItem) {
   return JSON.stringify({
     ...item,
-    cipher: _serializeCipher(item.cipher),
+    cipher: serializeCipher(item.cipher),
   })
 }
 

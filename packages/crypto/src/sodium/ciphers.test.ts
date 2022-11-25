@@ -6,7 +6,7 @@ import {
   generateSealedBoxCipher,
   generateSecretBoxCipher,
   SecretBoxCipher,
-  _serializeCipher,
+  serializeCipher,
 } from './ciphers'
 import { ready, Sodium, sodium } from './sodium'
 
@@ -50,8 +50,8 @@ describe('crypto/ciphers', () => {
     const a = generateBoxCipher(boxKeyPair.publicKey, boxKeyPair.privateKey)
     const b = generateSealedBoxCipher(sodium)
     const c = generateSecretBoxCipher(sodium)
-    expect(_serializeCipher(a).length).toBeLessThan(CIPHER_MAX_PADDED_LENGTH)
-    expect(_serializeCipher(b).length).toBeLessThan(CIPHER_MAX_PADDED_LENGTH)
-    expect(_serializeCipher(c).length).toBeLessThan(CIPHER_MAX_PADDED_LENGTH)
+    expect(serializeCipher(a).length).toBeLessThan(CIPHER_MAX_PADDED_LENGTH)
+    expect(serializeCipher(b).length).toBeLessThan(CIPHER_MAX_PADDED_LENGTH)
+    expect(serializeCipher(c).length).toBeLessThan(CIPHER_MAX_PADDED_LENGTH)
   })
 })
