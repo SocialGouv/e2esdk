@@ -10,6 +10,7 @@
       "outputs": ["dist/**", "build/**"]
     },
     "typecheck": {
+      "dependsOn": ["^build:npm"],
       "outputs": []
     },
     "lint": {
