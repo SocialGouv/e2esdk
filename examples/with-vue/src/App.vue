@@ -21,7 +21,7 @@ import HelloWorld from './components/HelloWorld.vue';
   <div class="devtools-wrapper">
     <e2esdk-devtools
       serverURL="http://localhost:3001"
-      serverPublicKey="Hg7oGCfCx_BRPgFbUQPvzULbuDobmumApVeYi5PHdAE"
+      serverPublicKey="gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE"
     />
   </div>
 </template>

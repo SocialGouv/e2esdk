@@ -27,7 +27,7 @@
   ],
   "scripts": {
     "dev": "vite --port 3000 --clearScreen false",
-    "build": "vite build",
+    "build:npm": "vite build",
     "typecheck": "tsc"
   },
   "peerDependencies": {
