@@ -14,6 +14,7 @@ import * as React from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
+import { PortalProvider } from './components/PortalProvider'
 import { E2ESdkDevtoolsView } from './view'
 
 export class E2ESDKDevtoolsElement extends HTMLElement {
@@ -87,7 +88,9 @@ export class E2ESDKDevtoolsElement extends HTMLElement {
           <QueryClientProvider client={queryClient}>
             <E2ESDKClientProvider client={client}>
               <ForceColorMode>
-                <E2ESdkDevtoolsView />
+                <PortalProvider>
+                  <E2ESdkDevtoolsView />
+                </PortalProvider>
               </ForceColorMode>
               {colorMode === 'dark' && <ReactQueryDevtools />}
             </E2ESDKClientProvider>

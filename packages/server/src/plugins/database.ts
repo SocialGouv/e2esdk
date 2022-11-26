@@ -30,7 +30,10 @@ const databasePlugin: FastifyPluginAsync = async (app: App) => {
           app.log.debug({
             msg: 'database:debug',
             connection,
-            query: query.replace(/\s+/gm, ' ').trim(), // minify
+            query: query
+              // todo: Remove comments
+              .replace(/\s+/gm, ' ')
+              .trim(), // minify
             parameters,
             paramTypes,
           })

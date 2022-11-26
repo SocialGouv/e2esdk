@@ -44,7 +44,7 @@ export default async function permissionsRoutes(app: App) {
         req.params.nameFingerprint
       )
       req.log.debug({
-        msg: 'retrived permissions from database',
+        msg: 'retrieved permissions from database',
         nameFingerprint: req.params.nameFingerprint,
         identity: req.identity,
         flags,

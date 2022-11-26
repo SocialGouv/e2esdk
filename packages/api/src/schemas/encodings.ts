@@ -14,6 +14,10 @@ export const timestampSchema = z.string() // todo: Refine for ISO8601
 
 // Ciphers --
 
+export const boxCiphertextV1Schema = z
+  .string()
+  .regex(/^v1\.box\.txt\.[\w-]{32}\.[\w-]{22,}$/)
+
 export const secretBoxCiphertextV1Schema = z
   .string()
   .regex(/^v1\.secretBox\.txt\.[\w-]{32}\.[\w-]{22,}$/)

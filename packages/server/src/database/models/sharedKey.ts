@@ -29,18 +29,16 @@ export function storeSharedKey(
   return sql`INSERT INTO ${sql(TABLE_NAME)} ${sql(sharedKey)}`
 }
 
-export async function findSharedKey(
+export async function getSharedKey(
   sql: Sql,
-  from: string,
   to: string,
   payloadFingerprint: string
 ) {
   const results: SharedKeySchema[] = await sql`
     SELECT *
-    FROM ${sql(TABLE_NAME)}
-    WHERE ${sql('fromUserId')} = ${from}
-    AND ${sql('toUserId')} = ${to}
-    AND ${sql('payloadFingerprint')} = ${payloadFingerprint}
+    FROM  ${sql(TABLE_NAME)}
+    WHERE ${sql('toUserId')} = ${to}
+    AND   ${sql('payloadFingerprint')} = ${payloadFingerprint}
     LIMIT 1
   `
   return getFirst(results)

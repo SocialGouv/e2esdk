@@ -1,19 +1,33 @@
 import {
   Box,
   Button,
+  ButtonProps,
   Center,
+  Checkbox,
   CloseButton,
   Flex,
   FormControl,
   FormHelperText,
   FormLabel,
   Grid,
+  HStack,
   Icon,
+  IconButton,
+  IconButtonProps,
   IconProps,
   Input,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverCloseButton,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
+  Portal,
   Select,
   Spinner,
   Stack,
+  StackProps,
   Table,
   TableContainer,
   Tbody,
@@ -22,30 +36,49 @@ import {
   Th,
   Thead,
   Tr,
+  useDisclosure,
 } from '@chakra-ui/react'
-import type { KeychainItemMetadata } from '@e2esdk/client'
+import {
+  Client,
+  KeychainItemMetadata,
+  PublicUserIdentity,
+} from '@e2esdk/client'
 import {
   Cipher,
   generateSealedBoxCipher,
   generateSecretBoxCipher,
 } from '@e2esdk/crypto'
-import { useE2ESDKClient, useE2ESDKClientKeys } from '@e2esdk/react'
-import React from 'react'
 import {
-  FiCheckCircle,
+  useE2ESDKClient,
+  useE2ESDKClientIdentity,
+  useE2ESDKClientKeys,
+} from '@e2esdk/react'
+import React from 'react'
+import FocusLock from 'react-focus-lock'
+import { IconType } from 'react-icons'
+import {
+  FiArchive,
+  FiClock,
   FiInbox,
+  FiKey,
   FiPlusCircle,
+  FiRotateCw,
+  FiShare2,
   FiShuffle,
+  FiSliders,
+  FiTrash2,
+  FiUserMinus,
   FiUsers,
-  FiXCircle,
 } from 'react-icons/fi'
-import { useQuery } from 'react-query'
+import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { AlgorithmBadge, algorithmColors } from '../components/AlgorithmBadge'
+import { usePortalRef } from '../components/PortalProvider'
 import {
   Section,
   SectionContainer,
   SectionHeader,
 } from '../components/Sections'
+import { UserIdentityInput } from '../components/UserIdentityInput'
 import { useLocalState } from '../hooks/useLocalState'
 
 export const KeysTab: React.FC = () => {
@@ -81,7 +114,7 @@ export const KeysTab: React.FC = () => {
         setSelectedKeyFingerprint={setSelectedKeyFingerprint}
         onCreateKey={() => setShowCreateKeyPanel(true)}
       />
-      <Section>
+      <Section flex={1.5}>
         {showCreateKeyPanel ? (
           <CreateKeyPanel
             onClose={() => setShowCreateKeyPanel(false)}
@@ -283,14 +316,41 @@ type KeyDetailsPanelProps = {
   keys: KeychainItemMetadata[]
 }
 
+const queryKeys = {
+  permissions: (key: KeychainItemMetadata) =>
+    ['key', 'permissions', key] as const,
+  participants: (key: KeychainItemMetadata) =>
+    ['key', 'participants', key] as const,
+  outgoing: ['key', 'outgoing'] as const,
+}
+
 const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
   const client = useE2ESDKClient()
+  const identity = useE2ESDKClientIdentity()
+  const queryClient = useQueryClient()
   const currentKey = keys[0]
   const { data: permissions } = useQuery({
-    queryKey: ['key', currentKey?.nameFingerprint, 'permissions'] as const,
-    queryFn: ({ queryKey }) => client.getPermissions(queryKey[1]),
+    queryKey: queryKeys.permissions(currentKey),
+    queryFn: ({ queryKey }) =>
+      client.getPermissions(queryKey[2].nameFingerprint),
     enabled: Boolean(currentKey),
   })
+  const { data: participants } = useQuery({
+    queryKey: queryKeys.participants(currentKey),
+    queryFn: ({ queryKey }) =>
+      client.getParticipants(
+        queryKey[2].nameFingerprint,
+        queryKey[2].payloadFingerprint
+      ),
+    enabled: Boolean(currentKey),
+  })
+  const { data: outgoingSharedKeys } = useQuery({
+    queryKey: queryKeys.outgoing,
+    queryFn: () => client.getOutgoingSharedKeys(),
+  })
+  const otherParticipants =
+    participants?.filter(p => !!identity && p.userId !== identity.userId) ?? []
+
   if (!currentKey) {
     return (
       <Center h="100%" color="gray.500" fontSize="sm">
@@ -298,10 +358,11 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
       </Center>
     )
   }
-
+  const showParticipantActions =
+    permissions?.allowManagement || permissions?.allowDeletion
   return (
     <>
-      <SectionHeader>Metadata</SectionHeader>
+      <SectionHeader icon={FiKey}>Current key</SectionHeader>
       <Grid
         templateColumns="8rem 1fr"
         px={4}
@@ -335,27 +396,187 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
         <Text fontFamily="mono" color="gray.500">
           {currentKey.sharedBy ?? <em>null</em>}
         </Text>
+        <Text fontWeight="semibold">Permissions</Text>
+        {permissions ? (
+          <PermissionIcons {...permissions} color="gray.500" />
+        ) : (
+          <Spinner size="sm" />
+        )}
       </Grid>
-      <SectionHeader mt={8}>Permissions</SectionHeader>
-      <Grid
-        templateColumns="8rem 1fr"
-        px={4}
-        rowGap={2}
-        fontSize="sm"
-        alignItems="center"
-      >
-        <Text fontWeight="semibold">Share</Text>
-        <PermissionIcon allowed={permissions?.allowSharing} />
-        <Text fontWeight="semibold">Rotate</Text>
-        <PermissionIcon allowed={permissions?.allowRotation} />
-        <Text fontWeight="semibold">Delete</Text>
-        <PermissionIcon allowed={permissions?.allowDeletion} />
-        <Text fontWeight="semibold">Manage</Text>
-        <PermissionIcon allowed={permissions?.allowManagement} />
-      </Grid>
+      <SectionHeader mt={8} icon={FiUsers}>
+        Participants
+        <ShareKeyPopup
+          ml="auto"
+          isDisabled={!permissions?.allowSharing}
+          algorithm={currentKey.algorithm}
+          nameFingerprint={currentKey.nameFingerprint}
+        />
+      </SectionHeader>
+      {!participants ? (
+        <Center h={12}>
+          <Spinner />
+        </Center>
+      ) : otherParticipants.length === 0 ? (
+        <Center h={12} color="gray.500" fontSize="sm">
+          No one else has access to this key
+        </Center>
+      ) : (
+        <TableContainer>
+          <Table size="sm" mt={-2}>
+            <Thead>
+              <Tr>
+                <Th>User ID</Th>
+                <Th>Added</Th>
+                <Th>Shared from</Th>
+                <Th>Permissions</Th>
+                {showParticipantActions && <Th>Actions</Th>}
+              </Tr>
+            </Thead>
+            <Tbody
+              color="gray.500"
+              fontSize="xs"
+              sx={{
+                '& td': {
+                  fontSize: 'xs',
+                },
+              }}
+            >
+              {otherParticipants.map(p => (
+                <Tr key={p.userId} fontFamily="mono">
+                  <Td>{p.userId}</Td>
+                  <Td>{new Date(p.addedAt).toLocaleString(['se-SE'])}</Td>
+                  <Td
+                    fontStyle={
+                      p.sharedBy === identity?.userId ? 'italic' : 'normal'
+                    }
+                  >
+                    {p.sharedBy === identity?.userId
+                      ? 'you'
+                      : p.sharedBy ?? <em>null</em>}
+                  </Td>
+                  <Td>
+                    <PermissionIcons
+                      spacing={2}
+                      allowSharing={p.allowSharing}
+                      allowRotation={p.allowRotation}
+                      allowDeletion={p.allowDeletion}
+                      allowManagement={p.allowManagement}
+                    />
+                  </Td>
+                  {showParticipantActions && (
+                    <Td w={10}>
+                      <Stack isInline spacing={2}>
+                        {permissions?.allowManagement && (
+                          <ManagePermissionsPopup
+                            participant={p}
+                            currentKey={currentKey}
+                          />
+                        )}
+                        {permissions?.allowDeletion && (
+                          <IconButton
+                            aria-label="Ban user"
+                            title="Ban user"
+                            icon={<FiUserMinus />}
+                            size="xs"
+                            variant="ghost"
+                            rounded="full"
+                            colorScheme="red"
+                            onClick={() =>
+                              client
+                                .banUser(p.userId, currentKey.nameFingerprint)
+                                .then(() =>
+                                  queryClient.invalidateQueries(
+                                    queryKeys.participants(currentKey)
+                                  )
+                                )
+                            }
+                          />
+                        )}
+                      </Stack>
+                    </Td>
+                  )}
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </TableContainer>
+      )}
+      {(outgoingSharedKeys?.length ?? 0) > 0 && (
+        <>
+          <SectionHeader icon={FiClock} mt={8}>
+            Pending Shared Keys
+          </SectionHeader>
+          <TableContainer>
+            <Table size="sm" mt={-2}>
+              <Thead>
+                <Tr>
+                  <Th>Recipient</Th>
+                  <Th>Fingerprint</Th>
+                  <Th>Expires</Th>
+                  <Th></Th>
+                </Tr>
+              </Thead>
+              <Tbody
+                color="gray.500"
+                fontSize="xs"
+                sx={{
+                  '& td': {
+                    fontSize: 'xs',
+                  },
+                }}
+              >
+                {outgoingSharedKeys!
+                  .filter(
+                    key => key.nameFingerprint === currentKey.nameFingerprint
+                  )
+                  .map(key => (
+                    <Tr
+                      key={key.nameFingerprint + key.payloadFingerprint}
+                      fontFamily="mono"
+                    >
+                      <Td>{key.toUserId}</Td>
+                      <Td>{key.payloadFingerprint}</Td>
+                      <Td>
+                        {key.expiresAt ? (
+                          new Date(key.expiresAt).toLocaleString(['se-SE'])
+                        ) : (
+                          <em>never</em>
+                        )}
+                      </Td>
+                      <Td>
+                        <IconButton
+                          aria-label="Revoke"
+                          icon={<FiTrash2 />}
+                          size="xs"
+                          variant="ghost"
+                          rounded="full"
+                          colorScheme="red"
+                          onClick={() =>
+                            client
+                              .deleteOutgoingSharedKey(
+                                key.toUserId,
+                                key.payloadFingerprint
+                              )
+                              .then(() =>
+                                queryClient.invalidateQueries(
+                                  queryKeys.outgoing
+                                )
+                              )
+                          }
+                        />
+                      </Td>
+                    </Tr>
+                  ))}
+              </Tbody>
+            </Table>
+          </TableContainer>
+        </>
+      )}
       {keys.length > 1 && (
         <>
-          <SectionHeader>Previous Keys</SectionHeader>
+          <SectionHeader icon={FiArchive} mt={8}>
+            Previous Keys
+          </SectionHeader>
           <TableContainer>
             <Table size="sm" mt={-2}>
               <Thead>
@@ -401,24 +622,292 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
 // --
 
 type PermissionIconProps = IconProps & {
+  as: IconType
+  action: string
   allowed: boolean | undefined
 }
 
 const PermissionIcon: React.FC<PermissionIconProps> = ({
+  as,
   allowed,
+  action,
   ...props
 }) => (
   <Icon
-    as={allowed === undefined ? Spinner : allowed ? FiCheckCircle : FiXCircle}
-    color={
-      allowed === undefined ? undefined : allowed ? 'green.600' : 'red.600'
-    }
-    _dark={{
-      color:
-        allowed === undefined ? undefined : allowed ? 'green.400' : 'red.400',
-    }}
+    as={as}
+    opacity={allowed ? 1 : 0.5}
     strokeWidth={2.5}
-    transform="translateY(1.5px)"
+    title={`${allowed ? 'Can' : 'Cannot'} ${action}`}
     {...props}
   />
 )
+
+// --
+
+type PermissionFlags = Awaited<ReturnType<Client['getPermissions']>>
+type PermissionsIconsProps = StackProps & PermissionFlags
+
+const PermissionIcons: React.FC<PermissionsIconsProps> = ({
+  allowSharing,
+  allowRotation,
+  allowDeletion,
+  allowManagement,
+  ...props
+}) => (
+  <Stack isInline spacing={4} {...props}>
+    <PermissionIcon as={FiShare2} allowed={allowSharing} action="share" />
+    <PermissionIcon as={FiRotateCw} allowed={allowRotation} action="rotate" />
+    <PermissionIcon
+      as={FiUserMinus}
+      allowed={allowDeletion}
+      action="ban others"
+    />
+    <PermissionIcon
+      as={FiSliders}
+      allowed={allowManagement}
+      action="manage permissions"
+    />
+  </Stack>
+)
+
+// --
+
+type ShareKeyPopupProps = Omit<ButtonProps, 'onClick'> & {
+  algorithm: Cipher['algorithm']
+  nameFingerprint: string
+}
+
+const ShareKeyPopup: React.FC<ShareKeyPopupProps> = ({
+  algorithm,
+  nameFingerprint,
+  ...props
+}) => {
+  const { isOpen, onClose, onToggle } = useDisclosure()
+  const client = useE2ESDKClient()
+  const queryClient = useQueryClient()
+  const [recipientIdentity, setRecipientIdentity] =
+    React.useState<PublicUserIdentity | null>(null)
+  const close = React.useCallback(() => {
+    setRecipientIdentity(null)
+    onClose()
+  }, [])
+
+  const share = useMutation({
+    mutationFn: () => client.shareKey(nameFingerprint, recipientIdentity!),
+    onSuccess: () => {
+      queryClient.invalidateQueries(queryKeys.outgoing)
+      close()
+    },
+  })
+  const portalRef = usePortalRef()
+  return (
+    <Popover isOpen={isOpen} onClose={close}>
+      <PopoverTrigger>
+        <Button
+          ml="auto"
+          my={-2}
+          size="xs"
+          rounded="full"
+          variant="ghost"
+          colorScheme={algorithmColors[algorithm]}
+          leftIcon={<FiShare2 />}
+          {...props}
+          onClick={onToggle}
+        >
+          Share key
+        </Button>
+      </PopoverTrigger>
+      <Portal containerRef={portalRef}>
+        <PopoverContent minW="lg">
+          <FocusLock returnFocus persistentFocus={false}>
+            <PopoverArrow />
+            <PopoverCloseButton rounded="full" mt={1} />
+            <PopoverHeader
+              display="flex"
+              alignItems="center"
+              fontWeight="medium"
+            >
+              <Icon as={FiShare2} mr={2} />
+              Share key with
+            </PopoverHeader>
+            <PopoverBody fontWeight="md">
+              <UserIdentityInput
+                identity={recipientIdentity}
+                onIdentityChange={setRecipientIdentity}
+                showPublicKey
+                mb={4}
+              />
+              <Button
+                width="100%"
+                colorScheme={algorithmColors[algorithm]}
+                leftIcon={<FiShare2 />}
+                isDisabled={!recipientIdentity}
+                isLoading={share.isLoading}
+                onClick={() => share.mutateAsync()}
+              >
+                Share {algorithm === 'secretBox' ? 'secret key' : 'key pair'}
+              </Button>
+              {share.isError && (
+                <Text
+                  color="red.600"
+                  _dark={{ color: 'red.400' }}
+                  fontSize="sm"
+                  my={2}
+                >
+                  {String(share.error)}
+                </Text>
+              )}
+            </PopoverBody>
+          </FocusLock>
+        </PopoverContent>
+      </Portal>
+    </Popover>
+  )
+}
+
+// --
+
+type ManagePermissionsPopupProps = Omit<
+  IconButtonProps,
+  'onClick' | 'aria-label'
+> & {
+  participant: Awaited<ReturnType<Client['getParticipants']>>[number]
+  currentKey: KeychainItemMetadata
+}
+
+const ManagePermissionsPopup: React.FC<ManagePermissionsPopupProps> = ({
+  participant,
+  currentKey,
+  ...props
+}) => {
+  const { isOpen, onClose, onToggle } = useDisclosure()
+  const portalRef = usePortalRef()
+  const client = useE2ESDKClient()
+  const queryClient = useQueryClient()
+
+  const [allowSharing, setAllowSharing] = React.useState(
+    participant.allowSharing
+  )
+  const [allowRotation, setAllowRotation] = React.useState(
+    participant.allowRotation
+  )
+  const [allowDeletion, setAllowDeletion] = React.useState(
+    participant.allowDeletion
+  )
+  const [allowManagement, setAllowManagement] = React.useState(
+    participant.allowManagement
+  )
+
+  React.useEffect(() => {
+    setAllowSharing(participant.allowSharing)
+    setAllowRotation(participant.allowRotation)
+    setAllowDeletion(participant.allowDeletion)
+    setAllowManagement(participant.allowManagement)
+  }, [isOpen])
+
+  const setPermissions = useMutation({
+    mutationFn: () =>
+      client.setPermissions(participant.userId, currentKey.nameFingerprint, {
+        allowSharing,
+        allowRotation,
+        allowDeletion,
+        allowManagement,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(queryKeys.participants(currentKey))
+      onClose()
+    },
+  })
+
+  return (
+    <Popover isOpen={isOpen} onClose={onClose}>
+      <PopoverTrigger>
+        <IconButton
+          aria-label="Manage permissions"
+          title="Manage permissions"
+          icon={<FiSliders />}
+          size="xs"
+          variant="ghost"
+          rounded="full"
+          {...props}
+          onClick={onToggle}
+        />
+      </PopoverTrigger>
+      <Portal containerRef={portalRef}>
+        <PopoverContent minW="lg">
+          <FocusLock returnFocus persistentFocus={false}>
+            <PopoverArrow />
+            <PopoverCloseButton rounded="full" mt={1} />
+            <PopoverHeader
+              display="flex"
+              alignItems="center"
+              fontWeight="medium"
+            >
+              <Icon as={FiSliders} mr={2} />
+              Manage permissions
+            </PopoverHeader>
+            <PopoverBody fontWeight="md">
+              <Stack mt={2} mb={4}>
+                <HStack>
+                  <Icon as={FiShare2} color="gray.500" />
+                  <Checkbox
+                    isChecked={allowSharing}
+                    onChange={e => setAllowSharing(e.target.checked)}
+                  >
+                    Allow sharing
+                  </Checkbox>
+                </HStack>
+                <HStack>
+                  <Icon as={FiRotateCw} color="gray.500" />
+                  <Checkbox
+                    isChecked={allowRotation}
+                    onChange={e => setAllowRotation(e.target.checked)}
+                  >
+                    Allow key rotation
+                  </Checkbox>
+                </HStack>
+                <HStack>
+                  <Icon as={FiUserMinus} color="gray.500" />
+                  <Checkbox
+                    isChecked={allowDeletion}
+                    onChange={e => setAllowDeletion(e.target.checked)}
+                  >
+                    Allow banning other users
+                  </Checkbox>
+                </HStack>
+                <HStack>
+                  <Icon as={FiSliders} color="gray.500" />
+                  <Checkbox
+                    isChecked={allowManagement}
+                    onChange={e => setAllowManagement(e.target.checked)}
+                  >
+                    Grant permission management rights
+                  </Checkbox>
+                </HStack>
+              </Stack>
+              <Button
+                width="100%"
+                colorScheme={algorithmColors[currentKey.algorithm]}
+                leftIcon={<FiSliders />}
+                onClick={() => setPermissions.mutateAsync()}
+                isLoading={setPermissions.isLoading}
+              >
+                Update permissions
+              </Button>
+              {setPermissions.isError && (
+                <Text
+                  color="red.600"
+                  _dark={{ color: 'red.400' }}
+                  fontSize="sm"
+                  my={2}
+                >
+                  {String(setPermissions.error)}
+                </Text>
+              )}
+            </PopoverBody>
+          </FocusLock>
+        </PopoverContent>
+      </Portal>
+    </Popover>
+  )
+}

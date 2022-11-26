@@ -1,4 +1,4 @@
-import { BoxProps, Button, Icon, Stack } from '@chakra-ui/react'
+import { BoxProps, Button, Stack } from '@chakra-ui/react'
 import type { PublicUserIdentity } from '@e2esdk/client'
 import { useE2ESDKClient, useE2ESDKClientIdentity } from '@e2esdk/react'
 import React from 'react'
@@ -30,8 +30,7 @@ const YourIdentitySection = (props: BoxProps) => {
   }
   return (
     <Section {...props}>
-      <SectionHeader mt={0} display="flex" alignItems="center">
-        <Icon as={FiUser} ml="2px" mr={2} />
+      <SectionHeader icon={FiUser}>
         Your identity
         <Button
           marginLeft="auto"
@@ -61,10 +60,7 @@ const FindUsersSection = (props: BoxProps) => {
   )
   return (
     <Section {...props}>
-      <SectionHeader mt={0}>
-        <Icon as={FiSearch} mr={2} transform="translateY(2px)" />
-        Find users
-      </SectionHeader>
+      <SectionHeader icon={FiSearch}>Find users</SectionHeader>
       <Stack spacing={4} px={4}>
         <UserIdentityInput
           identity={identity}

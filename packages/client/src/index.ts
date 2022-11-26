@@ -1,6 +1,7 @@
 import {
   GetKeychainResponseBody,
   GetMultipleIdentitiesResponseBody,
+  GetParticipantsResponseBody,
   GetSharedKeysResponseBody,
   GetSingleIdentityResponseBody,
   loginResponseBody,
@@ -107,8 +108,10 @@ export type KeychainItemMetadata = Pick<
 const keychainSchema = z.array(keychainItemSchema).transform(array =>
   array.reduce((map, item) => {
     map.set(
-      item.name,
-      [...(map.get(item.name) ?? []), item].sort(byCreatedAtMostRecentFirst)
+      item.nameFingerprint,
+      [...(map.get(item.nameFingerprint) ?? []), item].sort(
+        byCreatedAtMostRecentFirst
+      )
     )
     return map
   }, new Map<string, KeychainItem[]>())
@@ -385,22 +388,22 @@ export class Client {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked')
     }
+    const nameFingerprint = fingerprint(this.sodium, name)
     const serializedCipher = serializeCipher(cipher)
-    if (this.#state.keychain.has(name)) {
+    if (this.#state.keychain.has(nameFingerprint)) {
       // Make sure the cipher algorithm remains the same,
       // but the key itself is different, for rotations.
-      const [existingKey] = this.#state.keychain.get(name)!
+      const [existingKey] = this.#state.keychain.get(nameFingerprint)!
       if (cipher.algorithm !== existingKey.cipher.algorithm) {
-        throw new Error(`Cannot rotate key ${name} with different algorithm`)
+        throw new Error(
+          `Cannot rotate key ${nameFingerprint} with different algorithm`
+        )
       }
-      if (
-        serializedCipher.trim() === serializeCipher(existingKey.cipher).trim()
-      ) {
+      if (serializedCipher === serializeCipher(existingKey.cipher)) {
         throw new Error('This key is already in your keychain')
       }
     }
     const withPersonalKey = this.#usePersonalKey()
-    const nameFingerprint = fingerprint(this.sodium, name)
     const payloadFingerprint = fingerprint(this.sodium, serializedCipher)
     const createdAtISO = createdAt.toISOString()
     const expiresAtISO = expiresAt?.toISOString() ?? null
@@ -464,7 +467,7 @@ export class Client {
     }
   }
 
-  public getKeysBy(indexBy: 'name' | 'nameFingerprint') {
+  public get keys() {
     if (this.#state.state !== 'loaded') {
       return {}
     }
@@ -473,7 +476,7 @@ export class Client {
       if (items.length === 0) {
         return
       }
-      out[items[0][indexBy]] = items
+      out[items[0].nameFingerprint] = items
         .map(getKeychainItemMetadata)
         .sort(byCreatedAtMostRecentFirst)
     })
@@ -483,7 +486,7 @@ export class Client {
   // Sharing --
 
   public async shareKey(
-    keyName: string,
+    nameFingerprint: string,
     to: PublicUserIdentity,
     { expiresAt }: ShareKeyOptions = {}
   ) {
@@ -491,9 +494,11 @@ export class Client {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account must be unlocked before sending keys')
     }
-    const keychainItem = this.#state.keychain.get(keyName)?.[0]
+    const keychainItem = this.#state.keychain.get(nameFingerprint)?.[0]
     if (!keychainItem) {
-      throw new Error(`No available key to share with name ${keyName}`)
+      throw new Error(
+        `No available key to share with fingerprint ${nameFingerprint}`
+      )
     }
     const sendTo: BoxCipher = {
       algorithm: 'box',
@@ -501,7 +506,6 @@ export class Client {
       publicKey: this.decode(to.sharingPublicKey),
     }
     const serializedCipher = serializeCipher(keychainItem.cipher)
-    const nameFingerprint = fingerprint(this.sodium, keychainItem.name)
     // Remove padding for payload fingerprint as it is not deterministic
     const payloadFingerprint = fingerprint(this.sodium, serializedCipher)
     const createdAtISO = keychainItem.createdAt.toISOString()
@@ -546,6 +550,31 @@ export class Client {
       ),
     }
     return this.#apiCall('POST', '/v1/shared-keys', body)
+  }
+
+  public async getOutgoingSharedKeys() {
+    await this.sodium.ready
+    if (this.#state.state !== 'loaded') {
+      throw new Error('Account is locked')
+    }
+    return this.#apiCall<GetSharedKeysResponseBody>(
+      'GET',
+      '/v1/shared-keys/outgoing'
+    )
+  }
+
+  public async deleteOutgoingSharedKey(
+    toUserId: string,
+    payloadFingerprint: string
+  ) {
+    await this.sodium.ready
+    if (this.#state.state !== 'loaded') {
+      throw new Error('Account is locked')
+    }
+    await this.#apiCall(
+      'DELETE',
+      `/v1/shared-keys/${toUserId}/${payloadFingerprint}`
+    )
   }
 
   // User Ops --
@@ -598,6 +627,22 @@ export class Client {
     }
   }
 
+  public async getParticipants(
+    nameFingerprint: string,
+    payloadFingerprint: string
+  ) {
+    await this.sodium.ready
+    try {
+      return this.#apiCall<GetParticipantsResponseBody>(
+        'GET',
+        `/v1/participants/${nameFingerprint}/${payloadFingerprint}`
+      )
+    } catch (error) {
+      console.error(error)
+      return []
+    }
+  }
+
   // Permissions --
 
   public async getPermissions(nameFingerpint: string) {
@@ -618,10 +663,10 @@ export class Client {
     await this.#apiCall('POST', '/v1/permissions', body)
   }
 
-  public async banUser(userId: string, keyName: string) {
+  public async banUser(userId: string, nameFingerprint: string) {
     const body: PostBanRequestBody = {
       userId,
-      nameFingerprint: fingerprint(this.sodium, keyName),
+      nameFingerprint,
     }
     await this.#apiCall('POST', '/v1/ban', body)
   }
@@ -630,17 +675,19 @@ export class Client {
 
   public encrypt<DataType extends EncryptableJSONDataType | Uint8Array>(
     input: DataType,
-    keyName: string
+    nameFingerprint: string
   ) {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked: cannot encrypt')
     }
-    const currentKey = this.#state.keychain.get(keyName)?.[0]
+    const currentKey = this.#state.keychain.get(nameFingerprint)?.[0]
     if (!currentKey) {
-      throw new Error(`No key found with name ${keyName}`)
+      throw new Error(`No key found with name fingerprint ${nameFingerprint}`)
     }
     if ((currentKey.expiresAt?.valueOf() ?? Infinity) < Date.now()) {
-      throw new Error(`Key ${keyName} has expired`)
+      throw new Error(
+        `Key ${nameFingerprint}:${currentKey.payloadFingerprint} has expired`
+      )
     }
     return encrypt(
       this.sodium,
@@ -650,13 +697,13 @@ export class Client {
     )
   }
 
-  public decrypt(ciphertext: string, keyName: string) {
+  public decrypt(ciphertext: string, nameFingerpint: string) {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked: cannot decrypt')
     }
-    const keys = this.#state.keychain.get(keyName) ?? []
+    const keys = this.#state.keychain.get(nameFingerpint) ?? []
     if (keys.length === 0) {
-      throw new Error(`No key found with name ${keyName}`)
+      throw new Error(`No key found with name fingerprint ${nameFingerpint}`)
     }
     for (const key of keys) {
       try {
@@ -1079,9 +1126,9 @@ function serializeKeychainItem(item: KeychainItem) {
 }
 
 function addToKeychain(keychain: Keychain, newItem: KeychainItem) {
-  const items = keychain.get(newItem.name) ?? []
+  const items = keychain.get(newItem.nameFingerprint) ?? []
   if (items.length === 0) {
-    keychain.set(newItem.name, [newItem])
+    keychain.set(newItem.nameFingerprint, [newItem])
     return
   }
   const serialized = serializeKeychainItem(newItem)

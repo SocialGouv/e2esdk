@@ -17,7 +17,7 @@ import {
   createPermission,
   getPermission,
 } from '../database/models/permissions.js'
-import { deleteSharedKey, findSharedKey } from '../database/models/sharedKey.js'
+import { deleteSharedKey, getSharedKey } from '../database/models/sharedKey.js'
 import type { App } from '../types'
 
 export default async function keychainRoutes(app: App) {
@@ -121,14 +121,16 @@ export default async function keychainRoutes(app: App) {
       // If the origin of the key is specified,
       // make sure it matches a shared key entry.
 
-      const sharedKey = await findSharedKey(
+      const sharedKey = await getSharedKey(
         app.db,
-        req.body.sharedBy,
         req.identity.userId,
         req.body.payloadFingerprint
       )
       if (!sharedKey) {
         forbidden('Could not find associated shared key')
+      }
+      if (req.body.sharedBy !== sharedKey.fromUserId) {
+        forbidden('Mismatching shared key origin')
       }
       for (const fieldToMatch of [
         'createdAt',

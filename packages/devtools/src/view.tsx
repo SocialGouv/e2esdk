@@ -12,11 +12,11 @@ import {
 } from '@chakra-ui/react'
 import { useE2ESDKClientIdentity } from '@e2esdk/react'
 import React from 'react'
-import { FiKey, FiLogIn, FiPlusCircle, FiUser } from 'react-icons/fi'
+import { FiKey, FiUser } from 'react-icons/fi'
 import { MdOutlineLock } from 'react-icons/md'
-import { LoginForm, SignupForm } from './components/AuthForm'
 import { SodiumState } from './components/SodiumState'
 import { useLocalState } from './hooks/useLocalState'
+import { AuthTab } from './tabs/AuthTab'
 import { IdentityTab } from './tabs/IdentityTab'
 import { KeysTab } from './tabs/KeysTab'
 
@@ -42,7 +42,7 @@ export const E2ESdkDevtoolsView: React.FC<BoxProps> = ({ ...props }) => {
       {...props}
     >
       <Tabs
-        index={tabIndex}
+        index={identity ? tabIndex : 0}
         onChange={setTabIndex}
         position="absolute"
         inset={0}
@@ -86,11 +86,8 @@ export const E2ESdkDevtoolsView: React.FC<BoxProps> = ({ ...props }) => {
             ) : (
               <>
                 <Tab>
-                  <Icon as={FiLogIn} mr={2} />
-                  Log in
-                </Tab>
-                <Tab>
-                  <Icon as={FiPlusCircle} mr={2} /> Sign up
+                  <Icon as={FiUser} mr={2} />
+                  Authenticate
                 </Tab>
               </>
             )}
@@ -109,11 +106,8 @@ export const E2ESdkDevtoolsView: React.FC<BoxProps> = ({ ...props }) => {
             </TabPanels>
           ) : (
             <TabPanels>
-              <TabPanel px={0}>
-                <LoginForm />
-              </TabPanel>
-              <TabPanel px={0}>
-                <SignupForm />
+              <TabPanel>
+                <AuthTab />
               </TabPanel>
             </TabPanels>
           )}

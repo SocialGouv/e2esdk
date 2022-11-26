@@ -24,7 +24,7 @@ CREATE TABLE e2esdk_keychain_items (
   -- A user can only have a single copy of a key (to prevent key reuse)
   -- Note that we can't use `payload` as the unique constraint,
   -- as encryption is not deterministic, but the fingerprint is.
-  PRIMARY KEY (owner_id, payload_fingerprint)
+  CONSTRAINT e2esdk_keychain_items_pkey PRIMARY KEY (owner_id, payload_fingerprint)
 );
 
 CREATE INDEX e2esdk_keychain_items_owner_id_index             ON e2esdk_keychain_items (owner_id);            -- Query by owner (fetch own keychain)
@@ -48,11 +48,36 @@ CREATE TABLE e2esdk_shared_keys (
   payload_fingerprint         VARCHAR(128) NOT NULL,
   signature                   VARCHAR(128) UNIQUE NOT NULL,
 
-  -- Don't allow sending the same key multiple times (eg: with different names)
-  PRIMARY KEY (from_user_id, to_user_id, payload_fingerprint)
+  -- Don't allow sending the same key multiple times to the same recipient
+  -- (eg: with different other values or coming from different people)
+  CONSTRAINT e2esdk_shared_keys_pkey PRIMARY KEY (to_user_id, payload_fingerprint)
 );
 
 CREATE INDEX e2esdk_shared_keys_from_user_id_index         ON e2esdk_shared_keys (from_user_id);        -- Query outgoing messages
 CREATE INDEX e2esdk_shared_keys_to_user_id_index           ON e2esdk_shared_keys (to_user_id);          -- Query incoming messages
 CREATE INDEX e2esdk_shared_keys_name_fingerprint_index     ON e2esdk_shared_keys (name_fingerprint);    -- Query key graph (pending invites)
 CREATE INDEX e2esdk_shared_keys_payload_fingerprint_index  ON e2esdk_shared_keys (payload_fingerprint); -- Query key graph (pending invites)
+
+--------------------------------------------------------------------------------
+
+CREATE TABLE e2esdk_permissions (
+  created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  user_id                 VARCHAR(128) REFERENCES e2esdk_identities(user_id) NOT NULL,
+  name_fingerprint        VARCHAR(128) NOT NULL,
+  allow_sharing           BOOLEAN NOT NULL,
+  allow_rotation          BOOLEAN NOT NULL,
+  allow_deletion          BOOLEAN NOT NULL,
+  allow_management        BOOLEAN NOT NULL,
+
+  CONSTRAINT e2esdk_permissions_pkey PRIMARY KEY (user_id, name_fingerprint)
+);
+
+-- Add triggers for updated_at
+
+CREATE EXTENSION IF NOT EXISTS moddatetime;
+
+CREATE TRIGGER e2esdk_permissions_updated_at_trigger
+  BEFORE UPDATE ON e2esdk_permissions
+  FOR EACH ROW
+  EXECUTE PROCEDURE moddatetime (updated_at);

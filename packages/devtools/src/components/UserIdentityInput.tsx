@@ -4,14 +4,17 @@ import {
   FormControlProps,
   FormHelperText,
   FormLabel,
+  Icon,
   Input,
   InputGroup,
+  InputLeftElement,
   InputRightElement,
   Spinner,
 } from '@chakra-ui/react'
 import type { PublicUserIdentity } from '@e2esdk/client'
 import { useE2ESDKClient } from '@e2esdk/react'
 import React from 'react'
+import { FiUser } from 'react-icons/fi'
 
 type UserIdentityInputProps = FormControlProps & {
   label?: string
@@ -31,6 +34,13 @@ export const UserIdentityInput: React.FC<UserIdentityInputProps> = ({
   const [userId, setUserId] = React.useState(identity?.userId ?? '')
   const [isLoading, setIsLoading] = React.useState(false)
   const [publicKey, setPublicKey] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (!identity) {
+      setUserId('')
+      setPublicKey(null)
+    }
+  }, [identity])
 
   const fetchIdentity = React.useCallback(async () => {
     if (!userId.trim()) {
@@ -52,8 +62,12 @@ export const UserIdentityInput: React.FC<UserIdentityInputProps> = ({
     <FormControl {...props}>
       <FormLabel>{label}</FormLabel>
       <InputGroup>
+        <InputLeftElement>
+          {isLoading ? <Spinner size="sm" /> : <Icon as={FiUser} />}
+        </InputLeftElement>
         <Input
           value={userId}
+          placeholder="alice"
           onChange={e => setUserId(e.target.value)}
           onBlur={fetchIdentity}
           onKeyDown={e => {
@@ -63,9 +77,7 @@ export const UserIdentityInput: React.FC<UserIdentityInputProps> = ({
           }}
         />
         <InputRightElement>
-          {isLoading ? (
-            <Spinner />
-          ) : Boolean(identity) ? (
+          {Boolean(identity) && (
             <CloseButton
               size="sm"
               rounded="full"
@@ -75,7 +87,7 @@ export const UserIdentityInput: React.FC<UserIdentityInputProps> = ({
                 setPublicKey(null)
               }}
             />
-          ) : null}
+          )}
         </InputRightElement>
       </InputGroup>
       {showPublicKey && publicKey && (

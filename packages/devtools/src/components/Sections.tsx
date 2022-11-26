@@ -6,8 +6,10 @@ import {
   forwardRef,
   Heading,
   HeadingProps,
+  Icon,
   useBreakpointValue,
 } from '@chakra-ui/react'
+import { IconType } from 'react-icons/lib'
 
 export const SectionContainer = (props: FlexProps) => {
   return (
@@ -44,17 +46,21 @@ export const Section = forwardRef<BoxProps, 'section'>((props, ref) => (
 ))
 
 type SectionHeaderProps = HeadingProps & {
+  icon?: IconType
   children?: React.ReactNode
 }
 
 export const SectionHeader: React.FC<SectionHeaderProps> = ({
   children,
+  icon,
   ...props
 }) => {
   return (
     <Heading
       as="h3"
       fontSize="md"
+      display="flex"
+      alignItems="center"
       px={4}
       py={2}
       mb={4}
@@ -72,6 +78,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
       }}
       {...props}
     >
+      {icon && <Icon as={icon} mr={1.5} />}
       {children}
     </Heading>
   )

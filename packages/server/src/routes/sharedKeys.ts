@@ -1,17 +1,22 @@
 import {
+  fingerprintSchema,
   getSharedKeysResponseBody,
   GetSharedKeysResponseBody,
   postSharedKeyBody,
   PostSharedKeyBody,
+  publicIdentitySchema,
   PublicKeyAuthHeaders,
   publicKeyAuthHeaders,
 } from '@e2esdk/api'
+import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import { getKeychainItem } from '../database/models/keychain.js'
 import { getPermission } from '../database/models/permissions.js'
 import {
+  deleteSharedKey,
   getKeysSharedByMe,
   getKeysSharedWithMe,
+  getSharedKey,
   storeSharedKey,
 } from '../database/models/sharedKey.js'
 import type { App } from '../types'
@@ -35,6 +40,15 @@ export default async function sharedKeysRoutes(app: App) {
       },
     },
     async function postSharedKey(req, res) {
+      if (
+        req.identity.userId !== req.body.fromUserId ||
+        req.identity.sharingPublicKey !== req.body.fromSharingPublicKey ||
+        req.identity.signaturePublicKey !== req.body.fromSignaturePublicKey
+      ) {
+        throw app.httpErrors.forbidden(
+          'You are not allowed to share keys as someone else'
+        )
+      }
       // First, check if the recipient doesn't
       // already have this key in their keychain
       const existingKeychainEntry = await getKeychainItem(app.db, {
@@ -42,11 +56,22 @@ export default async function sharedKeysRoutes(app: App) {
         nameFingerprint: req.body.nameFingerprint,
         payloadFingerprint: req.body.payloadFingerprint,
       })
+      const conflictMessage = 'The recipient already has a copy of this key'
       if (existingKeychainEntry) {
-        throw app.httpErrors.conflict(
-          'The recipient already has a copy of this key'
-        )
+        throw app.httpErrors.conflict(conflictMessage)
       }
+      // Then, check if there is already a pending shared key
+      const existingSharedKey = await getSharedKey(
+        app.db,
+        req.body.toUserId,
+        req.body.payloadFingerprint
+      )
+      if (existingSharedKey) {
+        // We use the same message as the previous check
+        // to avoid revealing too much to a potential attacker.
+        throw app.httpErrors.conflict(conflictMessage)
+      }
+      // Then, are we allowed to share this key?
       const { allowSharing } = await getPermission(
         app.db,
         req.identity.userId,
@@ -97,6 +122,39 @@ export default async function sharedKeysRoutes(app: App) {
     async function getOutgoingSharedKeys(req, res) {
       const sharedKeys = await getKeysSharedByMe(app.db, req.identity)
       return res.send(sharedKeys)
+    }
+  )
+
+  const deleteSharedKeyUrlParams = z.object({
+    userId: publicIdentitySchema.shape.userId,
+    payloadFingerprint: fingerprintSchema,
+  })
+
+  app.delete<{
+    Params: z.infer<typeof deleteSharedKeyUrlParams>
+    Headers: PublicKeyAuthHeaders
+  }>(
+    '/shared-keys/:userId/:payloadFingerprint',
+    {
+      preValidation: app.usePublicKeyAuth(),
+      schema: {
+        params: zodToJsonSchema(deleteSharedKeyUrlParams),
+        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        response: {
+          200: {
+            type: 'null',
+          },
+        },
+      },
+    },
+    async function deletePendingSharedKey(req, res) {
+      await deleteSharedKey(
+        app.db,
+        req.identity.userId,
+        req.params.userId,
+        req.params.payloadFingerprint
+      )
+      return res.send()
     }
   )
 }

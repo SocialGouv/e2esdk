@@ -41,7 +41,7 @@ export function useE2ESDKClientIdentity() {
     }
   )
   React.useEffect(() => {
-    return client.on('identityUpdated', (identity) => setIdentity(identity))
+    return client.on('identityUpdated', identity => setIdentity(identity))
   }, [client])
   return identity
 }
@@ -50,11 +50,9 @@ export function useE2ESDKClientKeys(
   indexBy: 'name' | 'nameFingerprint' = 'name'
 ) {
   const client = useE2ESDKClient()
-  const [keys, setKeys] = React.useState(() => client.getKeysBy(indexBy))
+  const [keys, setKeys] = React.useState(() => client.keys)
   React.useEffect(() => {
-    return client.on('keychainUpdated', () =>
-      setKeys(client.getKeysBy(indexBy))
-    )
+    return client.on('keychainUpdated', () => setKeys(client.keys))
   }, [client, indexBy])
   return keys
 }
