@@ -38,7 +38,23 @@ const envSchema = z.object({
     .transform(value => parseInt(value)),
 })
 
-export const env = envSchema.parse(process.env)
+const res = envSchema.safeParse(process.env)
+
+if (!res.success) {
+  console.error(
+    `Missing or invalid environment variable${
+      res.error.errors.length > 1 ? 's' : ''
+    }:`
+  )
+  console.error(
+    res.error.errors
+      .map(error => `  ${error.path}: ${error.message}`)
+      .join('\n')
+  )
+  process.exit(1)
+}
+
+export const env = res.data
 
 declare global {
   namespace NodeJS {
