@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { fingerprintSchema } from './schemas/encodings'
-import { publicIdentitySchema } from './schemas/identity'
+import { identitySchema } from './schemas/identity'
 
 export const permissionFlags = z.object({
   allowSharing: z.boolean(),
@@ -12,7 +12,7 @@ export const permissionFlags = z.object({
 export type PermissionFlags = z.infer<typeof permissionFlags>
 
 export const postPermissionRequestBody = permissionFlags.partial().extend({
-  userId: publicIdentitySchema.shape.userId,
+  userId: identitySchema.shape.userId,
   nameFingerprint: fingerprintSchema,
 })
 

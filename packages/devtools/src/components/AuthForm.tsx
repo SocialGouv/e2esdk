@@ -21,7 +21,7 @@ type AuthFormProps = Omit<StackProps, 'onSubmit'> & {
 
 const formSchema = z.object({
   userId: z.string(),
-  personalKey: z.string(),
+  mainKey: z.string(),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -36,17 +36,25 @@ const AuthForm: React.FC<AuthFormProps> = ({
     register,
     handleSubmit,
     formState: { isSubmitting },
+    reset,
   } = useForm<FormValues>()
+  const _onSubmit = React.useCallback(
+    async (values: FormValues) => {
+      await onSubmit(values)
+      reset()
+    },
+    [onSubmit, reset]
+  )
   return (
-    <Box as="form" onSubmit={handleSubmit(onSubmit)} px={5}>
+    <Box as="form" onSubmit={handleSubmit(_onSubmit)} px={5}>
       <Stack spacing={4} {...props}>
         <FormControl>
           <FormLabel>User ID</FormLabel>
           <Input fontFamily="mono" {...register('userId')} />
         </FormControl>
         <FormControl>
-          <FormLabel>Personal Key</FormLabel>
-          <Input fontFamily="mono" {...register('personalKey')} />
+          <FormLabel>Main Key</FormLabel>
+          <Input fontFamily="mono" {...register('mainKey')} />
         </FormControl>
         <Button type="submit" isLoading={isSubmitting} leftIcon={buttonIcon}>
           {buttonText}
@@ -62,7 +70,9 @@ export const LoginForm: React.FC<Omit<StackProps, 'onSubmit'>> = props => {
   const client = useE2ESDKClient()
   const login = React.useCallback(
     async (values: FormValues) => {
-      await client.login(values.userId, client.decode(values.personalKey))
+      const mainKey = client.decode(values.mainKey)
+      await client.login(values.userId, mainKey)
+      client.sodium.memzero(mainKey)
     },
     [client]
   )
@@ -82,7 +92,9 @@ export const SignupForm: React.FC<Omit<StackProps, 'onSubmit'>> = props => {
   const client = useE2ESDKClient()
   const signup = React.useCallback(
     async (values: FormValues) => {
-      await client.signup(values.userId, client.decode(values.personalKey))
+      const mainKey = client.decode(values.mainKey)
+      await client.signup(values.userId, mainKey)
+      client.sodium.memzero(mainKey)
     },
     [client]
   )

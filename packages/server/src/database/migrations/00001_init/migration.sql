@@ -2,9 +2,8 @@ CREATE TABLE e2esdk_identities (
   user_id                     VARCHAR(128) PRIMARY KEY,
   created_at                  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   sharing_public_key          VARCHAR(128) UNIQUE NOT NULL,
-  sharing_private_key         VARCHAR(128) UNIQUE NOT NULL, -- encrypted
   signature_public_key        VARCHAR(128) UNIQUE NOT NULL,
-  signature_private_key       VARCHAR(256) UNIQUE NOT NULL  -- encrypted
+  proof                       VARCHAR(128) UNIQUE NOT NULL
 );
 
 --------------------------------------------------------------------------------
@@ -42,6 +41,7 @@ CREATE TABLE e2esdk_shared_keys (
   from_user_id                VARCHAR(128) NOT NULL REFERENCES e2esdk_identities(user_id),
   from_signature_public_key   VARCHAR(128) NOT NULL,
   from_sharing_public_key     VARCHAR(128) NOT NULL,
+  from_proof                  VARCHAR(128) NOT NULL,
   name                        TEXT UNIQUE NOT NULL, -- encrypted
   payload                     TEXT UNIQUE NOT NULL, -- encrypted
   name_fingerprint            VARCHAR(128) NOT NULL,

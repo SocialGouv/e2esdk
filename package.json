@@ -14,6 +14,7 @@
     "dev:examples": "FORCE_COLOR=3 turbo run dev --filter=./examples/*",
     "dev:all": "FORCE_COLOR=3 turbo run dev",
     "build:npm": "turbo run build:npm",
+    "build:server": "turbo run build:server",
     "build:docker": "docker build . -f packages/server/Dockerfile -t e2esdk:local",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",

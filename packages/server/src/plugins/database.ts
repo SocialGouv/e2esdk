@@ -24,16 +24,19 @@ const databasePlugin: FastifyPluginAsync = async (app: App) => {
             query ===
             'SELECT pg_database_size(current_database()::name) AS size_used'
           ) {
-            // Health check
+            // Don't log periodic health check
             return
           }
           app.log.debug({
             msg: 'database:debug',
             connection,
             query: query
-              // todo: Remove comments
+              // Remove comments
+              // https://stackoverflow.com/questions/7690380/regular-expression-to-match-all-comments-in-a-t-sql-script
+              .replace(/(--.*)|(((\/\*)+?[\w\W]+?(\*\/)+))/g, '')
+              // Minify whitespace
               .replace(/\s+/gm, ' ')
-              .trim(), // minify
+              .trim(),
             parameters,
             paramTypes,
           })

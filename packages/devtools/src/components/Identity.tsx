@@ -1,7 +1,7 @@
-import { Icon, Stack, StackProps, Text } from '@chakra-ui/react'
+import { chakra, Icon, Stack, StackProps, Text } from '@chakra-ui/react'
 import type { PublicUserIdentity } from '@e2esdk/client'
 import React from 'react'
-import { FiLock, FiPenTool, FiUser } from 'react-icons/fi'
+import { FiLock, FiPenTool, FiShield, FiUser } from 'react-icons/fi'
 
 type IdentityProps = StackProps & {
   identity: PublicUserIdentity
@@ -11,7 +11,7 @@ export const Identity: React.FC<IdentityProps> = ({ identity, ...props }) => {
   return (
     <Stack
       fontFamily="mono"
-      fontSize="sm"
+      fontSize={{ base: 'xs', md: 'sm' }}
       borderWidth="1px"
       px={4}
       py={3}
@@ -38,6 +38,12 @@ export const Identity: React.FC<IdentityProps> = ({ identity, ...props }) => {
       <Text>
         <Icon as={FiPenTool} mr={3} transform="translateY(2px)" />
         {identity.signaturePublicKey}
+      </Text>
+      <Text>
+        <Icon as={FiShield} mr={3} transform="translateY(2px)" />
+        <chakra.span>{identity.proof.slice(0, 43)}</chakra.span>
+        <br />
+        <chakra.span ml="2em">{identity.proof.slice(43)}</chakra.span>
       </Text>
     </Stack>
   )

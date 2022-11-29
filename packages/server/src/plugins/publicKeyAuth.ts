@@ -1,18 +1,19 @@
-import type { PublicIdentity } from '@e2esdk/api'
+import type { Identity } from '@e2esdk/api'
 import { isFarFromCurrentTime } from '@e2esdk/core'
 import {
   signAuth as signResponse,
   verifyAuth as verifyClientSignature,
+  verifyClientIdentity,
 } from '@e2esdk/crypto'
 import type { FastifyPluginAsync, FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
-import { getPublicIdentity } from '../database/models/identity.js'
+import { getIdentity as getIdentityFromDatabase } from '../database/models/identity.js'
 import { env } from '../env.js'
 import type { App } from '../types'
 
 type PublicKeyAuthOptions = {
   // todo: Use better type for request
-  getIdentity?: 'database' | ((req: any) => PublicIdentity | null)
+  getIdentity?: 'database' | ((req: any) => Identity | null)
 }
 
 declare module 'fastify' {
@@ -23,7 +24,7 @@ declare module 'fastify' {
   }
 
   interface FastifyRequest {
-    identity: PublicIdentity
+    identity: Identity
   }
 }
 
@@ -50,11 +51,11 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
         }
         const signature = req.headers['x-e2esdk-signature'] as string
         if (!signature) {
-          throw app.httpErrors.unauthorized('Missing x-e2esdk-signature header')
+          throw app.httpErrors.badRequest('Missing x-e2esdk-signature header')
         }
         const identity =
           getIdentity === 'database'
-            ? await getPublicIdentity(app.db, userId)
+            ? await getIdentityFromDatabase(app.db, userId)
             : getIdentity(req)
         if (!identity) {
           throw app.httpErrors.unauthorized(
@@ -64,7 +65,9 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
         if (identity.userId !== userId) {
           throw app.httpErrors.badRequest('Invalid user ID')
         }
-
+        if (!verifyClientIdentity(app.sodium, identity)) {
+          throw app.httpErrors.unauthorized('Invalid identity')
+        }
         try {
           if (
             !verifyClientSignature(
@@ -86,7 +89,6 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
         } catch {
           throw app.httpErrors.unauthorized('Invalid request signature')
         }
-
         req.identity = identity
       }
   )

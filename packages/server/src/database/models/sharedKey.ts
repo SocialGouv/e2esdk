@@ -13,6 +13,7 @@ export const sharedKeySchema = z.object({
   fromUserId: z.string(),
   fromSharingPublicKey: z.string(),
   fromSignaturePublicKey: z.string(),
+  fromProof: z.string(),
   name: z.string(),
   payload: z.string(),
   nameFingerprint: z.string(),
@@ -60,7 +61,7 @@ export function getKeysSharedByMe(
   sql: Sql,
   identity: Pick<
     IdentitySchema,
-    'userId' | 'sharingPublicKey' | 'signaturePublicKey'
+    'userId' | 'sharingPublicKey' | 'signaturePublicKey' | 'proof'
   >
 ): Promise<SharedKeySchema[]> {
   return sql`
@@ -69,6 +70,7 @@ export function getKeysSharedByMe(
     WHERE ${sql('fromUserId')}              = ${identity.userId}
     AND   ${sql('fromSharingPublicKey')}    = ${identity.sharingPublicKey}
     AND   ${sql('fromSignaturePublicKey')}  = ${identity.signaturePublicKey}
+    AND   ${sql('fromProof')}               = ${identity.proof}
   `
 }
 

@@ -1,18 +1,10 @@
 import { z } from 'zod'
-import {
-  encryptedSharingPrivateKeySchema,
-  encryptedSignaturePrivateKeySchema,
-  thirtyTwoBytesBase64Schema,
-} from './encodings'
+import { signedHashSchema, thirtyTwoBytesBase64Schema } from './encodings'
 
-export const publicIdentitySchema = z.object({
-  userId: z.string().min(1),
+export const identitySchema = z.object({
+  userId: z.string().min(1).max(128),
   sharingPublicKey: thirtyTwoBytesBase64Schema,
   signaturePublicKey: thirtyTwoBytesBase64Schema,
+  proof: signedHashSchema,
 })
-export type PublicIdentity = z.infer<typeof publicIdentitySchema>
-
-export const fullIdentitySchema = publicIdentitySchema.extend({
-  sharingPrivateKey: encryptedSharingPrivateKeySchema,
-  signaturePrivateKey: encryptedSignaturePrivateKeySchema,
-})
+export type Identity = z.infer<typeof identitySchema>

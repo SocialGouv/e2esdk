@@ -5,7 +5,7 @@ import {
   signedHashSchema,
   timestampSchema,
 } from './schemas/encodings'
-import { publicIdentitySchema } from './schemas/identity'
+import { identitySchema } from './schemas/identity'
 
 const keychainItemSchema = z.object({
   createdAt: timestampSchema,
@@ -14,8 +14,8 @@ const keychainItemSchema = z.object({
   payload: secretBoxCiphertextV1Schema,
   nameFingerprint: fingerprintSchema,
   payloadFingerprint: fingerprintSchema,
-  ownerId: publicIdentitySchema.shape.userId,
-  sharedBy: publicIdentitySchema.shape.userId.nullable(),
+  ownerId: identitySchema.shape.userId,
+  sharedBy: identitySchema.shape.userId.nullable(),
   signature: signedHashSchema,
 })
 

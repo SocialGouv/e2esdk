@@ -2,9 +2,9 @@ import {
   fingerprintSchema,
   getSharedKeysResponseBody,
   GetSharedKeysResponseBody,
+  identitySchema,
   postSharedKeyBody,
   PostSharedKeyBody,
-  publicIdentitySchema,
   PublicKeyAuthHeaders,
   publicKeyAuthHeaders,
 } from '@e2esdk/api'
@@ -126,7 +126,7 @@ export default async function sharedKeysRoutes(app: App) {
   )
 
   const deleteSharedKeyUrlParams = z.object({
-    userId: publicIdentitySchema.shape.userId,
+    userId: identitySchema.shape.userId,
     payloadFingerprint: fingerprintSchema,
   })
 
