@@ -6,7 +6,7 @@ import {
   publicKeyAuthHeaders,
   PublicKeyAuthHeaders,
 } from '@e2esdk/api'
-import { verifySignedHash } from '@e2esdk/crypto'
+import { verifyMultipartSignature } from '@e2esdk/crypto'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import {
   getKeyNameParticipants,
@@ -53,7 +53,7 @@ export default async function keychainRoutes(app: App) {
         forbidden("You cannot add keychain keys that don't belong to you")
       }
       if (
-        !verifySignedHash(
+        !verifyMultipartSignature(
           app.sodium,
           app.sodium.from_base64(req.identity.signaturePublicKey),
           app.sodium.from_base64(req.body.signature),

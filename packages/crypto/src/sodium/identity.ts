@@ -1,5 +1,8 @@
 import type { KeyPair } from 'libsodium-wrappers'
-import { signHash, verifySignedHash } from './signHash'
+import {
+  multipartSignature,
+  verifyMultipartSignature,
+} from './multipartSignature'
 import type { Sodium } from './sodium'
 
 export function generateMainKey(sodium: Sodium) {
@@ -101,7 +104,7 @@ export function deriveClientIdentity(
       privateKey: signature.privateKey,
     },
     proof: sodium.to_base64(
-      signHash(
+      multipartSignature(
         sodium,
         signature.privateKey,
         sodium.from_string(userId),
@@ -125,7 +128,7 @@ export function verifyClientIdentity(
   sodium: Sodium,
   claims: VerifyClientIdentityClaims
 ) {
-  return verifySignedHash(
+  return verifyMultipartSignature(
     sodium,
     sodium.from_base64(claims.signaturePublicKey),
     sodium.from_base64(claims.proof),

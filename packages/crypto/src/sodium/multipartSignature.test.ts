@@ -1,13 +1,17 @@
 import { concat } from '../shared/utils'
-import { signHash, verifySignedHash } from './signHash'
+import {
+  multipartSignature,
+  verifyMultipartSignature,
+} from './multipartSignature'
 import { ready, sodium } from './sodium'
 
 beforeAll(() => ready)
 
-describe('signHash', () => {
+describe('multipartSignature', () => {
   test('known vectors', async () => {
-    // Private key:
-    // 3f1fcdac356ae7924e1358d1efc244155a1756e1434df06094c1d868357575ae1f5c53ba82fffdd4191803f484fe685a2c4652e150696fc8fda7d05fcc8a1e15
+    // const privateKey = sodium.from_hex(
+    //   '3f1fcdac356ae7924e1358d1efc244155a1756e1434df06094c1d868357575ae1f5c53ba82fffdd4191803f484fe685a2c4652e150696fc8fda7d05fcc8a1e15'
+    // )
     const publicKey = sodium.from_hex(
       '1f5c53ba82fffdd4191803f484fe685a2c4652e150696fc8fda7d05fcc8a1e15'
     )
@@ -15,9 +19,16 @@ describe('signHash', () => {
     const b = sodium.from_hex('80cc62c261b30c32')
     const c = sodium.from_hex('bfe93254c419de3c')
     const signature = sodium.from_hex(
-      '46674374c89beccb9b8db41da11ce9856fd1c711d9eb4a72133d2cbe71410cf232760479b36b47ae91446d2907b58e17606cd4b6b63cc1c819a827aa44d7a40d'
+      '601a4c9face0e4c8d9176a2b41fab25bca2479fc8d893dbe6d41e39b83155b47149d287a9979addcbd9f657edf7cf3f2caba68329da6bdf2838d3ac02462640a'
     )
-    const verified = verifySignedHash(sodium, publicKey, signature, a, b, c)
+    const verified = verifyMultipartSignature(
+      sodium,
+      publicKey,
+      signature,
+      a,
+      b,
+      c
+    )
     expect(verified).toBe(true)
   })
 
@@ -40,8 +51,8 @@ describe('signHash', () => {
       const a = sodium.randombytes_buf(getBlockLength())
       const b = sodium.randombytes_buf(getBlockLength())
       const c = sodium.randombytes_buf(getBlockLength())
-      const signature = signHash(sodium, alice.privateKey, a, b, c)
-      const verified = verifySignedHash(
+      const signature = multipartSignature(sodium, alice.privateKey, a, b, c)
+      const verified = verifyMultipartSignature(
         sodium,
         alice.publicKey,
         signature,
@@ -58,8 +69,8 @@ describe('signHash', () => {
       const a = sodium.randombytes_buf(getBlockLength())
       const b = sodium.randombytes_buf(getBlockLength())
       const c = sodium.randombytes_buf(getBlockLength())
-      const signature = signHash(sodium, alice.privateKey, a, b, c)
-      const verified = verifySignedHash(
+      const signature = multipartSignature(sodium, alice.privateKey, a, b, c)
+      const verified = verifyMultipartSignature(
         sodium,
         eve.publicKey,
         signature,
@@ -76,8 +87,8 @@ describe('signHash', () => {
       const a = sodium.randombytes_buf(getBlockLength())
       const b = sodium.randombytes_buf(getBlockLength())
       const c = sodium.randombytes_buf(getBlockLength())
-      const signature = signHash(sodium, eve.privateKey, a, b, c)
-      const verified = verifySignedHash(
+      const signature = multipartSignature(sodium, eve.privateKey, a, b, c)
+      const verified = verifyMultipartSignature(
         sodium,
         alice.publicKey,
         signature,
@@ -93,9 +104,9 @@ describe('signHash', () => {
       const a = sodium.randombytes_buf(getBlockLength())
       const b = sodium.randombytes_buf(getBlockLength())
       const c = sodium.randombytes_buf(getBlockLength())
-      const signature = signHash(sodium, alice.privateKey, a, b, c)
+      const signature = multipartSignature(sodium, alice.privateKey, a, b, c)
       signature.sort()
-      const verified = verifySignedHash(
+      const verified = verifyMultipartSignature(
         sodium,
         alice.publicKey,
         signature,
@@ -111,8 +122,8 @@ describe('signHash', () => {
       const a = sodium.randombytes_buf(getBlockLength())
       const b = sodium.randombytes_buf(getBlockLength())
       const c = sodium.randombytes_buf(getBlockLength())
-      const signature = signHash(sodium, alice.privateKey, a, b, c)
-      const verified = verifySignedHash(
+      const signature = multipartSignature(sodium, alice.privateKey, a, b, c)
+      const verified = verifyMultipartSignature(
         sodium,
         alice.publicKey,
         signature,
@@ -129,7 +140,7 @@ describe('signHash', () => {
       const a = sodium.randombytes_buf(getBlockLength())
       const b = sodium.randombytes_buf(getBlockLength())
       const c = sodium.randombytes_buf(getBlockLength())
-      const signature = signHash(sodium, alice.privateKey, a, b, c)
+      const signature = multipartSignature(sodium, alice.privateKey, a, b, c)
       // Canonicalisation attack:
       // legit    [aaaaaa][bbbbbb][cccccc]
       // tampered [aaaaa][abbbbbbc][ccccc]
@@ -137,7 +148,7 @@ describe('signHash', () => {
       const b_ = new Uint8Array([a[a.byteLength - 1]!, ...b.slice(), c[0]])
       const c_ = new Uint8Array(c.slice(1))
       expect(concat(a, b, c)).toEqual(concat(a_, b_, c_))
-      const verified = verifySignedHash(
+      const verified = verifyMultipartSignature(
         sodium,
         alice.publicKey,
         signature,

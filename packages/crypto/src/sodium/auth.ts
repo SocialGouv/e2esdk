@@ -1,4 +1,7 @@
-import { signHash, verifySignedHash } from './signHash'
+import {
+  multipartSignature,
+  verifyMultipartSignature,
+} from './multipartSignature'
 import type { Sodium } from './sodium'
 
 export type PublicKeyAuthArgs = {
@@ -21,7 +24,11 @@ export function signAuth(
   args: PublicKeyAuthArgs
 ) {
   return sodium.to_base64(
-    signHash(sodium, privateKey, ...getSignatureElements(sodium, args))
+    multipartSignature(
+      sodium,
+      privateKey,
+      ...getSignatureElements(sodium, args)
+    )
   )
 }
 
@@ -31,7 +38,7 @@ export function verifyAuth(
   signature: string,
   args: PublicKeyAuthArgs
 ) {
-  return verifySignedHash(
+  return verifyMultipartSignature(
     sodium,
     publicKey,
     sodium.from_base64(signature),

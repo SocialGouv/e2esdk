@@ -1,7 +1,7 @@
 import crypto from 'node:crypto'
 import { generateManifest } from './manifest'
 
-describe('crypto/manifest', () => {
+describe('manifest', () => {
   test('empty manifest (no input data)', () => {
     const received = generateManifest([])
     const expected = new Uint8Array([0])

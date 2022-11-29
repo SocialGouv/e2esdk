@@ -5,7 +5,7 @@ import { ready, sodium } from './sodium/sodium'
 
 beforeAll(() => ready)
 
-describe('crypto/lite', () => {
+describe('lite', () => {
   test('lite sealed boxes are compatible with libsodium', () => {
     const input = sodium.randombytes_buf(32)
     const cipher = generateSealedBoxCipher(sodium)
