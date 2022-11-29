@@ -1,11 +1,11 @@
-import { permissionFlags, publicIdentitySchema } from '@e2esdk/api'
+import { identitySchema, permissionFlags } from '@e2esdk/api'
 import { Sql } from 'postgres'
 import { z } from 'zod'
 import { TABLE_NAME as IDENTITY_TABLE } from './identity.js'
 import { keychainItemSchema, TABLE_NAME as KEYCHAIN_TABLE } from './keychain.js'
 import { TABLE_NAME as PERMISSIONS_TABLE } from './permissions.js'
 
-const getNamePayloadParticipantsQueryResult = publicIdentitySchema
+const getNamePayloadParticipantsQueryResult = identitySchema
   .merge(permissionFlags.partial())
   .merge(
     keychainItemSchema.pick({
@@ -27,8 +27,9 @@ export function getNamePayloadParticipantsWithPermissions(
     SELECT
       -- Identity
       i.${sql('userId')},
-      i.${sql('signaturePublicKey')},
       i.${sql('sharingPublicKey')},
+      i.${sql('signaturePublicKey')},
+      i.${sql('proof')},
       -- Keychain metadata
       k.${sql('addedAt')},
       k.${sql('sharedBy')},

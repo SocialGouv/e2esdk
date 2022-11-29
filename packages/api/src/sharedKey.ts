@@ -5,15 +5,16 @@ import {
   signedHashSchema,
   timestampSchema,
 } from './schemas/encodings'
-import { publicIdentitySchema } from './schemas/identity'
+import { identitySchema } from './schemas/identity'
 
 const sharedKey = z.object({
   createdAt: timestampSchema,
   expiresAt: timestampSchema.nullable(),
-  toUserId: publicIdentitySchema.shape.userId,
-  fromUserId: publicIdentitySchema.shape.userId,
-  fromSharingPublicKey: publicIdentitySchema.shape.sharingPublicKey,
-  fromSignaturePublicKey: publicIdentitySchema.shape.signaturePublicKey,
+  toUserId: identitySchema.shape.userId,
+  fromUserId: identitySchema.shape.userId,
+  fromSharingPublicKey: identitySchema.shape.sharingPublicKey,
+  fromSignaturePublicKey: identitySchema.shape.signaturePublicKey,
+  fromProof: identitySchema.shape.proof,
   name: boxCiphertextV1Schema,
   payload: boxCiphertextV1Schema,
   nameFingerprint: fingerprintSchema,

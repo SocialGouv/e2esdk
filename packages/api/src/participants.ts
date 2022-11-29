@@ -1,13 +1,13 @@
 import { z } from 'zod'
 import { permissionFlags } from './permissions'
 import { timestampSchema } from './schemas/encodings'
-import { publicIdentitySchema } from './schemas/identity'
+import { identitySchema } from './schemas/identity'
 
 export const getParticipantsResponseBody = z.array(
-  publicIdentitySchema.merge(permissionFlags).merge(
+  identitySchema.merge(permissionFlags).merge(
     z.object({
       addedAt: timestampSchema,
-      sharedBy: publicIdentitySchema.shape.userId.nullable(),
+      sharedBy: identitySchema.shape.userId.nullable(),
     })
   )
 )

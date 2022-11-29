@@ -50,7 +50,8 @@ export default async function participantsRoutes(app: App) {
           p =>
             p.userId === req.identity.userId &&
             p.sharingPublicKey === req.identity.sharingPublicKey &&
-            p.signaturePublicKey === req.identity.signaturePublicKey
+            p.signaturePublicKey === req.identity.signaturePublicKey &&
+            p.proof === req.identity.proof
         )
       ) {
         // We're not in the list of participants

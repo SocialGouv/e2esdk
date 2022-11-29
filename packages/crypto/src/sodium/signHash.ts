@@ -6,6 +6,12 @@ export function generateSignatureKeyPair(sodium: Sodium) {
   return sodium.crypto_sign_keypair()
 }
 
+// todo: Throw away the middleman hash calculation and use a multipart
+// signature (Ed25519ph), but:
+// - Keep the manifest to protect against canonicalisation attacks
+// - Maybe pass an optional domain to scope the signature to
+// https://doc.libsodium.org/public-key_cryptography/public-key_signatures#multi-part-messages
+
 /**
  * Calculate the hash of the given items, sign it and return the detached signature.
  *

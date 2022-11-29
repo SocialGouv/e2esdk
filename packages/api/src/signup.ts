@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { fullIdentitySchema } from './schemas/identity'
+import { identitySchema } from './schemas/identity'
 
-export const signupRequestBody = fullIdentitySchema
+export const signupRequestBody = identitySchema
 
 export type SignupRequestBody = z.infer<typeof signupRequestBody>

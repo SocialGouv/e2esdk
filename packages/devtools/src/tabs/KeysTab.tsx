@@ -53,6 +53,7 @@ import {
   useE2ESDKClientIdentity,
   useE2ESDKClientKeys,
 } from '@e2esdk/react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import React from 'react'
 import FocusLock from 'react-focus-lock'
 import { IconType } from 'react-icons'
@@ -70,7 +71,6 @@ import {
   FiUserMinus,
   FiUsers,
 } from 'react-icons/fi'
-import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { AlgorithmBadge, algorithmColors } from '../components/AlgorithmBadge'
 import { usePortalRef } from '../components/PortalProvider'
 import {
@@ -82,7 +82,7 @@ import { UserIdentityInput } from '../components/UserIdentityInput'
 import { useLocalState } from '../hooks/useLocalState'
 
 export const KeysTab: React.FC = () => {
-  const allKeys = useE2ESDKClientKeys('nameFingerprint')
+  const allKeys = useE2ESDKClientKeys()
   const [selectedKeyFingerprint, setSelectedKeyFingerprint] = useLocalState<
     string | null
   >({
@@ -321,7 +321,7 @@ const queryKeys = {
     ['key', 'permissions', key] as const,
   participants: (key: KeychainItemMetadata) =>
     ['key', 'participants', key] as const,
-  outgoing: ['key', 'outgoing'] as const,
+  outgoing: (key: KeychainItemMetadata) => ['key', 'outgoing', key] as const,
 }
 
 const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
@@ -345,8 +345,16 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
     enabled: Boolean(currentKey),
   })
   const { data: outgoingSharedKeys } = useQuery({
-    queryKey: queryKeys.outgoing,
-    queryFn: () => client.getOutgoingSharedKeys(),
+    queryKey: queryKeys.outgoing(currentKey),
+    queryFn: async ({ queryKey }) => {
+      const outgoingSharedKeys = await client.getOutgoingSharedKeys()
+      return outgoingSharedKeys.filter(
+        key =>
+          key.nameFingerprint === queryKey[2].nameFingerprint &&
+          key.payloadFingerprint === queryKey[2].payloadFingerprint
+      )
+    },
+    enabled: Boolean(currentKey),
   })
   const otherParticipants =
     participants?.filter(p => !!identity && p.userId !== identity.userId) ?? []
@@ -408,8 +416,7 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
         <ShareKeyPopup
           ml="auto"
           isDisabled={!permissions?.allowSharing}
-          algorithm={currentKey.algorithm}
-          nameFingerprint={currentKey.nameFingerprint}
+          currentKey={currentKey}
         />
       </SectionHeader>
       {!participants ? (
@@ -504,7 +511,7 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
       {(outgoingSharedKeys?.length ?? 0) > 0 && (
         <>
           <SectionHeader icon={FiClock} mt={8}>
-            Pending Shared Keys
+            Pending shared keys
           </SectionHeader>
           <TableContainer>
             <Table size="sm" mt={-2}>
@@ -525,48 +532,48 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
                   },
                 }}
               >
-                {outgoingSharedKeys!
-                  .filter(
-                    key => key.nameFingerprint === currentKey.nameFingerprint
-                  )
-                  .map(key => (
-                    <Tr
-                      key={key.nameFingerprint + key.payloadFingerprint}
-                      fontFamily="mono"
-                    >
-                      <Td>{key.toUserId}</Td>
-                      <Td>{key.payloadFingerprint}</Td>
-                      <Td>
-                        {key.expiresAt ? (
-                          new Date(key.expiresAt).toLocaleString(['se-SE'])
-                        ) : (
-                          <em>never</em>
-                        )}
-                      </Td>
-                      <Td>
-                        <IconButton
-                          aria-label="Revoke"
-                          icon={<FiTrash2 />}
-                          size="xs"
-                          variant="ghost"
-                          rounded="full"
-                          colorScheme="red"
-                          onClick={() =>
-                            client
-                              .deleteOutgoingSharedKey(
-                                key.toUserId,
-                                key.payloadFingerprint
+                {outgoingSharedKeys!.map(key => (
+                  <Tr
+                    key={
+                      key.toUserId +
+                      key.nameFingerprint +
+                      key.payloadFingerprint
+                    }
+                    fontFamily="mono"
+                  >
+                    <Td>{key.toUserId}</Td>
+                    <Td>{key.payloadFingerprint}</Td>
+                    <Td>
+                      {key.expiresAt ? (
+                        new Date(key.expiresAt).toLocaleString(['se-SE'])
+                      ) : (
+                        <em>never</em>
+                      )}
+                    </Td>
+                    <Td>
+                      <IconButton
+                        aria-label="Revoke"
+                        icon={<FiTrash2 />}
+                        size="xs"
+                        variant="ghost"
+                        rounded="full"
+                        colorScheme="red"
+                        onClick={() =>
+                          client
+                            .deleteOutgoingSharedKey(
+                              key.toUserId,
+                              key.payloadFingerprint
+                            )
+                            .then(() =>
+                              queryClient.invalidateQueries(
+                                queryKeys.outgoing(currentKey)
                               )
-                              .then(() =>
-                                queryClient.invalidateQueries(
-                                  queryKeys.outgoing
-                                )
-                              )
-                          }
-                        />
-                      </Td>
-                    </Tr>
-                  ))}
+                            )
+                        }
+                      />
+                    </Td>
+                  </Tr>
+                ))}
               </Tbody>
             </Table>
           </TableContainer>
@@ -673,13 +680,11 @@ const PermissionIcons: React.FC<PermissionsIconsProps> = ({
 // --
 
 type ShareKeyPopupProps = Omit<ButtonProps, 'onClick'> & {
-  algorithm: Cipher['algorithm']
-  nameFingerprint: string
+  currentKey: KeychainItemMetadata
 }
 
 const ShareKeyPopup: React.FC<ShareKeyPopupProps> = ({
-  algorithm,
-  nameFingerprint,
+  currentKey,
   ...props
 }) => {
   const { isOpen, onClose, onToggle } = useDisclosure()
@@ -693,9 +698,10 @@ const ShareKeyPopup: React.FC<ShareKeyPopupProps> = ({
   }, [])
 
   const share = useMutation({
-    mutationFn: () => client.shareKey(nameFingerprint, recipientIdentity!),
+    mutationFn: () =>
+      client.shareKey(currentKey.nameFingerprint, recipientIdentity!),
     onSuccess: () => {
-      queryClient.invalidateQueries(queryKeys.outgoing)
+      queryClient.invalidateQueries(queryKeys.outgoing(currentKey))
       close()
     },
   })
@@ -709,7 +715,7 @@ const ShareKeyPopup: React.FC<ShareKeyPopupProps> = ({
           size="xs"
           rounded="full"
           variant="ghost"
-          colorScheme={algorithmColors[algorithm]}
+          colorScheme={algorithmColors[currentKey.algorithm]}
           leftIcon={<FiShare2 />}
           {...props}
           onClick={onToggle}
@@ -739,13 +745,16 @@ const ShareKeyPopup: React.FC<ShareKeyPopupProps> = ({
               />
               <Button
                 width="100%"
-                colorScheme={algorithmColors[algorithm]}
+                colorScheme={algorithmColors[currentKey.algorithm]}
                 leftIcon={<FiShare2 />}
                 isDisabled={!recipientIdentity}
                 isLoading={share.isLoading}
                 onClick={() => share.mutateAsync()}
               >
-                Share {algorithm === 'secretBox' ? 'secret key' : 'key pair'}
+                Share{' '}
+                {currentKey.algorithm === 'secretBox'
+                  ? 'secret key'
+                  : 'key pair'}
               </Button>
               {share.isError && (
                 <Text

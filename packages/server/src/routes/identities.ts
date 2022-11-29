@@ -8,10 +8,7 @@ import {
 } from '@e2esdk/api'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
-import {
-  getPublicIdentities,
-  getPublicIdentity,
-} from '../database/models/identity.js'
+import { getIdentities, getIdentity } from '../database/models/identity.js'
 import type { App } from '../types'
 
 const userIdParams = z.object({
@@ -40,7 +37,7 @@ export default async function identitiesRoutes(app: App) {
       },
     },
     async function getSinglePublicIdentity(req, res) {
-      const identity = await getPublicIdentity(app.db, req.params.userId)
+      const identity = await getIdentity(app.db, req.params.userId)
       if (!identity) {
         throw app.httpErrors.notFound(
           `No identity found for user id ${req.params.userId}`
@@ -66,7 +63,7 @@ export default async function identitiesRoutes(app: App) {
     },
     async function getMultiplePublicIdentities(req, res) {
       const userIds = req.params.userIds.split(',')
-      const identities = await getPublicIdentities(app.db, userIds)
+      const identities = await getIdentities(app.db, userIds)
       return res.send(identities)
     }
   )

@@ -1,7 +1,6 @@
 import { ready, sodium } from '../sodium/sodium'
 import { base64UrlEncode } from './codec'
 import {
-  checkEncryptionPublicKey,
   checkSignaturePublicKey,
   concat,
   ieee754BytesToNumber,
@@ -36,17 +35,6 @@ describe('utils', () => {
     ).toBe(true)
     expect(
       checkSignaturePublicKey(sodium, eve.publicKey, alice.privateKey)
-    ).toBe(false)
-  })
-
-  test('checkEncryptionPublicKey', async () => {
-    const alice = sodium.crypto_box_keypair()
-    const eve = sodium.crypto_box_keypair()
-    expect(
-      checkEncryptionPublicKey(sodium, alice.publicKey, alice.privateKey)
-    ).toBe(true)
-    expect(
-      checkEncryptionPublicKey(sodium, eve.publicKey, alice.privateKey)
     ).toBe(false)
   })
 

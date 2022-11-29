@@ -32,14 +32,11 @@ export function isEncryptable(
 }
 
 /**
- * When receiving one of our own signature public keys from a server,
- * make sure it matches our associated private key.
+ * When receiving separate public & private signature keys,
+ * make sure they match.
  *
- * In Ed25519, the public key is located in the
- * right-most 32 bytes of the private key:
- *
- * @param publicKey The public key received from the outside
- * @param privateKey The associated private key
+ * In Ed25519, the public key is located in the right-most
+ * 32 bytes of the private key.
  */
 export function checkSignaturePublicKey(
   sodium: Sodium,
@@ -48,24 +45,6 @@ export function checkSignaturePublicKey(
 ) {
   const embeddedPublicKey = privateKey.slice(32)
   return sodium.compare(embeddedPublicKey, publicKey) === 0
-}
-
-/**
- * When receiving one of our own encryption public keys from a server,
- * make sure it matches our associated private key.
- *
- * Works on Sodium box key pairs generated with `sodium.crypto_box_keypair()`.
- *
- * @param publicKey The public key received from the outside
- * @param privateKey The associated private key
- */
-export function checkEncryptionPublicKey(
-  sodium: Sodium,
-  publicKey: Uint8Array,
-  privateKey: Uint8Array
-) {
-  const derivedPublicKey = sodium.crypto_scalarmult_base(privateKey)
-  return sodium.compare(derivedPublicKey, publicKey) === 0
 }
 
 /**

@@ -46,13 +46,11 @@ export function useE2ESDKClientIdentity() {
   return identity
 }
 
-export function useE2ESDKClientKeys(
-  indexBy: 'name' | 'nameFingerprint' = 'name'
-) {
+export function useE2ESDKClientKeys() {
   const client = useE2ESDKClient()
   const [keys, setKeys] = React.useState(() => client.keys)
   React.useEffect(() => {
     return client.on('keychainUpdated', () => setKeys(client.keys))
-  }, [client, indexBy])
+  }, [client])
   return keys
 }

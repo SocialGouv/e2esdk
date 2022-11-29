@@ -1,14 +1,12 @@
 #!/usr/bin/env zx
 
 import {
-  encrypt,
-  generateBoxKeyPair,
-  generateSecretBoxCipher,
-  generateSignatureKeyPair,
+  deriveClientIdentity,
   signHash,
   sodium,
   verifySignedHash,
 } from '@e2esdk/crypto'
+import crypto from 'node:crypto'
 
 async function main() {
   await import('zx/globals')
@@ -133,29 +131,21 @@ ${envName('PRIVATE_KEY')}=${privateKey}`)
   }
 
   if (argv._[0] === 'identity') {
-    const personalKey = generateSecretBoxCipher(sodium)
-    const signature = generateSignatureKeyPair(sodium)
-    const sharing = generateBoxKeyPair(sodium)
+    const mainKey = argv.mainKey
+      ? sodium.from_base64(argv.mainKey)
+      : sodium.randombytes_buf(32)
+    const userId = argv.userId ?? crypto.randomUUID()
+    const identity = deriveClientIdentity(sodium, userId, mainKey)
     console.log(
       JSON.stringify(
         {
-          personalKey: sodium.to_base64(personalKey.key),
+          mainKey: sodium.to_base64(mainKey),
+          personalKey: sodium.to_base64(identity.personalKey),
           identity: {
-            userId: argv.userId,
-            sharingPublicKey: sodium.to_base64(sharing.publicKey),
-            sharingPrivateKey: encrypt(
-              sodium,
-              sharing.privateKey,
-              personalKey,
-              'base64'
-            ),
-            signaturePublicKey: sodium.to_base64(signature.publicKey),
-            signaturePrivateKey: encrypt(
-              sodium,
-              signature.privateKey,
-              personalKey,
-              'base64'
-            ),
+            userId,
+            sharingPublicKey: sodium.to_base64(identity.sharing.publicKey),
+            signaturePublicKey: sodium.to_base64(identity.signature.publicKey),
+            proof: identity.proof,
           },
         },
         null,

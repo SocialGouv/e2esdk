@@ -7,9 +7,8 @@ export const TABLE_NAME = 'e2esdk_identities'
 export const identitySchema = z.object({
   userId: z.string(),
   signaturePublicKey: z.string(),
-  signaturePrivateKey: z.string(),
   sharingPublicKey: z.string(),
-  sharingPrivateKey: z.string(),
+  proof: z.string(),
 })
 
 export type IdentitySchema = z.infer<typeof identitySchema>
@@ -21,41 +20,20 @@ export function createIdentity(
   return sql`INSERT INTO ${sql(TABLE_NAME)} ${sql(identity)}`
 }
 
-export async function getOwnIdentity(sql: Sql, userId: string) {
-  const columns = [
-    'sharingPublicKey',
-    'sharingPrivateKey',
-    'signaturePublicKey',
-    'signaturePrivateKey',
-  ] as const
-  type Row = Pick<IdentitySchema, typeof columns[number]>
-  const result: Row[] = await sql`
-    SELECT ${sql(columns)}
-    FROM ${sql(TABLE_NAME)}
-    WHERE user_id = ${userId}
+export async function getIdentity(sql: Sql, userId: string) {
+  const result: IdentitySchema[] = await sql`
+    SELECT *
+    FROM  ${sql(TABLE_NAME)}
+    WHERE ${sql('userId')} = ${userId}
     LIMIT 1
   `
   return getFirst(result)
 }
 
-export async function getPublicIdentity(sql: Sql, userId: string) {
-  const columns = ['userId', 'sharingPublicKey', 'signaturePublicKey'] as const
-  type Row = Pick<IdentitySchema, typeof columns[number]>
-  const result: Row[] = await sql`
-    SELECT ${sql(columns)}
-    FROM ${sql(TABLE_NAME)}
-    WHERE user_id = ${userId}
-    LIMIT 1
-  `
-  return getFirst(result)
-}
-
-export function getPublicIdentities(sql: Sql, userIds: string[]) {
-  const columns = ['userId', 'sharingPublicKey', 'signaturePublicKey'] as const
-  type Row = Pick<IdentitySchema, typeof columns[number]>
-  return sql<Row[]>`
-    SELECT ${sql(columns)}
-    FROM ${sql(TABLE_NAME)}
-    WHERE user_id IN ${sql(userIds)}
+export function getIdentities(sql: Sql, userIds: string[]) {
+  return sql<IdentitySchema[]>`
+    SELECT *
+    FROM  ${sql(TABLE_NAME)}
+    WHERE ${sql('userId')} IN ${sql(userIds)}
   `
 }

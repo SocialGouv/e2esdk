@@ -1,44 +1,48 @@
 import {
+  fingerprintSchema,
   GetKeychainResponseBody,
   GetMultipleIdentitiesResponseBody,
   GetParticipantsResponseBody,
   GetSharedKeysResponseBody,
   GetSingleIdentityResponseBody,
-  loginResponseBody,
+  identitySchema as apiIdentitySchema,
   permissionFlags,
   PermissionFlags,
   PostBanRequestBody,
   PostKeychainItemRequestBody,
   PostPermissionRequestBody,
   PostSharedKeyBody,
+  signedHashSchema,
   SignupRequestBody,
+  sixtyFourBytesBase64Schema,
+  thirtyTwoBytesBase64Schema,
+  timestampSchema,
 } from '@e2esdk/api'
 import type { Optional } from '@e2esdk/core'
 import { isFarFromCurrentTime } from '@e2esdk/core'
-import type { Sodium } from '@e2esdk/crypto'
 import {
   base64UrlDecode,
   base64UrlEncode,
   BoxCipher,
-  checkEncryptionPublicKey,
-  checkSignaturePublicKey,
+  Cipher,
   cipherParser,
   CIPHER_MAX_PADDED_LENGTH,
   decrypt,
+  deriveClientIdentity,
   encodedCiphertextFormatV1,
   encrypt,
   EncryptableJSONDataType,
   fingerprint,
-  generateBoxKeyPair,
-  generateSignatureKeyPair,
   memzeroCipher,
   randomPad,
   SecretBoxCipher,
   serializeCipher,
   signAuth as signClientRequest,
   signHash,
+  Sodium,
   sodium,
   verifyAuth as verifyServerSignature,
+  verifyClientIdentity,
   verifySignedHash,
 } from '@e2esdk/crypto'
 import { LocalStateSync } from 'local-state-sync'
@@ -51,8 +55,8 @@ export type ClientConfig<KeyType = string> = {
   pollingInterval?: number
 }
 
-type Config = Omit<ClientConfig<Key>, 'pollingInterval'> &
-  Required<Pick<ClientConfig<Key>, 'pollingInterval'>>
+type Config = Omit<ClientConfig<Uint8Array>, 'pollingInterval'> &
+  Required<Pick<ClientConfig<Uint8Array>, 'pollingInterval'>>
 
 // --
 
@@ -60,32 +64,33 @@ const stringSchema = z.string()
 
 // --
 
-const keySchema = z.string().transform(base64UrlDecode)
-
-type Key = Uint8Array
+const key32Schema = thirtyTwoBytesBase64Schema.transform(base64UrlDecode)
+const key64Schema = sixtyFourBytesBase64Schema.transform(base64UrlDecode)
 
 // --
 
-const keyPairSchema = z.object({
-  publicKey: keySchema,
-  privateKey: keySchema,
+const boxKeyPairSchema = z.object({
+  publicKey: key32Schema,
+  privateKey: key32Schema,
+})
+
+const signatureKeyPairSchema = z.object({
+  publicKey: key32Schema,
+  privateKey: key64Schema,
 })
 
 // --
 
 const keychainItemSchema = z.object({
   name: z.string(),
-  nameFingerprint: z.string(),
-  payloadFingerprint: z.string(),
+  nameFingerprint: fingerprintSchema,
+  payloadFingerprint: fingerprintSchema,
   cipher: z
     .string()
     .transform(input => cipherParser.parse(JSON.parse(input.trim()))),
-  createdAt: z.string().transform(value => new Date(value)),
-  expiresAt: z
-    .string()
-    .transform(value => new Date(value))
-    .nullable(),
-  sharedBy: z.string().nullable(),
+  createdAt: timestampSchema.transform(value => new Date(value)),
+  expiresAt: timestampSchema.transform(value => new Date(value)).nullable(),
+  sharedBy: apiIdentitySchema.shape.userId.nullable(),
 })
 
 type KeychainItem = z.infer<typeof keychainItemSchema>
@@ -99,7 +104,7 @@ export type KeychainItemMetadata = Pick<
   | 'expiresAt'
   | 'sharedBy'
 > & {
-  algorithm: z.infer<typeof cipherParser>['algorithm']
+  algorithm: Cipher['algorithm']
   publicKey?: string
 }
 
@@ -122,17 +127,20 @@ type Keychain = z.infer<typeof keychainSchema>
 // --
 
 const identitySchema = z.object({
-  userId: z.string(),
-  sharing: keyPairSchema,
-  signature: keyPairSchema,
+  userId: apiIdentitySchema.shape.userId,
+  personalKey: key32Schema,
+  sharing: boxKeyPairSchema,
+  signature: signatureKeyPairSchema,
+  proof: signedHashSchema,
 })
 
 type Identity = z.infer<typeof identitySchema>
 
-export type PublicUserIdentity<KeyType = string> = {
+export type PublicUserIdentity = {
   userId: string
-  signaturePublicKey: KeyType
-  sharingPublicKey: KeyType
+  signaturePublicKey: string
+  sharingPublicKey: string
+  proof: string
 }
 
 // --
@@ -150,7 +158,6 @@ const idleStateSchema = z.object({
 const loadedStateSchema = z.object({
   state: z.literal('loaded'),
   identity: identitySchema,
-  personalKey: keySchema,
   keychain: keychainSchema,
 })
 
@@ -197,24 +204,25 @@ export class Client {
     }
     this.#mitt = mitt()
     this.#sync = new LocalStateSync({
-      encryptionKey: 'E2ESDKDevtoolsLocalStateSyncEncryptionKey01',
+      encryptionKey: 'E2ESDKClientLocalStateSyncEncryptionKey1234',
       namespace: [config.serverURL, config.serverPublicKey].join(':'),
-      onStateUpdated: state => {
-        if (state.state === 'idle') {
+      onStateUpdated: incomingState => {
+        if (incomingState.state === 'idle') {
           this.#clearState()
           return
         }
         const initialize = this.#state.state === 'idle'
-        this.#state = state
+        this.#state = incomingState
         this.#mitt.emit('identityUpdated', this.publicIdentity)
         this.#mitt.emit('keychainUpdated', null)
+        const promiseChain = this.sodium.ready.then(
+          this.#verifySelfIdentity.bind(this)
+        )
         if (initialize) {
-          this.sodium.ready
-            .then(() => this.#loadKeychain())
-            .then(() => {
-              this.#startMessagePolling()
-              return this.#processIncomingSharedKeys()
-            })
+          promiseChain
+            .then(this.#loadKeychain.bind(this))
+            .then(this.#processIncomingSharedKeys.bind(this))
+            .then(this.#startMessagePolling.bind(this))
             .catch(console.error)
         }
       },
@@ -241,43 +249,23 @@ export class Client {
 
   // Auth --
 
-  public async signup(userId: string, personalKey: Uint8Array) {
+  public async signup(userId: string, mainKey: Uint8Array) {
     await this.sodium.ready
     if (this.#state.state !== 'idle') {
       throw new Error(
         'Please log out of your current account before signing up for another one'
       )
     }
-    const identity: Identity = {
-      userId,
-      sharing: generateBoxKeyPair(this.sodium),
-      signature: generateSignatureKeyPair(this.sodium),
-    }
-    const withPersonalKey: SecretBoxCipher = {
-      algorithm: 'secretBox',
-      key: personalKey,
-    }
+    const identity = deriveClientIdentity(this.sodium, userId, mainKey)
     const body: SignupRequestBody = {
       userId,
       signaturePublicKey: this.encode(identity.signature.publicKey),
       sharingPublicKey: this.encode(identity.sharing.publicKey),
-      signaturePrivateKey: encrypt(
-        this.sodium,
-        identity.signature.privateKey,
-        withPersonalKey,
-        'base64'
-      ),
-      sharingPrivateKey: encrypt(
-        this.sodium,
-        identity.sharing.privateKey,
-        withPersonalKey,
-        'base64'
-      ),
+      proof: identity.proof,
     }
     this.#state = {
       state: 'loaded',
       identity,
-      personalKey,
       keychain: new Map(),
     }
     try {
@@ -292,76 +280,20 @@ export class Client {
     }
   }
 
-  public async login(userId: string, personalKey: Uint8Array) {
+  public async login(userId: string, mainKey: Uint8Array) {
     await this.sodium.ready
     this.#clearState()
-    const res = await fetch(`${this.config.serverURL}/v1/login`, {
-      mode: 'cors',
-      cache: 'no-store',
-      credentials: 'omit',
-      referrerPolicy: 'origin',
-      headers: {
-        'content-type': 'application/json',
-        'x-e2esdk-user-id': userId,
-        'x-e2esdk-timestamp': new Date().toISOString(),
-      },
-    })
-    // todo: Error handling
-    // todo: Verify server response AFTER parsing body (requires refactor)
-    const responseBody = loginResponseBody.parse(await res.json())
-    const withPersonalKey: SecretBoxCipher = {
-      algorithm: 'secretBox',
-      key: personalKey,
-    }
-    const identity: Identity = {
-      userId,
-      signature: {
-        publicKey: this.decode(responseBody.signaturePublicKey),
-        privateKey: decrypt(
-          this.sodium,
-          responseBody.signaturePrivateKey,
-          withPersonalKey,
-          'base64'
-        ),
-      },
-      sharing: {
-        publicKey: this.decode(responseBody.sharingPublicKey),
-        privateKey: decrypt(
-          this.sodium,
-          responseBody.sharingPrivateKey,
-          withPersonalKey,
-          'base64'
-        ),
-      },
-    }
-    if (
-      !checkSignaturePublicKey(
-        this.sodium,
-        identity.signature.publicKey,
-        identity.signature.privateKey
-      )
-    ) {
-      throw new Error('Invalid signature key pair')
-    }
-    if (
-      !checkEncryptionPublicKey(
-        this.sodium,
-        identity.sharing.publicKey,
-        identity.sharing.privateKey
-      )
-    ) {
-      throw new Error('Invalid sharing key pair')
-    }
-    this.#startMessagePolling()
+    const identity = deriveClientIdentity(this.sodium, userId, mainKey)
     this.#state = {
       state: 'loaded',
       identity,
-      personalKey,
       keychain: new Map(),
     }
     // Load keychain & incoming shared keys in the background
-    this.#loadKeychain().catch(console.error)
-    this.#processIncomingSharedKeys().catch(console.error)
+    this.#loadKeychain()
+      .then(() => this.#processIncomingSharedKeys())
+      .then(() => this.#startMessagePolling())
+      .catch(console.error)
     this.#mitt.emit('identityUpdated', this.publicIdentity)
     this.#sync.setState(this.#state)
     return this.publicIdentity
@@ -517,6 +449,7 @@ export class Client {
       fromSignaturePublicKey: this.encode(
         this.#state.identity.signature.publicKey
       ),
+      fromProof: this.#state.identity.proof,
       toUserId: to.userId,
       createdAt: createdAtISO,
       expiresAt: expiresAtISO,
@@ -545,7 +478,8 @@ export class Client {
           this.decode(nameFingerprint),
           this.decode(payloadFingerprint),
           this.#state.identity.sharing.publicKey,
-          this.#state.identity.signature.publicKey
+          this.#state.identity.signature.publicKey,
+          this.decode(this.#state.identity.proof)
         )
       ),
     }
@@ -583,11 +517,12 @@ export class Client {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked')
     }
-    return this.#encodeIdentity({
+    return {
       userId: this.#state.identity.userId,
-      sharingPublicKey: this.#state.identity.sharing.publicKey,
-      signaturePublicKey: this.#state.identity.signature.publicKey,
-    })
+      sharingPublicKey: this.encode(this.#state.identity.sharing.publicKey),
+      signaturePublicKey: this.encode(this.#state.identity.signature.publicKey),
+      proof: this.#state.identity.proof,
+    }
   }
 
   public async getUserIdentity(
@@ -595,17 +530,21 @@ export class Client {
   ): Promise<PublicUserIdentity | null> {
     await this.sodium.ready
     try {
-      const res = await this.#apiCall<GetSingleIdentityResponseBody>(
+      const identity = await this.#apiCall<GetSingleIdentityResponseBody>(
         'GET',
         `/v1/identity/${userId}`
       )
-      if (!res) {
+      if (!identity) {
         return null
       }
-      if (res.userId !== userId) {
+      if (identity.userId !== userId) {
         throw new Error('Mismatching user IDs')
       }
-      return res
+      if (!verifyClientIdentity(this.sodium, identity)) {
+        console.error('Failed to verify user identity: ', identity)
+        return null
+      }
+      return identity
     } catch (error) {
       console.error(error)
       return null
@@ -617,10 +556,17 @@ export class Client {
   ): Promise<PublicUserIdentity[]> {
     await this.sodium.ready
     try {
-      return this.#apiCall<GetMultipleIdentitiesResponseBody>(
+      const identities = await this.#apiCall<GetMultipleIdentitiesResponseBody>(
         'GET',
         `/v1/identities/${userIds.join(',')}`
       )
+      return identities.filter(identity => {
+        if (verifyClientIdentity(this.sodium, identity)) {
+          return true
+        }
+        console.warn('Failed to verify user identity (dropping): ', identity)
+        return false
+      })
     } catch (error) {
       console.error(error)
       return []
@@ -633,10 +579,17 @@ export class Client {
   ) {
     await this.sodium.ready
     try {
-      return this.#apiCall<GetParticipantsResponseBody>(
+      const participants = await this.#apiCall<GetParticipantsResponseBody>(
         'GET',
         `/v1/participants/${nameFingerprint}/${payloadFingerprint}`
       )
+      return participants.filter(participant => {
+        if (verifyClientIdentity(this.sodium, participant)) {
+          return true
+        }
+        console.warn('Failed to verify user identity (dropping): ', participant)
+        return false
+      })
     } catch (error) {
       console.error(error)
       return []
@@ -734,6 +687,23 @@ export class Client {
 
   // Internal APIs --
 
+  #verifySelfIdentity() {
+    if (this.#state.state !== 'loaded') {
+      return
+    }
+    const verified = verifyClientIdentity(this.sodium, {
+      userId: this.#state.identity.userId,
+      sharingPublicKey: this.encode(this.#state.identity.sharing.publicKey),
+      signaturePublicKey: this.encode(this.#state.identity.signature.publicKey),
+      proof: this.#state.identity.proof,
+    })
+    if (verified) {
+      return
+    }
+    console.error('Failed to verify self identity, logging out')
+    this.logout()
+  }
+
   async #loadKeychain() {
     await this.sodium.ready
     if (this.#state.state !== 'loaded') {
@@ -744,6 +714,7 @@ export class Client {
       '/v1/keychain'
     )
     const withPersonalKey = this.#usePersonalKey()
+    const keychain = new Map<string, KeychainItem[]>()
     for (const lockedItem of res) {
       if (lockedItem.ownerId !== this.#state.identity.userId) {
         console.warn('Got a key belonging to someone else', lockedItem)
@@ -806,10 +777,17 @@ export class Client {
         console.warn('Invalid payload fingerprint', lockedItem)
         continue
       }
-      addToKeychain(this.#state.keychain, item)
-      this.#mitt.emit('keychainUpdated', null)
-      this.#sync.setState(this.#state)
+      addToKeychain(keychain, item)
     }
+    // Clear previous keychain
+    this.#state.keychain.forEach(items =>
+      items.forEach(item => memzeroCipher(this.sodium, item.cipher))
+    )
+    this.#state.keychain.clear()
+    // And replace with new one
+    this.#state.keychain = keychain
+    this.#sync.setState(this.#state)
+    this.#mitt.emit('keychainUpdated', null)
   }
 
   async #processIncomingSharedKeys() {
@@ -844,10 +822,21 @@ export class Client {
             this.decode(sharedKey.nameFingerprint),
             this.decode(sharedKey.payloadFingerprint),
             this.decode(sharedKey.fromSharingPublicKey),
-            this.decode(sharedKey.fromSignaturePublicKey)
+            this.decode(sharedKey.fromSignaturePublicKey),
+            this.decode(sharedKey.fromProof)
           )
         ) {
           throw new Error('Invalid shared key signature')
+        }
+        if (
+          !verifyClientIdentity(this.sodium, {
+            userId: sharedKey.fromUserId,
+            sharingPublicKey: sharedKey.fromSharingPublicKey,
+            signaturePublicKey: sharedKey.fromSignaturePublicKey,
+            proof: sharedKey.fromProof,
+          })
+        ) {
+          throw new Error('Could not verify source of incoming shared key')
         }
         const withSharedSecret: BoxCipher = {
           algorithm: 'box',
@@ -1024,17 +1013,7 @@ export class Client {
     }
     return {
       algorithm: 'secretBox',
-      key: this.#state.personalKey,
-    }
-  }
-
-  #encodeIdentity(
-    identity: PublicUserIdentity<Key>
-  ): PublicUserIdentity<string> {
-    return {
-      userId: identity.userId,
-      sharingPublicKey: this.encode(identity.sharingPublicKey),
-      signaturePublicKey: this.encode(identity.signaturePublicKey),
+      key: this.#state.identity.personalKey,
     }
   }
 
@@ -1046,7 +1025,7 @@ export class Client {
     if (this.#state.state !== 'loaded') {
       return
     }
-    this.sodium.memzero(this.#state.personalKey)
+    this.sodium.memzero(this.#state.identity.personalKey)
     this.sodium.memzero(this.#state.identity.sharing.privateKey)
     this.sodium.memzero(this.#state.identity.signature.privateKey)
     this.#state.keychain.forEach(items =>
@@ -1087,6 +1066,7 @@ function stateSerializer(state: State) {
     state: state.state,
     identity: {
       userId: state.identity.userId,
+      personalKey: base64UrlEncode(state.identity.personalKey),
       sharing: {
         publicKey: base64UrlEncode(state.identity.sharing.publicKey),
         privateKey: base64UrlEncode(state.identity.sharing.privateKey),
@@ -1095,8 +1075,8 @@ function stateSerializer(state: State) {
         publicKey: base64UrlEncode(state.identity.signature.publicKey),
         privateKey: base64UrlEncode(state.identity.signature.privateKey),
       },
+      proof: state.identity.proof,
     },
-    personalKey: base64UrlEncode(state.personalKey),
     keychain: Array.from(state.keychain.values())
       .flat()
       .map(item => ({

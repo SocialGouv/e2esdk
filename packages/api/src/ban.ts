@@ -1,9 +1,9 @@
 import { z } from 'zod'
 import { fingerprintSchema } from './schemas/encodings'
-import { publicIdentitySchema } from './schemas/identity'
+import { identitySchema } from './schemas/identity'
 
 export const postBanRequestBody = z.object({
-  userId: publicIdentitySchema.shape.userId,
+  userId: identitySchema.shape.userId,
   nameFingerprint: fingerprintSchema,
 })
 

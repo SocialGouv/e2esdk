@@ -21,6 +21,7 @@ export default async function signupRoutes(app: App) {
             userId: req.body.userId,
             sharingPublicKey: req.body.sharingPublicKey,
             signaturePublicKey: req.body.signaturePublicKey,
+            proof: req.body.proof,
           }
         },
       }),
@@ -36,6 +37,7 @@ export default async function signupRoutes(app: App) {
       },
     },
     async function signup(req, res) {
+      // todo: Handle insert conflicts and return 409
       await createIdentity(app.db, req.body)
       return res.status(201).send()
     }

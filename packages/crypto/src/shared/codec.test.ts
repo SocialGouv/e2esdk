@@ -4,7 +4,7 @@ import { base64UrlDecode, base64UrlEncode } from './codec'
 beforeAll(() => ready)
 
 describe('codec', () => {
-  test.skip.each(Array.from({ length: 32 }, (_, i) => i))(
+  test.each(Array.from({ length: 32 }, (_, i) => i))(
     'base64url (buffer size %d)',
     bufferSize => {
       const buffer = sodium.randombytes_buf(bufferSize)

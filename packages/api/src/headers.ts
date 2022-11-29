@@ -1,9 +1,9 @@
 import { z } from 'zod'
 import { signedHashSchema, timestampSchema } from './schemas/encodings'
-import { publicIdentitySchema } from './schemas/identity'
+import { identitySchema } from './schemas/identity'
 
 export const publicRouteHeaders = z.object({
-  'x-e2esdk-user-id': publicIdentitySchema.shape.userId,
+  'x-e2esdk-user-id': identitySchema.shape.userId,
   'x-e2esdk-timestamp': timestampSchema,
 })
 
