@@ -13,7 +13,7 @@ export function generateMainKey(sodium: Sodium) {
 
 type ClientIdentity = {
   userId: string
-  personalKey: Uint8Array
+  keychainBaseKey: Uint8Array
   sharing: Omit<KeyPair, 'keyType'>
   signature: Omit<KeyPair, 'keyType'>
   proof: string
@@ -29,7 +29,8 @@ const KDF_DOMAIN = 'e2esdkid'
  * Let's start from the end. We want to produce:
  * - An Ed25519 signature key pair
  * - An X25519 encryption (box) key pair
- * - A XChaCha20-Poly1305 (secretbox) symmetric key
+ * - A base key to be derived into individual XChaCha20-Poly1305 (secretbox) keys
+ *   to encrypt keychain items.
  *
  * Those have to be derived deterministically from the input parameters,
  * userId and mainKey.
@@ -80,8 +81,8 @@ export function deriveClientIdentity(
     KDF_DOMAIN,
     intermediateKey
   )
-  const personalKey = sodium.crypto_kdf_derive_from_key(
-    sodium.crypto_secretbox_KEYBYTES,
+  const keychainBaseKey = sodium.crypto_kdf_derive_from_key(
+    sodium.crypto_kdf_KEYBYTES,
     2,
     KDF_DOMAIN,
     intermediateKey
@@ -94,7 +95,7 @@ export function deriveClientIdentity(
   sodium.memzero(sharingSeed)
   return {
     userId,
-    personalKey,
+    keychainBaseKey,
     sharing: {
       publicKey: sharing.publicKey,
       privateKey: sharing.privateKey,

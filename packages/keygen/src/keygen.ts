@@ -144,7 +144,7 @@ ${envName('PRIVATE_KEY')}=${privateKey}`)
       JSON.stringify(
         {
           mainKey: sodium.to_base64(mainKey),
-          personalKey: sodium.to_base64(identity.personalKey),
+          keychainBaseKey: sodium.to_base64(identity.keychainBaseKey),
           identity: {
             userId,
             sharingPublicKey: sodium.to_base64(identity.sharing.publicKey),

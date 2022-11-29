@@ -8,6 +8,7 @@ export const keychainItemSchema = z.object({
   addedAt: z.string(),
   createdAt: z.string(),
   expiresAt: z.string().nullable(),
+  subkeyIndex: z.number().int(),
   name: z.string(),
   payload: z.string(),
   nameFingerprint: z.string(),
@@ -54,7 +55,7 @@ export async function getKeychainItem(
     WHERE ${sql('ownerId')} = ${ownerId}
     -- Keep payloadFingerprint first for (theoretical) index performance
     AND ${sql('payloadFingerprint')} = ${payloadFingerprint}
-    AND ${sql('nameFingerprint')} = ${nameFingerprint}
+    AND ${sql('nameFingerprint')}    = ${nameFingerprint}
   `
   return getFirst(results)
 }

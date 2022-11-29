@@ -9,7 +9,7 @@
 export const SEED_USERS = [
   {
     mainKey: 'jcef-s6GavZu_Pge5MzQW7e1R_kLgIYLTbCtTi0X8uA',
-    personalKey: 'KFiLNV_9Ikur9Toyb23CVBjhJmnsJxeT4BxtqRXIpgA',
+    keychainBaseKey: 'KFiLNV_9Ikur9Toyb23CVBjhJmnsJxeT4BxtqRXIpgA',
     identity: {
       userId: 'alice',
       sharingPublicKey: '62PV0lAmVeVhcAZRRHUaAioMYiRyXCBwR2-r_pQQPzo',
@@ -20,7 +20,7 @@ export const SEED_USERS = [
   },
   {
     mainKey: '7d-0d8n5DDHbCpA46pGVbz9_Fdy3QEDC9AuPBbloygM',
-    personalKey: 'vslE3yRI3DCteGogEv-22q9cfwUkKiBvQgVpFtMDfYA',
+    keychainBaseKey: 'vslE3yRI3DCteGogEv-22q9cfwUkKiBvQgVpFtMDfYA',
     identity: {
       userId: 'bob',
       sharingPublicKey: 'dRR6RHSlP4zCAXq64ruXSKFwFYjqlVxQbimPovyc2iU',
@@ -31,7 +31,7 @@ export const SEED_USERS = [
   },
   {
     mainKey: 'IihRh3WbEp8rPxC13WjPNC2Droqqc20Zv45O_4eqerQ',
-    personalKey: 'bfL9TFyuuEZkbCA0dqATsGIPAWTMeykLmkqhp-jsWW8',
+    keychainBaseKey: 'bfL9TFyuuEZkbCA0dqATsGIPAWTMeykLmkqhp-jsWW8',
     identity: {
       userId: 'carol',
       sharingPublicKey: 'i45EWyYkTfkHRbBwd1KwIUKXBZaGPsr09ZZl6eSiH34',
@@ -42,7 +42,7 @@ export const SEED_USERS = [
   },
   {
     mainKey: 'bkpg1y2AvkGP-M7P44YGm7ZWUexRSBR9qoYgYAGaW4Y',
-    personalKey: 'FTHtdqz7uejOfrMb5PzMMjMupKLPHZqy527TWlO4NXY',
+    keychainBaseKey: 'FTHtdqz7uejOfrMb5PzMMjMupKLPHZqy527TWlO4NXY',
     identity: {
       userId: 'daniel',
       sharingPublicKey: '5klv5Ik1M2ZuQxzbHO70XIJ1dqeQMdiS7Hl1C7nvzCQ',

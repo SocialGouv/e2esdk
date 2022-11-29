@@ -2,13 +2,10 @@ import type { Uint8ArrayOutputFormat } from 'libsodium-wrappers'
 import {
   boolToByte,
   byteToBool,
-  concat,
   ieee754BytesToNumber,
-  isEncryptable,
-  isUint8Array,
   numberToIEEE754Bytes,
-  split,
-} from '../shared/utils'
+} from '../shared/codec'
+import { concat, isEncryptable, isUint8Array, split } from '../shared/utils'
 import type { Cipher } from './ciphers'
 import type { Sodium } from './sodium'
 

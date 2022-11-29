@@ -1,3 +1,5 @@
+import { numberToUint32LE } from '../shared/codec'
+
 /**
  * A manifest is a buffer containing the number of elements passed,
  * and their lengths.
@@ -24,11 +26,4 @@ export function generateManifest(items: Uint8Array[]) {
     manifest.set(numberToUint32LE(item.byteLength), 1 + index * 4)
   })
   return manifest
-}
-
-function numberToUint32LE(input: number) {
-  const buffer = new ArrayBuffer(4)
-  const u32 = new Uint32Array(buffer)
-  u32[0] = input
-  return new Uint8Array(buffer)
 }

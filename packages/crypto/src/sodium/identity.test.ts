@@ -41,7 +41,7 @@ describe('identity', () => {
     const i1 = deriveClientIdentity(sodium, 'foo', mainKey)
     const i2 = deriveClientIdentity(sodium, 'bar', mainKey)
     expect(i1.proof).not.toEqual(i2.proof)
-    expect(i1.personalKey).not.toEqual(i2.personalKey)
+    expect(i1.keychainBaseKey).not.toEqual(i2.keychainBaseKey)
     expect(i1.sharing.publicKey).not.toEqual(i2.sharing.publicKey)
     expect(i1.sharing.privateKey).not.toEqual(i2.sharing.privateKey)
     expect(i1.signature.publicKey).not.toEqual(i2.signature.publicKey)
@@ -91,10 +91,21 @@ describe('identity', () => {
     expectTampering(tampered)
   })
 
-  test('personal key is not part of the proof', () => {
+  test('keychain key is not part of the proof', () => {
     const mainKey = generateMainKey(sodium)
     const tampered = deriveClientIdentity(sodium, 'foo', mainKey)
-    tampered.personalKey = sodium.crypto_secretbox_keygen()
+    tampered.keychainBaseKey = sodium.randombytes_buf(
+      tampered.keychainBaseKey.byteLength
+    )
     expect(verifyClientIdentity(sodium, serializeIdentity(tampered))).toBe(true)
+  })
+})
+
+describe('sodium.kdf', () => {
+  test('changing the context with the same subkey ID yields different subkeys', () => {
+    const baseKey = sodium.crypto_kdf_keygen()
+    const sk1 = sodium.crypto_kdf_derive_from_key(32, 0, 'baadf00d', baseKey)
+    const sk2 = sodium.crypto_kdf_derive_from_key(32, 0, 'cafecafe', baseKey)
+    expect(sk1).not.toEqual(sk2)
   })
 })

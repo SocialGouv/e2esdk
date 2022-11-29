@@ -12,6 +12,7 @@ CREATE TABLE e2esdk_keychain_items (
   added_at                    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   created_at                  TIMESTAMP WITH TIME ZONE NOT NULL,
   expires_at                  TIMESTAMP WITH TIME ZONE,
+  subkey_index                INTEGER NOT NULL,
   name                        TEXT UNIQUE NOT NULL, -- encrypted
   payload                     TEXT UNIQUE NOT NULL, -- encrypted
   name_fingerprint            VARCHAR(128) NOT NULL,

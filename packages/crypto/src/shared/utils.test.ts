@@ -1,13 +1,5 @@
 import { ready, sodium } from '../sodium/sodium'
-import { base64UrlEncode } from './codec'
-import {
-  checkSignaturePublicKey,
-  concat,
-  ieee754BytesToNumber,
-  numberToIEEE754Bytes,
-  randomPad,
-  split,
-} from './utils'
+import { checkSignaturePublicKey, concat, randomPad, split } from './utils'
 
 beforeAll(() => ready)
 
@@ -67,22 +59,5 @@ describe('utils', () => {
         expect(padLeft + padRight).toEqual(padLength)
       }
     )
-  })
-
-  describe('number <-> IEEE754 bytes', () => {
-    test('NaN', () => {
-      expect(base64UrlEncode(numberToIEEE754Bytes(NaN))).toEqual('AAAAAAAA-H8')
-      expect(ieee754BytesToNumber(numberToIEEE754Bytes(NaN))).toBeNaN()
-    })
-    test('Denormal', () => {
-      expect(ieee754BytesToNumber(numberToIEEE754Bytes(0.1 + 0.2))).toEqual(
-        0.30000000000000004
-      )
-    })
-    test('Large numbers', () => {
-      expect(ieee754BytesToNumber(numberToIEEE754Bytes(1234567890))).toEqual(
-        1234567890
-      )
-    })
   })
 })

@@ -16,7 +16,7 @@ import {
   SignupRequestBody,
   sixtyFourBytesBase64Schema,
   thirtyTwoBytesBase64Schema,
-  timestampSchema,
+  timestampSchema
 } from '@e2esdk/api'
 import type { Optional } from '@e2esdk/core'
 import { isFarFromCurrentTime } from '@e2esdk/core'
@@ -34,7 +34,7 @@ import {
   EncryptableJSONDataType,
   fingerprint,
   memzeroCipher,
-  multipartSignature,
+  multipartSignature, numberToUint32LE,
   randomPad,
   SecretBoxCipher,
   serializeCipher,
@@ -43,7 +43,7 @@ import {
   sodium,
   verifyAuth as verifyServerSignature,
   verifyClientIdentity,
-  verifyMultipartSignature,
+  verifyMultipartSignature
 } from '@e2esdk/crypto'
 import { LocalStateSync } from 'local-state-sync'
 import mitt, { Emitter } from 'mitt'
@@ -128,7 +128,7 @@ type Keychain = z.infer<typeof keychainSchema>
 
 const identitySchema = z.object({
   userId: apiIdentitySchema.shape.userId,
-  personalKey: key32Schema,
+  keychainBaseKey: key32Schema,
   sharing: boxKeyPairSchema,
   signature: signatureKeyPairSchema,
   proof: signedHashSchema,
@@ -335,7 +335,8 @@ export class Client {
         throw new Error('This key is already in your keychain')
       }
     }
-    const withPersonalKey = this.#usePersonalKey()
+    const subkeyIndex = this.sodium.randombytes_random() & 0x7fffff // Make it unsigned
+    const { nameCipher, payloadCipher } = this.#deriveKeychainKeys(subkeyIndex)
     const payloadFingerprint = fingerprint(this.sodium, serializedCipher)
     const createdAtISO = createdAt.toISOString()
     const expiresAtISO = expiresAt?.toISOString() ?? null
@@ -344,16 +345,12 @@ export class Client {
       sharedBy,
       createdAt: createdAtISO,
       expiresAt: expiresAtISO,
-      name: encrypt(
-        this.sodium,
-        name,
-        withPersonalKey,
-        encodedCiphertextFormatV1
-      ),
+      subkeyIndex,
+      name: encrypt(this.sodium, name, nameCipher, encodedCiphertextFormatV1),
       payload: encrypt(
         this.sodium,
         randomPad(serializedCipher, CIPHER_MAX_PADDED_LENGTH),
-        withPersonalKey,
+        payloadCipher,
         encodedCiphertextFormatV1
       ),
       nameFingerprint,
@@ -366,6 +363,7 @@ export class Client {
           this.sodium.from_string(sharedBy ?? ''),
           this.sodium.from_string(createdAtISO),
           this.sodium.from_string(expiresAtISO ?? ''),
+          numberToUint32LE(subkeyIndex),
           this.sodium.from_base64(nameFingerprint),
           this.sodium.from_base64(payloadFingerprint)
         )
@@ -713,7 +711,6 @@ export class Client {
       'GET',
       '/v1/keychain'
     )
-    const withPersonalKey = this.#usePersonalKey()
     const keychain = new Map<string, KeychainItem[]>()
     for (const lockedItem of res) {
       if (lockedItem.ownerId !== this.#state.identity.userId) {
@@ -729,6 +726,7 @@ export class Client {
           this.sodium.from_string(lockedItem.sharedBy ?? ''),
           this.sodium.from_string(lockedItem.createdAt),
           this.sodium.from_string(lockedItem.expiresAt ?? ''),
+          numberToUint32LE(lockedItem.subkeyIndex),
           this.sodium.from_base64(lockedItem.nameFingerprint),
           this.sodium.from_base64(lockedItem.payloadFingerprint)
         )
@@ -736,13 +734,17 @@ export class Client {
         console.warn('Invalid keychain entry detected:', lockedItem)
         continue
       }
+      const { nameCipher, payloadCipher } = this.#deriveKeychainKeys(
+        lockedItem.subkeyIndex
+      )
+
       // todo: Decryption error handling
       const item: KeychainItem = {
         name: stringSchema.parse(
           decrypt(
             this.sodium,
             lockedItem.name,
-            withPersonalKey,
+            nameCipher,
             encodedCiphertextFormatV1
           )
         ),
@@ -755,7 +757,7 @@ export class Client {
                 decrypt(
                   this.sodium,
                   lockedItem.payload,
-                  withPersonalKey,
+                  payloadCipher,
                   encodedCiphertextFormatV1
                 )
               )
@@ -1007,13 +1009,31 @@ export class Client {
 
   // --
 
-  #usePersonalKey(): SecretBoxCipher {
+  #deriveKeychainKeys(subkeyIndex: number) {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked')
     }
-    return {
+    const nameCipher: SecretBoxCipher = {
       algorithm: 'secretBox',
-      key: this.#state.identity.personalKey,
+      key: this.sodium.crypto_kdf_derive_from_key(
+        sodium.crypto_secretbox_KEYBYTES,
+        subkeyIndex,
+        'nameSubK',
+        this.#state.identity.keychainBaseKey
+      ),
+    }
+    const payloadCipher: SecretBoxCipher = {
+      algorithm: 'secretBox',
+      key: this.sodium.crypto_kdf_derive_from_key(
+        sodium.crypto_secretbox_KEYBYTES,
+        subkeyIndex,
+        'pyldSubK',
+        this.#state.identity.keychainBaseKey
+      ),
+    }
+    return {
+      nameCipher,
+      payloadCipher,
     }
   }
 
@@ -1025,7 +1045,7 @@ export class Client {
     if (this.#state.state !== 'loaded') {
       return
     }
-    this.sodium.memzero(this.#state.identity.personalKey)
+    this.sodium.memzero(this.#state.identity.keychainBaseKey)
     this.sodium.memzero(this.#state.identity.sharing.privateKey)
     this.sodium.memzero(this.#state.identity.signature.privateKey)
     this.#state.keychain.forEach(items =>
@@ -1066,7 +1086,7 @@ function stateSerializer(state: State) {
     state: state.state,
     identity: {
       userId: state.identity.userId,
-      personalKey: base64UrlEncode(state.identity.personalKey),
+      keychainBaseKey: base64UrlEncode(state.identity.keychainBaseKey),
       sharing: {
         publicKey: base64UrlEncode(state.identity.sharing.publicKey),
         privateKey: base64UrlEncode(state.identity.sharing.privateKey),

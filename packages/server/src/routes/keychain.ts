@@ -4,18 +4,18 @@ import {
   postKeychainItemRequestBody,
   PostKeychainItemRequestBody,
   publicKeyAuthHeaders,
-  PublicKeyAuthHeaders,
+  PublicKeyAuthHeaders
 } from '@e2esdk/api'
-import { verifyMultipartSignature } from '@e2esdk/crypto'
+import { numberToUint32LE, verifyMultipartSignature } from '@e2esdk/crypto'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import {
   getKeyNameParticipants,
   getOwnKeychainItems,
-  storeKeychainItem,
+  storeKeychainItem
 } from '../database/models/keychain.js'
 import {
   createPermission,
-  getPermission,
+  getPermission
 } from '../database/models/permissions.js'
 import { deleteSharedKey, getSharedKey } from '../database/models/sharedKey.js'
 import type { App } from '../types'
@@ -61,6 +61,7 @@ export default async function keychainRoutes(app: App) {
           app.sodium.from_string(req.body.sharedBy ?? ''),
           app.sodium.from_string(req.body.createdAt),
           app.sodium.from_string(req.body.expiresAt ?? ''),
+          numberToUint32LE(req.body.subkeyIndex),
           app.sodium.from_base64(req.body.nameFingerprint),
           app.sodium.from_base64(req.body.payloadFingerprint)
         )

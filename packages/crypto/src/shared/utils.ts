@@ -75,33 +75,3 @@ export function randomPad(
     .padStart(outputLength - padEnd, paddingChar)
     .padEnd(outputLength, paddingChar)
 }
-
-export function numberToIEEE754Bytes(input: number) {
-  const buffer = new ArrayBuffer(8)
-  const f64 = new Float64Array(buffer)
-  f64[0] = input
-  return new Uint8Array(buffer)
-}
-
-export function ieee754BytesToNumber(bytes: Uint8Array) {
-  if (bytes.byteLength !== 8) {
-    return NaN
-  }
-  const f64 = new Float64Array(bytes.buffer)
-  return f64[0]
-}
-
-export function boolToByte(input: boolean) {
-  const byte = new Uint8Array(1)
-  crypto.getRandomValues(byte)
-  if (input) {
-    byte[0] |= 0x01 // set LSB
-  } else {
-    byte[0] &= 0xfe // clear LSB
-  }
-  return byte
-}
-
-export function byteToBool(byte: Uint8Array) {
-  return Boolean(byte[0] & 0x01)
-}

@@ -1,7 +1,10 @@
 import { hash as blake2b } from '@stablelib/blake2b'
 import tweetnacl from 'tweetnacl'
-import { base64UrlEncode } from './shared/codec'
-import { boolToByte, numberToIEEE754Bytes } from './shared/utils'
+import {
+  base64UrlEncode,
+  boolToByte,
+  numberToIEEE754Bytes,
+} from './shared/codec'
 
 // --
 

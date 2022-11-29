@@ -10,6 +10,7 @@ import { identitySchema } from './schemas/identity'
 const keychainItemSchema = z.object({
   createdAt: timestampSchema,
   expiresAt: timestampSchema.nullable(),
+  subkeyIndex: z.number().int(),
   name: secretBoxCiphertextV1Schema,
   payload: secretBoxCiphertextV1Schema,
   nameFingerprint: fingerprintSchema,
