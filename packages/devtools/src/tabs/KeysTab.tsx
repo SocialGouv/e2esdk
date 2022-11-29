@@ -16,6 +16,8 @@ import {
   IconButtonProps,
   IconProps,
   Input,
+  InputGroup,
+  InputRightElement,
   Popover,
   PopoverArrow,
   PopoverBody,
@@ -35,6 +37,7 @@ import {
   Text,
   Th,
   Thead,
+  Tooltip,
   Tr,
   useDisclosure,
 } from '@chakra-ui/react'
@@ -63,6 +66,7 @@ import {
   FiInbox,
   FiKey,
   FiPlusCircle,
+  FiRefreshCw,
   FiRotateCw,
   FiShare2,
   FiShuffle,
@@ -281,7 +285,26 @@ const CreateKeyPanel: React.FC<CreateKeyPanelProps> = ({
       <Stack spacing={4} px={4}>
         <FormControl>
           <FormLabel>Name</FormLabel>
-          <Input value={name} onChange={e => setName(e.target.value)} />
+          <InputGroup>
+            <Input value={name} onChange={e => setName(e.target.value)} />
+            <InputRightElement>
+              <Tooltip
+                label="Generate random UUIDv4"
+                portalProps={{
+                  containerRef: usePortalRef(),
+                }}
+              >
+                <IconButton
+                  aria-label="Generate random UUIDv4"
+                  icon={<FiRefreshCw />}
+                  variant="ghost"
+                  rounded="full"
+                  size="sm"
+                  onClick={() => setName(crypto.randomUUID())}
+                />
+              </Tooltip>
+            </InputRightElement>
+          </InputGroup>
           <FormHelperText>What will the key be used for?</FormHelperText>
         </FormControl>
         <FormControl>

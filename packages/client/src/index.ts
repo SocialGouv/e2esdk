@@ -34,16 +34,16 @@ import {
   EncryptableJSONDataType,
   fingerprint,
   memzeroCipher,
+  multipartSignature,
   randomPad,
   SecretBoxCipher,
   serializeCipher,
   signAuth as signClientRequest,
-  signHash,
   Sodium,
   sodium,
   verifyAuth as verifyServerSignature,
   verifyClientIdentity,
-  verifySignedHash,
+  verifyMultipartSignature,
 } from '@e2esdk/crypto'
 import { LocalStateSync } from 'local-state-sync'
 import mitt, { Emitter } from 'mitt'
@@ -359,7 +359,7 @@ export class Client {
       nameFingerprint,
       payloadFingerprint,
       signature: this.encode(
-        signHash(
+        multipartSignature(
           this.sodium,
           this.#state.identity.signature.privateKey,
           this.sodium.from_string(this.#state.identity.userId),
@@ -468,7 +468,7 @@ export class Client {
       nameFingerprint,
       payloadFingerprint,
       signature: this.encode(
-        signHash(
+        multipartSignature(
           this.sodium,
           this.#state.identity.signature.privateKey,
           this.sodium.from_string(this.#state.identity.userId),
@@ -721,7 +721,7 @@ export class Client {
         continue
       }
       if (
-        !verifySignedHash(
+        !verifyMultipartSignature(
           this.sodium,
           this.#state.identity.signature.publicKey,
           this.decode(lockedItem.signature),
@@ -811,7 +811,7 @@ export class Client {
           throw new Error("Got a shared key that doesn't belong to us")
         }
         if (
-          !verifySignedHash(
+          !verifyMultipartSignature(
             this.sodium,
             this.decode(sharedKey.fromSignaturePublicKey),
             this.decode(sharedKey.signature),

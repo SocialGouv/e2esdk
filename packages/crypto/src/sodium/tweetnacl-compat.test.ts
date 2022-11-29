@@ -6,7 +6,7 @@ import { ready, sodium } from './sodium'
 
 beforeAll(() => ready)
 
-describe('crypto/tweetnacl-compat', () => {
+describe('tweetnacl-compat', () => {
   test('box', () => {
     const nonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES)
     const cipher = _generateBoxCipher(sodium, nonce)

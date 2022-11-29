@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url)
 
 beforeAll(() => ready)
 
-describe('crypto/files', () => {
+describe('files', () => {
   test('encrypt / decrypt your own source code', async () => {
     const fileContent = new Uint8Array(await fs.readFile(__filename))
     const blob: any = new Blob([fileContent])

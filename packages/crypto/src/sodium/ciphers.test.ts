@@ -44,7 +44,7 @@ export function _generateSecretBoxCipher(
 
 beforeAll(() => ready)
 
-describe('crypto/ciphers', () => {
+describe('ciphers', () => {
   test('CIPHER_MAX_PADDED_LENGTH', () => {
     const boxKeyPair = generateBoxKeyPair(sodium)
     const a = generateBoxCipher(boxKeyPair.publicKey, boxKeyPair.privateKey)

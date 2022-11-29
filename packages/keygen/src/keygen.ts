@@ -2,9 +2,9 @@
 
 import {
   deriveClientIdentity,
-  signHash,
+  multipartSignature,
   sodium,
-  verifySignedHash,
+  verifyMultipartSignature,
 } from '@e2esdk/crypto'
 import crypto from 'node:crypto'
 
@@ -92,8 +92,12 @@ ${envName('PRIVATE_KEY')}=${privateKey}`)
         'base64'
       )
       const input = sodium.randombytes_buf(32)
-      const signature = signHash(sodium, sodium.from_base64(privateKey), input)
-      const verified = verifySignedHash(
+      const signature = multipartSignature(
+        sodium,
+        sodium.from_base64(privateKey),
+        input
+      )
+      const verified = verifyMultipartSignature(
         sodium,
         sodium.from_base64(publicKey),
         signature,
