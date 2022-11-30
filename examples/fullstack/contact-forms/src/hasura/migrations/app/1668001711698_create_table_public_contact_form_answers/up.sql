@@ -1,0 +1,1 @@
+CREATE TABLE "public"."contact_form_answers" ("id" serial NOT NULL, "created_at" timestamptz NOT NULL DEFAULT now(), "first_name" text NOT NULL, "last_name" text NOT NULL, "age" text, "email" Text NOT NULL, "phone_number" text, "contact_me" text NOT NULL, "title" text NOT NULL, "message" Text NOT NULL, "response_bucket_id" text NOT NULL, PRIMARY KEY ("id") );

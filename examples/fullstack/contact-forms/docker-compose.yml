@@ -1,0 +1,81 @@
+version: '3'
+
+name: e2esdk-examples-contact-forms
+
+
+services:
+  db-app:
+    image: postgres:14.1
+    ports:
+      - '4001:5432'
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=app
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 1s
+      start_period: 3s
+      retries: 50
+
+  hasura:
+    build: ./src/hasura
+    env_file: ./src/hasura/.env
+    restart: unless-stopped
+    ports:
+      - '4002:8080'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      db-app:
+        condition: service_healthy
+
+  e2esdk-migrations:
+    build:
+      context: ../../../
+      dockerfile: ./packages/server/Dockerfile
+    environment:
+      - POSTGRESQL_URL=postgres://postgres:password@db-sdk:5432/e2esdk
+    command: pnpm db migrations apply
+    links:
+      - db-sdk
+    depends_on:
+      - db-sdk
+
+  e2esdk:
+    build:
+      context: ../../../
+      dockerfile: ./packages/server/Dockerfile
+    ports:
+      - '4003:3000'
+    environment:
+      - DEPLOYMENT_URL=http://localhost:4000
+      - POSTGRESQL_URL=postgres://postgres:password@db-sdk:5432/e2esdk
+      - SIGNATURE_PUBLIC_KEY=gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE
+      - SIGNATURE_PRIVATE_KEY=___examples-server-signkey__NOT-FOR-PROD__yCwTsHrcRO00MjMDBcSndfUe_XZYIoYfqHtutXdT00oQ
+      - RELEASE_TAG=local
+    links:
+      - db-sdk
+    depends_on:
+      - e2esdk-migrations
+
+  db-sdk:
+    image: postgres:14.1
+    ports:
+      - '4004:5432'
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=e2esdk
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 1s
+      start_period: 3s
+      retries: 50
+
+
+
+
+
+
+
+
+

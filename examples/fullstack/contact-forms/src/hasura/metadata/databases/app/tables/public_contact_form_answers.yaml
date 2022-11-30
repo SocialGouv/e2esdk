@@ -1,0 +1,3 @@
+table:
+  schema: public
+  name: contact_form_answers

@@ -1,0 +1,46 @@
+table:
+  schema: public
+  name: contact_form_submissions
+configuration:
+  custom_root_fields: {}
+  custom_name: contactFormSubmissions
+  custom_column_names:
+    first_name: firstName
+    phone_number: phoneNumber
+    submission_bucket_id: submissionBucketId
+    contact_me: contactMe
+    last_name: lastName
+    created_at: createdAt
+insert_permissions:
+  - role: public
+    permission:
+      check: {}
+      columns:
+        - id
+        - age
+        - contact_me
+        - email
+        - first_name
+        - last_name
+        - message
+        - phone_number
+        - submission_bucket_id
+        - subject
+        - created_at
+      backend_only: false
+select_permissions:
+  - role: public
+    permission:
+      columns:
+        - id
+        - age
+        - contact_me
+        - email
+        - first_name
+        - last_name
+        - message
+        - phone_number
+        - submission_bucket_id
+        - subject
+        - created_at
+      filter: {}

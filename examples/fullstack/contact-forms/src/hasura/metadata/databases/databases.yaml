@@ -1,0 +1,8 @@
+- name: app
+  kind: postgres
+  configuration:
+    connection_info:
+      use_prepared_statements: false
+      database_url: postgres://postgres:password@db-app:5432/app
+      isolation_level: read-committed
+  tables: "!include app/tables/tables.yaml"
