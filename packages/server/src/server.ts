@@ -148,14 +148,6 @@ export function createServer() {
           app.printRoutes({ commonPrefix: false, includeHooks: true })
       )
     }
-    app.log.info(
-      {
-        release: env.RELEASE_TAG,
-        deploymentURL: env.DEPLOYMENT_URL,
-        signaturePublicKey: env.SIGNATURE_PUBLIC_KEY,
-      },
-      'Server info'
-    )
   })
 
   return app
