@@ -25,6 +25,8 @@ import {
   sixtyFourBytesBase64Schema,
   thirtyTwoBytesBase64Schema,
   timestampSchema,
+  WebsocketNotificationTypes,
+  websocketNotificationTypesSchema,
 } from '@e2esdk/api'
 import {
   base64UrlDecode,
@@ -200,6 +202,7 @@ export class Client {
   #mitt: Emitter<Events>
   #sync: LocalStateSync<State>
   #pollingHandle?: ReturnType<typeof setInterval>
+  #socket?: WebSocket
 
   constructor(config: ClientConfig) {
     this.sodium = sodium
@@ -947,6 +950,41 @@ export class Client {
   }
 
   #startMessagePolling() {
+    if (this.#state.state !== 'loaded') {
+      return
+    }
+    // Start websocket
+    if (!this.#socket || this.#socket.readyState === WebSocket.CLOSED) {
+      const timestamp = new Date().toISOString()
+      const url = new URL('/v1/notifications', this.config.serverURL)
+      url.protocol = url.protocol.replace('http', 'ws')
+      url.searchParams.set('x-e2esdk-user-id', this.#state.identity.userId)
+      url.searchParams.set('x-e2esdk-timestamp', timestamp)
+      const signature = signClientRequest(
+        this.sodium,
+        this.#state.identity.signature.privateKey,
+        {
+          timestamp,
+          method: 'GET',
+          url: url.toString(),
+          recipientPublicKey: this.config.serverPublicKey,
+          userId: this.#state.identity.userId,
+        }
+      )
+      url.searchParams.set('x-e2esdk-signature', signature)
+      const ws = new WebSocket(url.toString())
+      ws.addEventListener('message', event => {
+        const res = websocketNotificationTypesSchema.safeParse(event.data)
+        if (!res.success) {
+          return
+        }
+        if (res.data === WebsocketNotificationTypes.sharedKeyAdded) {
+          this.#processIncomingSharedKeys()
+        }
+      })
+      this.#socket = ws
+    }
+
     clearInterval(this.#pollingHandle)
     this.#pollingHandle = setInterval(
       this.#processIncomingSharedKeys.bind(this),
@@ -1089,6 +1127,8 @@ export class Client {
   // Persistance & cross-tab communication --
 
   #clearState() {
+    this.#socket?.close(1001, 'logging out')
+    this.#socket = undefined
     clearTimeout(this.#pollingHandle)
     this.#pollingHandle = undefined
     if (this.#state.state !== 'loaded') {
