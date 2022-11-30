@@ -11,6 +11,7 @@ import { env } from '../env.js'
 import type { App } from '../types'
 
 type PublicKeyAuthOptions = {
+  mode?: 'http' | 'websocket'
   // todo: Use better type for request
   getIdentity?: 'database' | ((req: any) => Identity | null)
 }
@@ -33,13 +34,15 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
 
   app.decorate(
     'usePublicKeyAuth',
-    ({ getIdentity = 'database' }: PublicKeyAuthOptions = {}) =>
+    ({ mode = 'http', getIdentity = 'database' }: PublicKeyAuthOptions = {}) =>
       async function usePublicKeyAuth(req: FastifyRequest) {
-        const userId = req.headers['x-e2esdk-user-id'] as string
+        const headersOrQuery =
+          mode === 'http' ? req.headers : (req.query as Record<string, string>)
+        const userId = headersOrQuery['x-e2esdk-user-id'] as string
         if (!userId) {
           throw app.httpErrors.badRequest('Missing x-e2esdk-user-id header')
         }
-        const timestamp = req.headers['x-e2esdk-timestamp'] as string
+        const timestamp = headersOrQuery['x-e2esdk-timestamp'] as string
         if (!timestamp) {
           throw app.httpErrors.badRequest('Missing x-e2esdk-timestamp header')
         }
@@ -48,7 +51,7 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
             'Request timestamp is too far off current time'
           )
         }
-        const signature = req.headers['x-e2esdk-signature'] as string
+        const signature = headersOrQuery['x-e2esdk-signature'] as string
         if (!signature) {
           throw app.httpErrors.badRequest('Missing x-e2esdk-signature header')
         }
@@ -68,6 +71,18 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
           throw app.httpErrors.unauthorized('Invalid identity')
         }
         try {
+          const url = new URL(req.url, env.DEPLOYMENT_URL)
+          if (mode === 'websocket') {
+            // When using the querystring as transport for
+            // the public key authentication headers (websocket),
+            // the client will have computed the signature on
+            // the URL before adding it to the URL itself,
+            // so we remove it before verifying the signature,
+            // otherwise we have a snake eating its own tail.
+            url.searchParams.delete('x-e2esdk-signature')
+            // The protocol is also different:
+            url.protocol = url.protocol.replace('http', 'ws')
+          }
           if (
             !verifyClientSignature(
               app.sodium,
@@ -76,7 +91,7 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
               {
                 timestamp,
                 method: req.method,
-                url: `${env.DEPLOYMENT_URL}${req.url}`,
+                url: url.toString(),
                 body: JSON.stringify(req.body),
                 recipientPublicKey: serverPublicKey,
                 userId: identity.userId,

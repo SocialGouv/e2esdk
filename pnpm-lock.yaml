@@ -286,10 +286,12 @@ importers:
       '@e2esdk/crypto': workspace:*
       '@fastify/cors': ^8.2.0
       '@fastify/sensible': ^5.1.1
+      '@fastify/websocket': ^7.1.1
       '@swc/cli': ^0.1.57
       '@swc/core': ^1.3.21
       '@swc/helpers': ^0.4.14
       '@types/node': ^18.11.10
+      '@types/ws': ^8.5.3
       chokidar: ^3.5.3
       dotenv: ^16.0.3
       fastify: ^4.10.2
@@ -308,6 +310,7 @@ importers:
       '@e2esdk/api': link:../api
       '@e2esdk/crypto': link:../crypto
       '@fastify/cors': 8.2.0
+      '@fastify/websocket': 7.1.1
       dotenv: 16.0.3
       fastify: 4.10.2
       fastify-micro: 4.0.0-beta.3_fastify@4.10.2
@@ -322,6 +325,7 @@ importers:
       '@swc/core': 1.3.21
       '@swc/helpers': 0.4.14
       '@types/node': 18.11.10
+      '@types/ws': 8.5.3
       chokidar: 3.5.3
       nodemon: 2.0.20
       npm-run-all: 4.1.5
@@ -2026,6 +2030,16 @@ packages:
       fastify-plugin: 4.3.0
     dev: false
 
+  /@fastify/websocket/7.1.1:
+    resolution: {integrity: sha512-8lvB/E6p/o3MlmHzM2NJ19ixteI6Ckw0xOebLfoHoORPmpvCWqSp8+HLz4Gc6HrChH4vM9VcSWAK8jYuTT08hQ==}
+    dependencies:
+      fastify-plugin: 4.3.0
+      ws: 8.11.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+    dev: false
+
   /@graphql-typed-document-node/core/3.1.1_graphql@16.6.0:
     resolution: {integrity: sha512-NQ17ii0rK1b34VZonlmT2QMJFI70m0TRwbknO/ihlbatXyaktDhN/98vBiUU6kNBPljqGqyIrl2T4nY2RpFANg==}
     peerDependencies:
@@ -2937,6 +2951,12 @@ packages:
   /@types/which/2.0.1:
     resolution: {integrity: sha512-Jjakcv8Roqtio6w1gr0D7y6twbhx6gGgFGF5BLwajPpnOIOxFkakFhCq+LmyyeAz7BX6ULrjBOxdKaCDy+4+dQ==}
     dev: false
+
+  /@types/ws/8.5.3:
+    resolution: {integrity: sha512-6YOoWjruKj1uLf3INHH7D3qTXwFfEsg1kf3c0uDdSBJwfa/llkwIjrAGV7j7mVgGNbzTQ3HiHKKDXl6bJPD97w==}
+    dependencies:
+      '@types/node': 18.11.10
+    dev: true
 
   /@types/yargs-parser/21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
@@ -8398,7 +8418,6 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
-    dev: true
 
   /xml-name-validator/4.0.0:
     resolution: {integrity: sha512-ICP2e+jsHvAj2E2lIHxa5tjXRlKDJo4IdvPvCXbXQGdzSfmSpNVyIKMvoZHjDY9DP0zV17iI85o90vRFXNccRw==}
