@@ -47,7 +47,7 @@ services:
     ports:
       - '4003:3000'
     environment:
-      - DEPLOYMENT_URL=http://localhost:4000
+      - DEPLOYMENT_URL=http://localhost:4003
       - POSTGRESQL_URL=postgres://postgres:password@db-sdk:5432/e2esdk
       - SIGNATURE_PUBLIC_KEY=gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE
       - SIGNATURE_PRIVATE_KEY=___examples-server-signkey__NOT-FOR-PROD__yCwTsHrcRO00MjMDBcSndfUe_XZYIoYfqHtutXdT00oQ
