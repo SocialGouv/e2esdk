@@ -2,7 +2,6 @@ version: '3'
 
 name: e2esdk-examples-contact-forms
 
-
 services:
   db-app:
     image: postgres:14.1
@@ -70,12 +69,3 @@ services:
       interval: 1s
       start_period: 3s
       retries: 50
-
-
-
-
-
-
-
-
-
