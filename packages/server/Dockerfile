@@ -48,6 +48,8 @@ RUN pnpm install --offline --prod
 FROM node:16-alpine AS runner
 WORKDIR /app
 
+RUN apk add --no-cache curl
+
 RUN corepack enable
 
 ENV NODE_ENV production
@@ -61,5 +63,12 @@ USER e2esdk
 COPY --from=builder --chown=e2esdk:nodejs /app/ .
 
 EXPOSE 3000
+
+HEALTHCHECK \
+  --interval=10s \
+  --timeout=30s \
+  --start-period=1s \
+  --retries=5 \
+  CMD curl -f http://localhost:3000/_health || exit 1
 
 CMD ["node", "packages/server/build/main.js"]
