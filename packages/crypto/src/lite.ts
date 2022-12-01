@@ -7,6 +7,8 @@ import {
   numberToUint32LE,
 } from './shared/codec'
 
+export { base64UrlDecode, base64UrlEncode } from './shared/codec'
+
 // --
 
 export function deriveKey(

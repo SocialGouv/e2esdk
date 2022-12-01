@@ -16,7 +16,7 @@ import {
   SignupRequestBody,
   sixtyFourBytesBase64Schema,
   thirtyTwoBytesBase64Schema,
-  timestampSchema
+  timestampSchema,
 } from '@e2esdk/api'
 import type { Optional } from '@e2esdk/core'
 import { isFarFromCurrentTime } from '@e2esdk/core'
@@ -34,7 +34,8 @@ import {
   EncryptableJSONDataType,
   fingerprint,
   memzeroCipher,
-  multipartSignature, numberToUint32LE,
+  multipartSignature,
+  numberToUint32LE,
   randomPad,
   SecretBoxCipher,
   serializeCipher,
@@ -43,7 +44,7 @@ import {
   sodium,
   verifyAuth as verifyServerSignature,
   verifyClientIdentity,
-  verifyMultipartSignature
+  verifyMultipartSignature,
 } from '@e2esdk/crypto'
 import { LocalStateSync } from 'local-state-sync'
 import mitt, { Emitter } from 'mitt'

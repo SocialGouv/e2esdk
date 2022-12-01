@@ -3,7 +3,7 @@ version: '3'
 name: e2esdk-examples-contact-forms
 
 services:
-  db-app:
+  app-db:
     image: postgres:14.1
     ports:
       - '4001:5432'
@@ -16,7 +16,7 @@ services:
       start_period: 3s
       retries: 50
 
-  hasura:
+  app-hasura:
     build: ./src/hasura
     env_file: ./src/hasura/.env
     restart: unless-stopped
@@ -25,22 +25,23 @@ services:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     depends_on:
-      db-app:
+      app-db:
         condition: service_healthy
 
-  e2esdk-migrations:
+  e2esdk-db-ops:
     build:
       context: ../../../
       dockerfile: ./packages/server/Dockerfile
     environment:
-      - POSTGRESQL_URL=postgres://postgres:password@db-sdk:5432/e2esdk
+      - POSTGRESQL_URL=postgres://postgres:password@e2esdk-db:5432/e2esdk
     command: pnpm db migrations apply
     links:
-      - db-sdk
+      - e2esdk-db
     depends_on:
-      - db-sdk
+      e2esdk-db:
+        condition: service_healthy
 
-  e2esdk:
+  e2esdk-server:
     build:
       context: ../../../
       dockerfile: ./packages/server/Dockerfile
@@ -48,16 +49,20 @@ services:
       - '4003:3000'
     environment:
       - DEPLOYMENT_URL=http://localhost:4003
-      - POSTGRESQL_URL=postgres://postgres:password@db-sdk:5432/e2esdk
+      - POSTGRESQL_URL=postgres://postgres:password@e2esdk-db:5432/e2esdk
       - SIGNATURE_PUBLIC_KEY=gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE
       - SIGNATURE_PRIVATE_KEY=___examples-server-signkey__NOT-FOR-PROD__yCwTsHrcRO00MjMDBcSndfUe_XZYIoYfqHtutXdT00oQ
+      - CORS_ALLOWED_ORIGINS=http://localhost:4000
       - RELEASE_TAG=local
     links:
-      - db-sdk
+      - e2esdk-db
     depends_on:
-      - e2esdk-migrations
+      app-db:
+        condition: service_healthy
+      e2esdk-db-ops:
+        condition: service_completed_successfully
 
-  db-sdk:
+  e2esdk-db:
     image: postgres:14.1
     ports:
       - '4004:5432'

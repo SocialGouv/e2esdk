@@ -1,3 +1,4 @@
+export * from './lite'
 export * from './shared/codec'
 export * from './shared/utils'
 export * from './sodium/auth'
