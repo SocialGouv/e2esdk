@@ -4,7 +4,43 @@ import {
   base64UrlEncode,
   boolToByte,
   numberToIEEE754Bytes,
+  numberToUint32LE,
 } from './shared/codec'
+
+// --
+
+export function deriveKey(
+  outputLength: number,
+  subkeyIndex: number,
+  context: string,
+  mainKey: Uint8Array
+) {
+  if (mainKey.byteLength !== 32) {
+    throw new RangeError('deriveKey: main key must be 32 bytes long')
+  }
+  if (context.length !== 8) {
+    throw new RangeError('deriveKey: context must be exactly 8 characters long')
+  }
+  if (subkeyIndex >> 31 !== 0) {
+    throw new RangeError(
+      'deriveKey: subkeyIndex must be between 0 and 0x7fffffff'
+    )
+  }
+  const personalization = new Uint8Array(16).fill(0)
+  const salt = new Uint8Array(16).fill(0)
+  for (let i = 0; i < 8; ++i) {
+    personalization[i] = context.charCodeAt(i)
+  }
+  salt.set(numberToUint32LE(subkeyIndex))
+  const subkey = blake2b(new Uint8Array(), outputLength, {
+    salt,
+    key: mainKey,
+    personalization,
+  })
+  personalization.fill(0)
+  salt.fill(0)
+  return subkey
+}
 
 // --
 
