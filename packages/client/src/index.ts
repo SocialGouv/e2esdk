@@ -1159,6 +1159,8 @@ export class Client {
       this.#startMessagePolling()
     }
     if (document.visibilityState === 'hidden') {
+      this.#socket?.close()
+      this.#socket = undefined
       clearTimeout(this.#pollingHandle)
       this.#pollingHandle = undefined
     }
