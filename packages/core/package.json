@@ -38,7 +38,7 @@
     "test": "jest --color"
   },
   "devDependencies": {
-    "@types/node": "^18.11.9",
+    "@types/node": "^18.11.10",
     "jest": "^29.3.1",
     "jest-config": "workspace:*",
     "tsconfig": "workspace:*",
