@@ -3,6 +3,8 @@ version: '3'
 name: e2esdk-examples-contact-forms
 
 services:
+  # Application layer --
+
   app-db:
     image: postgres:14.1
     ports:
@@ -10,6 +12,8 @@ services:
     environment:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=app
+    volumes:
+      - ../../../.volumes/docker/$COMPOSE_PROJECT_NAME/app-db:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 1s
@@ -27,6 +31,23 @@ services:
     depends_on:
       app-db:
         condition: service_healthy
+
+  # E2ESDK --
+
+  e2esdk-db:
+    image: postgres:14.1
+    ports:
+      - '4004:5432'
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=e2esdk
+    volumes:
+      - ../../../.volumes/docker/$COMPOSE_PROJECT_NAME/e2esdk-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 1s
+      start_period: 3s
+      retries: 50
 
   e2esdk-db-ops:
     build:
@@ -62,15 +83,4 @@ services:
       e2esdk-db-ops:
         condition: service_completed_successfully
 
-  e2esdk-db:
-    image: postgres:14.1
-    ports:
-      - '4004:5432'
-    environment:
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=e2esdk
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
-      interval: 1s
-      start_period: 3s
-      retries: 50
+

@@ -11,7 +11,7 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=e2esdk
     volumes:
-      - .volumes/storage/e2esdk/db:/var/lib/postgresql/data
+      - .volumes/docker/$COMPOSE_PROJECT_NAME/db:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 1s
