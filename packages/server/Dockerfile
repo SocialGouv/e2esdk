@@ -40,7 +40,10 @@ COPY turbo.json .
 RUN pnpm turbo build:server
 
 # Only keep runtime dependencies
-RUN rm -rf node_modules **/node_modules **/.turbo
+RUN rm -rf node_modules
+RUN find -type d -name node_modules -exec rm -rf {} +
+RUN find -type d -name .turbo -exec rm -rf {} +
+RUN find -type d -name src -exec rm -rf {} +
 RUN pnpm install --offline --prod
 
 # ------------------------------------------------------------------------------
