@@ -1,9 +1,14 @@
 import {
   fingerprintSchema,
+  getKeychainResponseBody,
   GetKeychainResponseBody,
+  getMultipleIdentitiesResponseBody,
   GetMultipleIdentitiesResponseBody,
+  getParticipantsResponseBody,
   GetParticipantsResponseBody,
+  getSharedKeysResponseBody,
   GetSharedKeysResponseBody,
+  getSingleIdentityResponseBody,
   GetSingleIdentityResponseBody,
   identitySchema as apiIdentitySchema,
   permissionFlags,
@@ -13,7 +18,8 @@ import {
   PostPermissionRequestBody,
   PostSharedKeyBody,
   signedHashSchema,
-  SignupRequestBody,
+  signupBody,
+  SignupBody,
   sixtyFourBytesBase64Schema,
   thirtyTwoBytesBase64Schema,
   timestampSchema,
@@ -258,7 +264,7 @@ export class Client {
       )
     }
     const identity = deriveClientIdentity(this.sodium, userId, mainKey)
-    const body: SignupRequestBody = {
+    const body: SignupBody = {
       userId,
       signaturePublicKey: this.encode(identity.signature.publicKey),
       sharingPublicKey: this.encode(identity.sharing.publicKey),
@@ -270,7 +276,17 @@ export class Client {
       keychain: new Map(),
     }
     try {
-      await this.#apiCall('POST', '/v1/signup', body)
+      const response = signupBody.parse(
+        await this.#apiCall('POST', '/v1/signup', body)
+      )
+      if (
+        response.userId !== body.userId ||
+        response.signaturePublicKey !== body.signaturePublicKey ||
+        response.sharingPublicKey !== body.sharingPublicKey ||
+        response.proof !== body.proof
+      ) {
+        throw new Error('Signup failed: could not authenticate server')
+      }
       this.#startMessagePolling()
       this.#mitt.emit('identityUpdated', this.publicIdentity)
       this.#sync.setState(this.#state)
@@ -482,7 +498,7 @@ export class Client {
         )
       ),
     }
-    return this.#apiCall('POST', '/v1/shared-keys', body)
+    await this.#apiCall('POST', '/v1/shared-keys', body)
   }
 
   public async getOutgoingSharedKeys() {
@@ -490,9 +506,11 @@ export class Client {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked')
     }
-    return this.#apiCall<GetSharedKeysResponseBody>(
-      'GET',
-      '/v1/shared-keys/outgoing'
+    return getSharedKeysResponseBody.parse(
+      await this.#apiCall<GetSharedKeysResponseBody>(
+        'GET',
+        '/v1/shared-keys/outgoing'
+      )
     )
   }
 
@@ -529,9 +547,11 @@ export class Client {
   ): Promise<PublicUserIdentity | null> {
     await this.sodium.ready
     try {
-      const identity = await this.#apiCall<GetSingleIdentityResponseBody>(
-        'GET',
-        `/v1/identity/${userId}`
+      const identity = getSingleIdentityResponseBody.parse(
+        await this.#apiCall<GetSingleIdentityResponseBody>(
+          'GET',
+          `/v1/identity/${userId}`
+        )
       )
       if (!identity) {
         return null
@@ -555,9 +575,11 @@ export class Client {
   ): Promise<PublicUserIdentity[]> {
     await this.sodium.ready
     try {
-      const identities = await this.#apiCall<GetMultipleIdentitiesResponseBody>(
-        'GET',
-        `/v1/identities/${userIds.join(',')}`
+      const identities = getMultipleIdentitiesResponseBody.parse(
+        await this.#apiCall<GetMultipleIdentitiesResponseBody>(
+          'GET',
+          `/v1/identities/${userIds.join(',')}`
+        )
       )
       return identities.filter(identity => {
         if (verifyClientIdentity(this.sodium, identity)) {
@@ -578,9 +600,11 @@ export class Client {
   ) {
     await this.sodium.ready
     try {
-      const participants = await this.#apiCall<GetParticipantsResponseBody>(
-        'GET',
-        `/v1/participants/${nameFingerprint}/${payloadFingerprint}`
+      const participants = getParticipantsResponseBody.parse(
+        await this.#apiCall<GetParticipantsResponseBody>(
+          'GET',
+          `/v1/participants/${nameFingerprint}/${payloadFingerprint}`
+        )
       )
       return participants.filter(participant => {
         if (verifyClientIdentity(this.sodium, participant)) {
@@ -708,9 +732,8 @@ export class Client {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account must be unlocked before calling API')
     }
-    const res = await this.#apiCall<GetKeychainResponseBody>(
-      'GET',
-      '/v1/keychain'
+    const res = getKeychainResponseBody.parse(
+      await this.#apiCall<GetKeychainResponseBody>('GET', '/v1/keychain')
     )
     const keychain = new Map<string, KeychainItem[]>()
     for (const lockedItem of res) {
@@ -801,9 +824,11 @@ export class Client {
     }
     let sharedKeys: GetSharedKeysResponseBody = []
     try {
-      sharedKeys = await this.#apiCall<GetSharedKeysResponseBody>(
-        'GET',
-        '/v1/shared-keys/incoming'
+      sharedKeys = getSharedKeysResponseBody.parse(
+        await this.#apiCall<GetSharedKeysResponseBody>(
+          'GET',
+          '/v1/shared-keys/incoming'
+        )
       )
     } catch (error) {
       console.error(error)
@@ -907,19 +932,19 @@ export class Client {
   async #apiCall<ResponseType>(
     method: 'GET' | 'DELETE',
     path: string
-  ): Promise<ResponseType>
+  ): Promise<unknown>
 
-  async #apiCall<BodyType, ReponseType>(
+  async #apiCall<BodyType>(
     method: 'POST',
     path: string,
     body: BodyType
-  ): Promise<ResponseType>
+  ): Promise<unknown>
 
-  async #apiCall<BodyType, ResponseType>(
+  async #apiCall<BodyType>(
     method: HTTPMethod,
     path: string,
     body?: BodyType
-  ): Promise<ResponseType> {
+  ): Promise<unknown> {
     await this.sodium.ready
     if (this.#state.state !== 'loaded') {
       throw new Error('Account must be loaded before calling API')
@@ -957,18 +982,14 @@ export class Client {
       const { error: statusText, statusCode, message } = await res.json()
       throw new APIError(statusCode, statusText, message)
     }
-    return this.#verifyServerResponse<ResponseType>(
-      method,
-      res,
-      this.#state.identity
-    )
+    return this.#verifyServerResponse(method, res, this.#state.identity)
   }
 
-  async #verifyServerResponse<Output>(
+  async #verifyServerResponse(
     method: HTTPMethod,
     res: Response,
     identity: Identity
-  ): Promise<Output> {
+  ): Promise<unknown> {
     const now = Date.now()
     const signature = res.headers.get('x-e2esdk-signature')
     if (!signature) {

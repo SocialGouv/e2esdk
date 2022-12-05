@@ -1,8 +1,8 @@
 import {
   PublicRouteHeaders,
   publicRouteHeaders,
-  signupRequestBody,
-  SignupRequestBody,
+  signupBody,
+  SignupBody,
 } from '@e2esdk/api'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import { createIdentity } from '../database/models/identity.js'
@@ -11,7 +11,8 @@ import { App } from '../types'
 export default async function signupRoutes(app: App) {
   app.post<{
     Headers: PublicRouteHeaders
-    Body: SignupRequestBody
+    Body: SignupBody
+    Reply: SignupBody
   }>(
     '/signup',
     {
@@ -27,19 +28,16 @@ export default async function signupRoutes(app: App) {
       }),
       schema: {
         headers: zodToJsonSchema(publicRouteHeaders),
-        body: zodToJsonSchema(signupRequestBody),
+        body: zodToJsonSchema(signupBody),
         response: {
-          201: {
-            type: 'null',
-            description: 'Account has been created',
-          },
+          201: zodToJsonSchema(signupBody),
         },
       },
     },
     async function signup(req, res) {
       // todo: Handle insert conflicts and return 409
       await createIdentity(app.db, req.body)
-      return res.status(201).send()
+      return res.status(201).send(req.body)
     }
   )
 }
