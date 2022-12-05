@@ -3,7 +3,6 @@ import {
   BoxProps,
   Flex,
   FlexProps,
-  forwardRef,
   Heading,
   HeadingProps,
   Icon,
@@ -23,7 +22,7 @@ export const SectionContainer = (props: FlexProps) => {
   )
 }
 
-export const Section = forwardRef<BoxProps, 'section'>((props, ref) => (
+export const Section: React.FC<BoxProps> = props => (
   <Box
     as="section"
     flex={{ base: undefined, lg: 1 }}
@@ -40,10 +39,9 @@ export const Section = forwardRef<BoxProps, 'section'>((props, ref) => (
           },
         }) ?? {},
     }}
-    ref={ref}
     {...props}
   />
-))
+)
 
 type SectionHeaderProps = HeadingProps & {
   icon?: IconType

@@ -32,14 +32,11 @@ export default defineConfig({
   plugins: [react(), ...analyzeBundle(['sunburst', 'treemap', 'network'])],
   build: {
     outDir: path.resolve(__dirname, 'dist'),
-    emptyOutDir: true,
+    emptyOutDir: false,
     lib: {
       entry: path.resolve(__dirname, 'src/index.tsx'),
       formats: ['es', 'cjs'],
       fileName: 'index',
-    },
-    rollupOptions: {
-      external: ['react', 'react-dom'],
     },
   },
 })

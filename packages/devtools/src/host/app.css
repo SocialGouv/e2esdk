@@ -1,6 +1,8 @@
 html {
-    font-family: 'Comic Sans MS';
-    margin: 0;
-    position: relative;
-    height: 100vh;
+  margin: 0;
+  position: relative;
+  height: 100vh;
+  /* make style leakages stand out */
+  font-family: 'Comic Sans MS';
+  color: red;
 }

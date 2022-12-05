@@ -1,9 +1,7 @@
 import { Client } from '@e2esdk/client'
-import { E2ESDKClientProvider } from '@e2esdk/react'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { E2ESDKDevtools } from '..'
-import '../web-component'
+import '../index'
 import App from './App'
 
 const client = new Client({
@@ -38,9 +36,11 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         />
       </div>
       <div style={{ flex: 1 }}>
-        <E2ESDKClientProvider client={client}>
-          <E2ESDKDevtools theme="dark" />
-        </E2ESDKClientProvider>
+        <e2esdk-devtools
+          serverURL={__DEPLOYMENT_URL__}
+          serverPublicKey={__SIGNATURE_PUBLIC_KEY__}
+          theme="dark"
+        />
       </div>
     </div>
   </React.StrictMode>
