@@ -24,6 +24,12 @@ jobs:
           node-version: lts/*
           cache: pnpm
 
+      - name: Cache Turbo
+        uses: actions/cache@v3
+        with:
+          path: node_modules/.cache/turbo
+          key: ${{ runner.os }}-turbo
+
       - name: Install dependencies
         run: pnpm install
 
