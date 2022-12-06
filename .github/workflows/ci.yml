@@ -36,6 +36,9 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
+      - name: Type checking
+        run: pnpm typecheck
+
       # - name: Send test coverage to codecov
       #   continue-on-error: true
       #   uses: codecov/codecov-action@v2
