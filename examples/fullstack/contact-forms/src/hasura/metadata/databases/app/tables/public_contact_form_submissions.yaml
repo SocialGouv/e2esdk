@@ -11,6 +11,8 @@ configuration:
     contact_me: contactMe
     last_name: lastName
     created_at: createdAt
+    sealed_secret: sealedSecret
+    public_key: publicKey
 insert_permissions:
   - role: public
     permission:
@@ -27,6 +29,9 @@ insert_permissions:
         - submission_bucket_id
         - subject
         - created_at
+        - sealed_secret
+        - public_key
+        - signature
       backend_only: false
 select_permissions:
   - role: public
@@ -43,4 +48,7 @@ select_permissions:
         - submission_bucket_id
         - subject
         - created_at
+        - sealed_secret
+        - public_key
+        - signature
       filter: {}

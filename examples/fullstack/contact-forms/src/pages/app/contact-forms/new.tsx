@@ -11,7 +11,7 @@ import {
   StackProps,
 } from '@chakra-ui/react'
 import { PublicUserIdentity } from '@e2esdk/client'
-import { fingerprint, generateSealedBoxCipher } from '@e2esdk/crypto'
+import { generateSealedBoxCipher } from '@e2esdk/crypto'
 import { useE2ESDKClient } from '@e2esdk/react'
 import { CopiableReadOnlyInput } from 'components/CopiableReadOnlyInput'
 import { LoadingButton } from 'components/LoadingButton'
@@ -70,7 +70,7 @@ const NewContactFormPage: NextPage = () => {
           </FormHelperText>
         </FormControl>
         <ShareAccess
-          keyNameFingerprint={fingerprint(client.sodium, keyName)}
+          keyNameFingerprint={meta?.submissionBucketId ?? 'N.A.'}
           mt={8}
         />
         <Divider my={12} />

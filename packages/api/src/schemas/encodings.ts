@@ -14,12 +14,16 @@ export const timestampSchema = z
   .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
   .refine(v => Number.isSafeInteger(Date.parse(v)))
 
-// Ciphers --
+// Ciphertexts --
 
 export const boxCiphertextV1Schema = z
   .string()
-  .regex(/^v1\.box\.txt\.[\w-]{32}\.[\w-]{22,}$/)
+  .regex(/^v1\.box\.(bin|txt|num|bool|json)\.[\w-]{32}\.[\w-]{22,}$/)
 
 export const secretBoxCiphertextV1Schema = z
   .string()
-  .regex(/^v1\.secretBox\.txt\.[\w-]{32}\.[\w-]{22,}$/)
+  .regex(/^v1\.secretBox\.(bin|txt|num|bool|json)\.[\w-]{32}\.[\w-]{22,}$/)
+
+export const sealedBoxCiphertextV1Schema = z
+  .string()
+  .regex(/^v1\.sealedBox\.(bin|txt|num|bool|json)\.[\w-]{64,}$/)

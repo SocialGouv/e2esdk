@@ -171,7 +171,7 @@ importers:
 
   packages/crypto:
     specifiers:
-      '@stablelib/blake2b': ^1.0.1
+      '@e2esdk/api': workspace:*
       '@stablelib/hex': ^1.0.1
       '@types/libsodium-wrappers': ^0.7.10
       '@types/node': ^18.11.10
@@ -180,14 +180,12 @@ importers:
       libsodium-wrappers: ^0.7.10
       tsconfig: workspace:*
       tsup: ^6.5.0
-      tweetnacl: ^1.0.3
       typescript: ^4.9.3
       zod: ^3.19.1
     dependencies:
-      '@stablelib/blake2b': 1.0.1
+      '@e2esdk/api': link:../api
       '@stablelib/hex': 1.0.1
       libsodium-wrappers: 0.7.10
-      tweetnacl: 1.0.3
       zod: 3.19.1
     devDependencies:
       '@types/libsodium-wrappers': 0.7.10
@@ -2614,34 +2612,8 @@ packages:
       '@sinonjs/commons': 1.8.6
     dev: true
 
-  /@stablelib/binary/1.0.1:
-    resolution: {integrity: sha512-ClJWvmL6UBM/wjkvv/7m5VP3GMr9t0osr4yVgLZsLCOz4hGN9gIAFEqnJ0TsSMAN+n840nf2cHZnA5/KFqHC7Q==}
-    dependencies:
-      '@stablelib/int': 1.0.1
-    dev: false
-
-  /@stablelib/blake2b/1.0.1:
-    resolution: {integrity: sha512-B3KyKoBAjkIFeH7romcF96i+pVFYk7K2SBQ1pZvaxV+epSBXJ+n0C66esUhyz6FF+5FbdQVm77C5fzGFcEZpKA==}
-    dependencies:
-      '@stablelib/binary': 1.0.1
-      '@stablelib/hash': 1.0.1
-      '@stablelib/wipe': 1.0.1
-    dev: false
-
-  /@stablelib/hash/1.0.1:
-    resolution: {integrity: sha512-eTPJc/stDkdtOcrNMZ6mcMK1e6yBbqRBaNW55XA1jU8w/7QdnCF0CmMmOD1m7VSkBR44PWrMHU2l6r8YEQHMgg==}
-    dev: false
-
   /@stablelib/hex/1.0.1:
     resolution: {integrity: sha512-PQOEChVBjhYGgAD+ehO2ow1gSj1slre3jW4oMD4kV8VrhYhzmtsQDWDZej3BQO8qkVezdczDvISxVSF24PuYNA==}
-    dev: false
-
-  /@stablelib/int/1.0.1:
-    resolution: {integrity: sha512-byr69X/sDtDiIjIV6m4roLVWnNNlRGzsvxw+agj8CIEazqWGOQp2dTYgQhtyVXV9wpO6WyXRQUzLV/JRNumT2w==}
-    dev: false
-
-  /@stablelib/wipe/1.0.1:
-    resolution: {integrity: sha512-WfqfX/eXGiAd3RJe4VU2snh/ZPwtSjLG4ynQ/vYzvghTh7dHFcI1wl+nrkWG6lGhukOxOsUHfv8dUXr58D0ayg==}
     dev: false
 
   /@swc/cli/0.1.57_mmzt2lum23erosdhjy7mml53di:
@@ -8052,10 +8024,6 @@ packages:
       turbo-windows-64: 1.6.3
       turbo-windows-arm64: 1.6.3
     dev: true
-
-  /tweetnacl/1.0.3:
-    resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
-    dev: false
 
   /type-check/0.3.2:
     resolution: {integrity: sha512-ZCmOJdvOWDBYJlzAoFkC+Q0+bUyEOS1ltgp1MGU03fqHG+dbi9tBFU2Rd9QKiDZFAYrhPh2JUf7rZRIuHRKtOg==}

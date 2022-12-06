@@ -34,10 +34,12 @@ import {
   cipherParser,
   CIPHER_MAX_PADDED_LENGTH,
   decrypt,
+  decryptFormData,
   deriveClientIdentity,
   encodedCiphertextFormatV1,
   encrypt,
   EncryptableJSONDataType,
+  EncryptedFormSubmission,
   fingerprint,
   memzeroCipher,
   multipartSignature,
@@ -352,7 +354,7 @@ export class Client {
         throw new Error('This key is already in your keychain')
       }
     }
-    const subkeyIndex = this.sodium.randombytes_random() & 0x7fffff // Make it unsigned
+    const subkeyIndex = this.sodium.randombytes_uniform(0x7fffffff) // Make it unsigned
     const { nameCipher, payloadCipher } = this.#deriveKeychainKeys(subkeyIndex)
     const payloadFingerprint = fingerprint(this.sodium, serializedCipher)
     const createdAtISO = createdAt.toISOString()
@@ -690,6 +692,31 @@ export class Client {
           'application/e2esdk.ciphertext.v1'
         )
       } catch {
+        continue
+      }
+    }
+    throw new Error('Failed to decrypt: exhausted all available keys')
+  }
+
+  public unsealFormData<FormData extends object>(
+    submission: EncryptedFormSubmission<FormData>,
+    nameFingerpint: string
+  ): Record<keyof FormData, unknown> {
+    if (this.#state.state !== 'loaded') {
+      throw new Error('Account is locked: cannot decrypt')
+    }
+    const keys = this.#state.keychain.get(nameFingerpint) ?? []
+    if (keys.length === 0) {
+      throw new Error(`No key found with name fingerprint ${nameFingerpint}`)
+    }
+    for (const key of keys) {
+      try {
+        if (key.cipher.algorithm !== 'sealedBox') {
+          throw new Error('invalid algorithm')
+        }
+        return decryptFormData<FormData>(this.sodium, submission, key.cipher)
+      } catch (error) {
+        console.warn(error)
         continue
       }
     }

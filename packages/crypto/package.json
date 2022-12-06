@@ -24,17 +24,11 @@
       "require": "./dist/index.cjs",
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./lite": {
-      "require": "./dist/lite.cjs",
-      "import": "./dist/lite.js",
-      "types": "./dist/lite.d.ts"
     }
   },
   "tsup": {
     "entry": [
-      "src/index.ts",
-      "src/lite.ts"
+      "src/index.ts"
     ],
     "treeshake": true
   },
@@ -46,10 +40,9 @@
     "test": "jest --color"
   },
   "dependencies": {
-    "@stablelib/blake2b": "^1.0.1",
+    "@e2esdk/api": "workspace:*",
     "@stablelib/hex": "^1.0.1",
     "libsodium-wrappers": "^0.7.10",
-    "tweetnacl": "^1.0.3",
     "zod": "^3.19.1"
   },
   "devDependencies": {

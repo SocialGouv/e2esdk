@@ -13,9 +13,8 @@ import {
 } from '@chakra-ui/react'
 import {
   base64UrlDecode,
-  sealBoolean,
-  sealNumber,
-  sealString,
+  encryptFormData,
+  initializeEncryptedFormLocalState,
 } from '@e2esdk/crypto'
 import request, { gql } from 'graphql-request'
 import type { NextPage } from 'next'
@@ -39,6 +38,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 type SubmitContactFormVariables = {
   submissionBucketId: string
+  signature: string
+  sealedSecret: string
+  publicKey: string
 } & {
   [K in keyof FormValues]: FormValues extends undefined
     ? string | undefined
@@ -71,19 +73,14 @@ const ContactFormPage: NextPage = () => {
       if (!publicKey || !submissionBucketId) {
         return
       }
+      const state = await initializeEncryptedFormLocalState(submissionBucketId)
+      const { metadata, encrypted } = encryptFormData(values, state)
       const variables: SubmitContactFormVariables = {
         submissionBucketId,
-        firstName: sealString(values.firstName, publicKey),
-        lastName: sealString(values.lastName, publicKey),
-        age: Number.isInteger(values.age)
-          ? sealNumber(values.age!, publicKey)
-          : undefined,
-        contactMe: sealBoolean(values.contactMe, publicKey),
-        email: values.email && sealString(values.email, publicKey),
-        phoneNumber:
-          values.phoneNumber && sealString(values.phoneNumber, publicKey),
-        subject: sealString(values.subject, publicKey),
-        message: sealString(values.message, publicKey),
+        sealedSecret: metadata.sealedSecret,
+        signature: metadata.signature,
+        publicKey: metadata.publicKey,
+        ...encrypted,
       }
       const res = await request<InsertResponseData>(
         'http://localhost:4002/v1/graphql', // todo: Use env
@@ -213,6 +210,9 @@ function usePublicKeyInURLHash() {
 const SUBMIT_CONTACT_FORM_MUTATION = gql`
   mutation SubmitContactForm(
     $submissionBucketId: String!
+    $signature: String!
+    $sealedSecret: String!
+    $publicKey: String!
     $subject: String!
     $message: String!
     $firstName: String!
@@ -225,6 +225,9 @@ const SUBMIT_CONTACT_FORM_MUTATION = gql`
     inserted: insert_contactFormSubmissions_one(
       object: {
         submissionBucketId: $submissionBucketId
+        signature: $signature
+        sealedSecret: $sealedSecret
+        publicKey: $publicKey
         subject: $subject
         message: $message
         firstName: $firstName

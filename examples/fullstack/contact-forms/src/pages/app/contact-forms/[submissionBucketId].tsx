@@ -44,10 +44,10 @@ const formSchema = z.object({
   message: z.string(),
   firstName: z.string(),
   lastName: z.string(),
-  age: z.number().nullable(),
+  age: z.number().nullish(),
   contactMe: z.boolean(),
-  email: z.string().email().nullable(),
-  phoneNumber: z.string().nullable(),
+  email: z.string().email().nullish(),
+  phoneNumber: z.string().nullish(),
 })
 
 const formWithMetadata = formSchema.extend({
@@ -58,7 +58,12 @@ const formWithMetadata = formSchema.extend({
 type FormValues = z.infer<typeof formWithMetadata>
 type QueryResult = {
   contactFormSubmissions: Array<
-    { id: number } & {
+    {
+      id: number
+      sealedSecret: string
+      publicKey: string
+      signature: string
+    } & {
       [K in keyof Omit<FormValues, 'id'>]: FormValues[K] extends null
         ? string | null
         : string
@@ -280,47 +285,36 @@ function useContactFormSubmissions(currentKey: KeychainItemMetadata | null) {
         'http://localhost:4002/v1/graphql',
         GET_CONTACT_FORM_SUBMISSIONS_QUERY,
         {
-          submissionBucketId: currentKey?.nameFingerprint,
+          submissionBucketId: currentKey.nameFingerprint,
         }
       )
       return (
-        res.contactFormSubmissions?.map(({ id, createdAt, ...encrypted }) =>
-          formWithMetadata.parse({
+        res.contactFormSubmissions?.map(
+          ({
             id,
             createdAt,
-            subject: client.decrypt(
-              encrypted.subject,
+            publicKey,
+            sealedSecret,
+            signature,
+            ...encryptedFields
+          }) => {
+            const decrypted = client.unsealFormData(
+              {
+                metadata: {
+                  publicKey,
+                  sealedSecret,
+                  signature,
+                },
+                encrypted: encryptedFields,
+              },
               currentKey.nameFingerprint
-            ),
-            message: client.decrypt(
-              encrypted.message,
-              currentKey.nameFingerprint
-            ),
-            firstName: client.decrypt(
-              encrypted.firstName,
-              currentKey.nameFingerprint
-            ),
-            lastName: client.decrypt(
-              encrypted.lastName,
-              currentKey.nameFingerprint
-            ),
-            contactMe: client.decrypt(
-              encrypted.contactMe,
-              currentKey.nameFingerprint
-            ),
-            age: encrypted.age
-              ? client.decrypt(encrypted.age, currentKey.nameFingerprint)
-              : null,
-            email: encrypted.email
-              ? client.decrypt(encrypted.email, currentKey.nameFingerprint)
-              : null,
-            phoneNumber: encrypted.phoneNumber
-              ? client.decrypt(
-                  encrypted.phoneNumber,
-                  currentKey.nameFingerprint
-                )
-              : null,
-          })
+            )
+            return formWithMetadata.parse({
+              id,
+              createdAt,
+              ...decrypted,
+            })
+          }
         ) ?? []
       )
     },
@@ -342,6 +336,9 @@ const GET_CONTACT_FORM_SUBMISSIONS_QUERY = gql`
       contactMe
       email
       phoneNumber
+      sealedSecret
+      signature
+      publicKey
     }
   }
 `
