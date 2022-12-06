@@ -1,0 +1,56 @@
+name: CI
+on:
+  - push
+  - pull_request
+
+env:
+  HUSKY: 0
+  FORCE_COLOR: 3
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit tests
+        run: pnpm test
+
+      # - name: Send test coverage to codecov
+      #   continue-on-error: true
+      #   uses: codecov/codecov-action@v2
+
+      - name: Build (NPM)
+        run: pnpm build:npm
+
+      - name: Build (Docker)
+        run: pnpm build:docker
+
+      # - name: Functional tests
+      #   run: pnpm e2e
+
+      # - name: Build to lib folder for archives
+      #   run: pnpm build --outDir lib
+
+      # - name: Archive lib components
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: components
+      #     path: lib/
