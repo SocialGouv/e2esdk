@@ -54,7 +54,12 @@ jobs:
         run: pnpm build:npm
 
       - name: Build (Docker)
-        run: pnpm build:docker
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: packages/server/Dockerfile
+          tags: e2esdk/server:ci
+          push: false
 
       # - name: Functional tests
       #   run: pnpm e2e
