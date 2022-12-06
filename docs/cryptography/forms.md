@@ -87,6 +87,7 @@ key derivation secret using the following KDF parameters:
   form public key
 
 > **Note**
+>
 > While Sodium was designed to allow 64 bits worths of key indices,
 > bitwise maths in JavaScript works on signed 32 bits integers,
 > so we constrain the subkey space to 31 bits to keep things unsigned.
