@@ -8,7 +8,8 @@ env:
   FORCE_COLOR: 3
 
 jobs:
-  build:
+  ci:
+    name: Integration
     runs-on: ubuntu-latest
 
     steps:
