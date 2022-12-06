@@ -43,7 +43,6 @@ RUN pnpm turbo build:server
 RUN rm -rf node_modules
 RUN find -type d -name node_modules -exec rm -rf {} +
 RUN find -type d -name .turbo -exec rm -rf {} +
-RUN find -type d -name src -exec rm -rf {} +
 RUN pnpm install --offline --prod
 
 # ------------------------------------------------------------------------------
