@@ -17,6 +17,7 @@
       "outputs": []
     },
     "test": {
+      "dependsOn": ["^build:npm"],
       "outputs": []
     },
     "dev": {
