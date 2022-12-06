@@ -11,10 +11,6 @@ jobs:
   ci:
     name: Integration
     runs-on: ubuntu-latest
-    env:
-      TURBO_API: http://127.0.0.1:9080
-      TURBO_TOKEN: turbo-local-cache
-      TURBO_TEAM: e2esdk
 
     steps:
       - uses: actions/checkout@v3
@@ -29,11 +25,12 @@ jobs:
           node-version: lts/*
           cache: pnpm
 
-      - name: Turbo cache server
-        uses: felixmosh/turborepo-gh-artifacts@v2
+      - name: Turbo Cache
+        id: turbo-cache
+        uses: actions/cache@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          server-token: ${{ env.TURBO_TOKEN }}
+          path: node_modules/.cache/turbo
+          key: turbo-${{ github.sha }}
 
       - name: Install dependencies
         run: pnpm install
