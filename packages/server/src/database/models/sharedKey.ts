@@ -23,15 +23,14 @@ export const sharedKeySchema = z.object({
 
 export type SharedKeySchema = z.infer<typeof sharedKeySchema>
 
-export const notifyOfInsertsFor = (userId: string) =>
-  `${TABLE_NAME}:insert:${userId}`
+export const sharedKeyInsertsNotificationChannel = `${TABLE_NAME}:insert`
 
 export async function storeSharedKey(
   sql: Sql,
   sharedKey: Omit<SharedKeySchema, 'sharedAt'>
 ) {
   await sql`INSERT INTO ${sql(TABLE_NAME)} ${sql(sharedKey)}`
-  return sql.notify(notifyOfInsertsFor(sharedKey.toUserId), '')
+  return sql.notify(sharedKeyInsertsNotificationChannel, sharedKey.toUserId)
 }
 
 export async function getSharedKey(
