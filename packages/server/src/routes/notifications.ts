@@ -54,7 +54,7 @@ export default async function notificationsRoutes(app: App) {
       )
       connection.socket.on('close', (code, reason) => {
         logger.info({
-          msg: 'WebSocket closed by client, unregistering database listener',
+          msg: 'WebSocket connection closed',
           code,
           reason: reason.toString('utf8'),
         })
