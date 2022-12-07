@@ -1,3 +1,4 @@
+import type { Optional } from '@e2esdk/api'
 import {
   fingerprintSchema,
   getKeychainResponseBody,
@@ -11,6 +12,7 @@ import {
   getSingleIdentityResponseBody,
   GetSingleIdentityResponseBody,
   identitySchema as apiIdentitySchema,
+  isFarFromCurrentTime,
   permissionFlags,
   PermissionFlags,
   PostBanRequestBody,
@@ -24,8 +26,6 @@ import {
   thirtyTwoBytesBase64Schema,
   timestampSchema,
 } from '@e2esdk/api'
-import type { Optional } from '@e2esdk/core'
-import { isFarFromCurrentTime } from '@e2esdk/core'
 import {
   base64UrlDecode,
   base64UrlEncode,

@@ -1,5 +1,4 @@
-import type { Identity } from '@e2esdk/api'
-import { isFarFromCurrentTime } from '@e2esdk/core'
+import { Identity, isFarFromCurrentTime } from '@e2esdk/api'
 import {
   signAuth as signResponse,
   verifyAuth as verifyClientSignature,

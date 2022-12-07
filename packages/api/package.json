@@ -35,12 +35,16 @@
     "dev": "tsup --format esm --dts --watch",
     "build:npm": "tsup --clean --format esm,cjs --dts",
     "build:server": "tsup --clean --format esm",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "jest --color"
   },
   "dependencies": {
     "zod": "^3.19.1"
   },
   "devDependencies": {
+    "@types/node": "^18.11.10",
+    "jest": "^29.3.1",
+    "jest-config": "workspace:*",
     "tsconfig": "workspace:*",
     "tsup": "^6.5.0",
     "typescript": "^4.9.3"
