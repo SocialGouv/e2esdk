@@ -1,4 +1,3 @@
-import type { Optional } from '@e2esdk/api'
 import {
   fingerprintSchema,
   getKeychainResponseBody,
@@ -13,12 +12,14 @@ import {
   GetSingleIdentityResponseBody,
   identitySchema as apiIdentitySchema,
   isFarFromCurrentTime,
+  Optional,
   permissionFlags,
   PermissionFlags,
   PostBanRequestBody,
   PostKeychainItemRequestBody,
   PostPermissionRequestBody,
   PostSharedKeyBody,
+  publicKeyAuthHeaders,
   signedHashSchema,
   signupBody,
   SignupBody,
@@ -63,11 +64,12 @@ import { z } from 'zod'
 export type ClientConfig<KeyType = string> = {
   serverURL: string
   serverPublicKey: KeyType // todo: Make this an array to allow server key rotation
-  pollingInterval?: number
+  handleNotifications?: boolean
 }
 
-type Config = Omit<ClientConfig<Uint8Array>, 'pollingInterval'> &
-  Required<Pick<ClientConfig<Uint8Array>, 'pollingInterval'>>
+type Config = Required<ClientConfig<Uint8Array>> & {
+  clientId: string
+}
 
 // --
 
@@ -193,15 +195,12 @@ type HTTPMethod = 'GET' | 'POST' | 'DELETE'
 
 // --
 
-const DEFAULT_POLLING_INTERVAL = 30_000 // 30 seconds
-
 export class Client {
   public readonly sodium: Sodium
   public readonly config: Readonly<Config>
   #state: State
   #mitt: Emitter<Events>
   #sync: LocalStateSync<State>
-  #pollingHandle?: ReturnType<typeof setInterval>
   #socket?: WebSocket
 
   constructor(config: ClientConfig) {
@@ -209,7 +208,8 @@ export class Client {
     this.config = Object.freeze({
       serverURL: config.serverURL,
       serverPublicKey: this.decode(config.serverPublicKey),
-      pollingInterval: config.pollingInterval ?? DEFAULT_POLLING_INTERVAL,
+      handleNotifications: config.handleNotifications ?? true,
+      clientId: crypto.randomUUID(),
     })
     this.#state = {
       state: 'idle',
@@ -234,7 +234,7 @@ export class Client {
           promiseChain
             .then(this.#loadKeychain.bind(this))
             .then(this.#processIncomingSharedKeys.bind(this))
-            .then(this.#startMessagePolling.bind(this))
+            .then(this.#startWebSocket.bind(this, 'init'))
             .catch(console.error)
         }
       },
@@ -292,7 +292,7 @@ export class Client {
       ) {
         throw new Error('Signup failed: could not authenticate server')
       }
-      this.#startMessagePolling()
+      this.#startWebSocket('signup')
       this.#mitt.emit('identityUpdated', this.publicIdentity)
       this.#sync.setState(this.#state)
       return this.publicIdentity
@@ -314,7 +314,7 @@ export class Client {
     // Load keychain & incoming shared keys in the background
     this.#loadKeychain()
       .then(() => this.#processIncomingSharedKeys())
-      .then(() => this.#startMessagePolling())
+      .then(() => this.#startWebSocket('login'))
       .catch(console.error)
     this.#mitt.emit('identityUpdated', this.publicIdentity)
     this.#sync.setState(this.#state)
@@ -949,47 +949,72 @@ export class Client {
     }
   }
 
-  #startMessagePolling() {
+  #startWebSocket(context: string) {
     if (this.#state.state !== 'loaded') {
-      return
+      return false
     }
-    // Start websocket
-    if (!this.#socket || this.#socket.readyState === WebSocket.CLOSED) {
-      const timestamp = new Date().toISOString()
-      const url = new URL('/v1/notifications', this.config.serverURL)
-      url.protocol = url.protocol.replace('http', 'ws')
-      url.searchParams.set('x-e2esdk-user-id', this.#state.identity.userId)
-      url.searchParams.set('x-e2esdk-timestamp', timestamp)
-      const signature = signClientRequest(
-        this.sodium,
-        this.#state.identity.signature.privateKey,
-        {
-          timestamp,
-          method: 'GET',
-          url: url.toString(),
-          recipientPublicKey: this.config.serverPublicKey,
-          userId: this.#state.identity.userId,
-        }
-      )
-      url.searchParams.set('x-e2esdk-signature', signature)
-      const ws = new WebSocket(url.toString())
-      ws.addEventListener('message', event => {
-        const res = websocketNotificationTypesSchema.safeParse(event.data)
-        if (!res.success) {
-          return
-        }
-        if (res.data === WebsocketNotificationTypes.sharedKeyAdded) {
-          this.#processIncomingSharedKeys()
-        }
-      })
-      this.#socket = ws
+    if (!this.config.handleNotifications) {
+      // This is the case for clients managed by Devtools,
+      // we assume that there is another client running for
+      // the application that will (by default) handle notifications.
+      // Having more than one of them react to notifications risks
+      // data races in processing incoming shared keys.
+      return false
     }
-
-    clearInterval(this.#pollingHandle)
-    this.#pollingHandle = setInterval(
-      this.#processIncomingSharedKeys.bind(this),
-      this.config.pollingInterval
+    if (this.#socket && this.#socket.readyState !== WebSocket.CLOSED) {
+      // WebSocket is already connected
+      return false
+    }
+    // WebSocket upgrade authentication is done via querystring,
+    // as we cannot set custom headers on the underlying HTTP request.
+    // See packages/server/src/routes/notifications.ts
+    const timestamp = new Date().toISOString()
+    const url = new URL('/v1/notifications', this.config.serverURL)
+    url.searchParams.set('context', context)
+    url.searchParams.set('x-e2esdk-user-id', this.#state.identity.userId)
+    url.searchParams.set('x-e2esdk-client-id', this.config.clientId)
+    url.searchParams.set('x-e2esdk-timestamp', timestamp)
+    url.protocol = url.protocol.replace('http', 'ws')
+    const signature = signClientRequest(
+      this.sodium,
+      this.#state.identity.signature.privateKey,
+      {
+        timestamp,
+        method: 'GET',
+        // Note that we sign the URL before applying the signature
+        // into the querystring (otherwise we'd be running in circles),
+        // so the server will do the same thing for verification.
+        url: url.toString(),
+        recipientPublicKey: this.config.serverPublicKey,
+        userId: this.#state.identity.userId,
+        clientId: this.config.clientId,
+      }
     )
+    url.searchParams.set('x-e2esdk-signature', signature)
+    const socket = new WebSocket(url.toString())
+    socket.addEventListener('message', event => {
+      const res = websocketNotificationTypesSchema.safeParse(event.data)
+      if (!res.success) {
+        return
+      }
+      if (res.data === WebsocketNotificationTypes.sharedKeyAdded) {
+        // By adding a random delay, we might help solve data races
+        // between two clients configured to handle notifications.
+        // One case where that might happen is when two windows are
+        // open and visible (eg: on different screens or each on half of
+        // a shared screen). It does not happen for tabs since the WebSocket
+        // is closed when a tab becomes hidden.
+        const randomDelay = Math.random() * 2000
+        setTimeout(() => this.#processIncomingSharedKeys(), randomDelay)
+      }
+    })
+    this.#socket = socket
+    return true
+  }
+
+  #stopWebSocket(reason: string) {
+    this.#socket?.close(1001, reason)
+    this.#socket = undefined
   }
 
   // API Layer --
@@ -1027,6 +1052,7 @@ export class Client {
         body: json,
         recipientPublicKey: this.config.serverPublicKey,
         userId: this.#state.identity.userId,
+        clientId: this.config.clientId,
       }
     )
     const res = await fetch(url, {
@@ -1038,6 +1064,7 @@ export class Client {
       headers: {
         'content-type': 'application/json',
         'x-e2esdk-user-id': this.#state.identity.userId,
+        'x-e2esdk-client-id': this.config.clientId,
         'x-e2esdk-timestamp': timestamp,
         'x-e2esdk-signature': signature,
       },
@@ -1056,15 +1083,12 @@ export class Client {
     identity: Identity
   ): Promise<unknown> {
     const now = Date.now()
-    const signature = res.headers.get('x-e2esdk-signature')
-    if (!signature) {
-      throw new Error('Missing server response signature')
-    }
-    const timestamp = res.headers.get('x-e2esdk-timestamp')
-    if (!timestamp) {
-      throw new Error('Missing server response timestamp')
-    }
-    const userId = res.headers.get('x-e2esdk-user-id') ?? undefined
+    const {
+      'x-e2esdk-signature': signature,
+      'x-e2esdk-client-id': clientId,
+      'x-e2esdk-timestamp': timestamp,
+      'x-e2esdk-user-id': userId,
+    } = publicKeyAuthHeaders.parse(Object.fromEntries(res.headers))
     // res.text() will return "" on empty bodies
     const body = (await res.text()) || undefined
     const verified = verifyServerSignature(
@@ -1078,13 +1102,17 @@ export class Client {
         body,
         recipientPublicKey: identity.signature.publicKey,
         userId,
+        clientId: this.config.clientId,
       }
     )
     if (!verified) {
       throw new Error('Invalid server response signature')
     }
-    if (userId && userId !== identity.userId) {
+    if (userId !== identity.userId) {
       throw new Error('Mismatching user ID')
+    }
+    if (clientId !== this.config.clientId) {
+      throw new Error('Mismatching client ID')
     }
     if (isFarFromCurrentTime(timestamp, now)) {
       throw new Error(
@@ -1127,10 +1155,7 @@ export class Client {
   // Persistance & cross-tab communication --
 
   #clearState() {
-    this.#socket?.close(1001, 'logging out')
-    this.#socket = undefined
-    clearTimeout(this.#pollingHandle)
-    this.#pollingHandle = undefined
+    this.#stopWebSocket('logging out')
     if (this.#state.state !== 'loaded') {
       return
     }
@@ -1156,13 +1181,10 @@ export class Client {
       return
     }
     if (document.visibilityState === 'visible') {
-      this.#startMessagePolling()
+      this.#startWebSocket('document:visible')
     }
     if (document.visibilityState === 'hidden') {
-      this.#socket?.close()
-      this.#socket = undefined
-      clearTimeout(this.#pollingHandle)
-      this.#pollingHandle = undefined
+      this.#stopWebSocket('document:hidden')
     }
   }
 }

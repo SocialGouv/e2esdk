@@ -9,7 +9,8 @@ export type PublicKeyAuthArgs = {
   method: string
   url: string
   body?: string
-  userId?: string
+  userId: string
+  clientId: string
 
   // Note: Ed25519 already includes the signature public key
   // in the signature calculation (exclusive ownership),
@@ -56,6 +57,7 @@ function getSignatureElements(
     url,
     body,
     userId,
+    clientId,
     recipientPublicKey,
   }: PublicKeyAuthArgs
 ) {
@@ -65,6 +67,7 @@ function getSignatureElements(
     sodium.from_string(url),
     body ? sodium.from_string(body) : null,
     userId ? sodium.from_string(userId) : null,
+    sodium.from_string(clientId),
     typeof recipientPublicKey === 'string'
       ? sodium.from_base64(recipientPublicKey)
       : recipientPublicKey,

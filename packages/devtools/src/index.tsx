@@ -35,6 +35,8 @@ export class E2ESDKDevtoolsElement extends HTMLElement {
     const client = new Client({
       serverURL,
       serverPublicKey,
+      // Let the main application client deal with notifications
+      handleNotifications: false,
     })
     const config: ThemeConfig = {
       useSystemColorMode: false,

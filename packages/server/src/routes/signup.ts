@@ -1,6 +1,6 @@
 import {
-  PublicRouteHeaders,
-  publicRouteHeaders,
+  PublicKeyAuthHeaders,
+  publicKeyAuthHeaders,
   signupBody,
   SignupBody,
 } from '@e2esdk/api'
@@ -10,7 +10,7 @@ import { App } from '../types'
 
 export default async function signupRoutes(app: App) {
   app.post<{
-    Headers: PublicRouteHeaders
+    Headers: PublicKeyAuthHeaders
     Body: SignupBody
     Reply: SignupBody
   }>(
@@ -27,7 +27,7 @@ export default async function signupRoutes(app: App) {
         },
       }),
       schema: {
-        headers: zodToJsonSchema(publicRouteHeaders),
+        headers: zodToJsonSchema(publicKeyAuthHeaders),
         body: zodToJsonSchema(signupBody),
         response: {
           201: zodToJsonSchema(signupBody),

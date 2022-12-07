@@ -1,8 +1,12 @@
-import { Identity, isFarFromCurrentTime } from '@e2esdk/api'
+import {
+  Identity,
+  isFarFromCurrentTime,
+  publicKeyAuthHeaders
+} from '@e2esdk/api'
 import {
   signAuth as signResponse,
   verifyAuth as verifyClientSignature,
-  verifyClientIdentity,
+  verifyClientIdentity
 } from '@e2esdk/crypto'
 import type { FastifyPluginAsync, FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
@@ -25,6 +29,7 @@ declare module 'fastify' {
 
   interface FastifyRequest {
     identity: Identity
+    clientId: string
   }
 }
 
@@ -38,22 +43,26 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
       async function usePublicKeyAuth(req: FastifyRequest) {
         const headersOrQuery =
           mode === 'http' ? req.headers : (req.query as Record<string, string>)
-        const userId = headersOrQuery['x-e2esdk-user-id'] as string
-        if (!userId) {
-          throw app.httpErrors.badRequest('Missing x-e2esdk-user-id header')
+        const parsed = publicKeyAuthHeaders.safeParse(headersOrQuery)
+        if (!parsed.success) {
+          req.log.error({
+            msg: 'Missing public key authentication headers',
+            error: parsed.error,
+            remediation:
+              "Set this route's querystring schema to `zodToJsonSchema(publicKeyAuthHeaders)` to validate the request before attempting authentication.",
+          })
+          throw app.httpErrors.badRequest('Missing public key headers')
         }
-        const timestamp = headersOrQuery['x-e2esdk-timestamp'] as string
-        if (!timestamp) {
-          throw app.httpErrors.badRequest('Missing x-e2esdk-timestamp header')
-        }
+        const {
+          'x-e2esdk-signature': signature,
+          'x-e2esdk-timestamp': timestamp,
+          'x-e2esdk-user-id': userId,
+          'x-e2esdk-client-id': clientId,
+        } = parsed.data
         if (isFarFromCurrentTime(timestamp)) {
           throw app.httpErrors.forbidden(
             'Request timestamp is too far off current time'
           )
-        }
-        const signature = headersOrQuery['x-e2esdk-signature'] as string
-        if (!signature) {
-          throw app.httpErrors.badRequest('Missing x-e2esdk-signature header')
         }
         const identity =
           getIdentity === 'database'
@@ -95,6 +104,7 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
                 body: JSON.stringify(req.body),
                 recipientPublicKey: serverPublicKey,
                 userId: identity.userId,
+                clientId,
               }
             )
           ) {
@@ -104,6 +114,7 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
           throw app.httpErrors.unauthorized('Invalid request signature')
         }
         req.identity = identity
+        req.clientId = clientId
       }
   )
 
@@ -121,9 +132,11 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
         url: `${env.DEPLOYMENT_URL}${req.url}`,
         body,
         userId: req.identity.userId,
+        clientId: req.clientId,
         recipientPublicKey: req.identity.signaturePublicKey,
       })
       res.header('x-e2esdk-user-id', req.identity.userId)
+      res.header('x-e2esdk-client-id', req.clientId)
       res.header('x-e2esdk-timestamp', timestamp)
       res.header('x-e2esdk-signature', signature)
       return body
