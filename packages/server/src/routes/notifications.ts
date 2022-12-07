@@ -1,4 +1,4 @@
-import { publicKeyAuthHeaders, WebsocketNotificationTypes } from '@e2esdk/api'
+import { publicKeyAuthHeaders, WebSocketNotificationTypes } from '@e2esdk/api'
 import mitt from 'mitt'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
@@ -31,24 +31,34 @@ export default async function notificationsRoutes(app: App) {
       },
     },
     async function websocketNotifications(connection, req) {
-      req.log.info({
-        msg: 'WebSocket connection established',
-        context: req.query.context,
+      const logger = req.log.child({
+        category: 'websocket',
         identity: req.identity,
         clientId: req.clientId,
       })
+      logger.info({
+        msg: 'WebSocket connection established',
+        context: req.query.context,
+      })
       const sharedKeyForMe = `sharedKeyInserted:${req.identity.userId}}`
-      function onSharedKeyInsertedForMe() {
-        connection.socket.send(WebsocketNotificationTypes.sharedKeyAdded)
+      function sendSharedKeyAddedNotification() {
+        connection.socket.send(WebSocketNotificationTypes.sharedKeyAdded)
       }
-      emitter.on(sharedKeyForMe, onSharedKeyInsertedForMe)
-      connection.on('close', () => {
-        req.log.info({
-          msg: 'Websocket closed by client, unregistering database listener',
-          identity: req.identity,
-          clientId: req.clientId,
+      emitter.on(sharedKeyForMe, sendSharedKeyAddedNotification)
+
+      connection.socket.on('error', error =>
+        logger.error({
+          msg: 'WebSocket error',
+          error,
         })
-        emitter.off(sharedKeyForMe, onSharedKeyInsertedForMe)
+      )
+      connection.socket.on('close', (code, reason) => {
+        logger.info({
+          msg: 'WebSocket closed by client, unregistering database listener',
+          code,
+          reason: reason.toString('utf8'),
+        })
+        emitter.off(sharedKeyForMe, sendSharedKeyAddedNotification)
       })
     }
   )
