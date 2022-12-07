@@ -56,7 +56,7 @@ export default async function infoRoutes(app: App) {
     deploymentURL: env.DEPLOYMENT_URL,
     signaturePublicKey: env.SIGNATURE_PUBLIC_KEY,
     manifestSignature,
-    manifest,
+    manifest: env.NODE_ENV === 'production' ? manifest : undefined,
   }
   app.log.info({
     msg: 'Server info',
