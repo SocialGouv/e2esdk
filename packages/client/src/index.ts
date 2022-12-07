@@ -26,7 +26,7 @@ import {
   sixtyFourBytesBase64Schema,
   thirtyTwoBytesBase64Schema,
   timestampSchema,
-  WebsocketNotificationTypes,
+  WebSocketNotificationTypes,
   websocketNotificationTypesSchema,
 } from '@e2esdk/api'
 import {
@@ -949,21 +949,22 @@ export class Client {
     }
   }
 
-  #startWebSocket(context: string) {
+  async #startWebSocket(context: string) {
     if (this.#state.state !== 'loaded') {
-      return false
+      return
     }
+    await this.sodium.ready
     if (!this.config.handleNotifications) {
       // This is the case for clients managed by Devtools,
       // we assume that there is another client running for
       // the application that will (by default) handle notifications.
       // Having more than one of them react to notifications risks
       // data races in processing incoming shared keys.
-      return false
+      return
     }
     if (this.#socket && this.#socket.readyState !== WebSocket.CLOSED) {
       // WebSocket is already connected
-      return false
+      return
     }
     // WebSocket upgrade authentication is done via querystring,
     // as we cannot set custom headers on the underlying HTTP request.
@@ -997,7 +998,7 @@ export class Client {
       if (!res.success) {
         return
       }
-      if (res.data === WebsocketNotificationTypes.sharedKeyAdded) {
+      if (res.data === WebSocketNotificationTypes.sharedKeyAdded) {
         // By adding a random delay, we might help solve data races
         // between two clients configured to handle notifications.
         // One case where that might happen is when two windows are
@@ -1009,11 +1010,13 @@ export class Client {
       }
     })
     this.#socket = socket
-    return true
   }
 
   #stopWebSocket(reason: string) {
-    this.#socket?.close(1001, reason)
+    if (!this.#socket) {
+      return
+    }
+    this.#socket.close(3000, reason)
     this.#socket = undefined
   }
 
@@ -1155,7 +1158,7 @@ export class Client {
   // Persistance & cross-tab communication --
 
   #clearState() {
-    this.#stopWebSocket('logging out')
+    this.#stopWebSocket('logout')
     if (this.#state.state !== 'loaded') {
       return
     }

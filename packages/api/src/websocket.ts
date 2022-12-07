@@ -1,9 +1,9 @@
 import { z } from 'zod'
 
-export enum WebsocketNotificationTypes {
+export enum WebSocketNotificationTypes {
   sharedKeyAdded = 'event:sharedKey:added',
 }
 
 export const websocketNotificationTypesSchema = z.nativeEnum(
-  WebsocketNotificationTypes
+  WebSocketNotificationTypes
 )
