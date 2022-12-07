@@ -2,16 +2,11 @@ import { z } from 'zod'
 import { signedHashSchema, timestampSchema } from './schemas/encodings'
 import { identitySchema } from './schemas/identity'
 
-export const publicRouteHeaders = z.object({
+export const publicKeyAuthHeaders = z.object({
   'x-e2esdk-user-id': identitySchema.shape.userId,
+  'x-e2esdk-client-id': z.string().uuid(),
   'x-e2esdk-timestamp': timestampSchema,
-})
-
-export const publicKeyAuthHeaders = publicRouteHeaders.extend({
   'x-e2esdk-signature': signedHashSchema,
 })
 
-// --
-
-export type PublicRouteHeaders = z.infer<typeof publicRouteHeaders>
 export type PublicKeyAuthHeaders = z.infer<typeof publicKeyAuthHeaders>
