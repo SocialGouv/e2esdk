@@ -20,12 +20,14 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "keygen": "pnpm --filter keygen run keygen",
-    "db": "pnpm --filter server run db"
+    "db": "pnpm --filter server run db",
+    "verdaccio": "verdaccio --config config/verdaccio/config.yml"
   },
   "devDependencies": {
     "@types/jest": "^29.2.3",
     "prettier": "^2.8.0",
-    "turbo": "^1.6.3"
+    "turbo": "^1.6.3",
+    "verdaccio": "^5.18.0"
   },
   "prettier": {
     "arrowParens": "avoid",

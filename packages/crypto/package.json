@@ -9,7 +9,8 @@
     "url": "https://francoisbest.com"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "http://localhost:4873"
   },
   "files": [
     "/dist"
