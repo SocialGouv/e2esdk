@@ -202,6 +202,7 @@ export class Client {
   #mitt: Emitter<Events>
   #sync: LocalStateSync<State>
   #socket?: WebSocket
+  #socketExponentialBackoffTimeout?: number
 
   constructor(config: ClientConfig) {
     this.sodium = sodium
@@ -1009,6 +1010,23 @@ export class Client {
         setTimeout(() => this.#processIncomingSharedKeys(), randomDelay)
       }
     })
+    // Automatically reconnect with exponential backoff
+    socket.addEventListener('close', event => {
+      if (event.code === 4000) {
+        // We closed the connection ourselves, bail out from autoreconnect
+        return
+      }
+      this.#socketExponentialBackoffTimeout = Math.min(
+        (this.#socketExponentialBackoffTimeout ?? 500) * 2,
+        64000
+      )
+      setTimeout(() => {
+        console.debug(
+          '@e2esdk/client: WebSocket connection closed, attempting to reconnect...'
+        )
+        this.#startWebSocket('reconnect')
+      }, this.#socketExponentialBackoffTimeout)
+    })
     this.#socket = socket
   }
 
@@ -1016,8 +1034,9 @@ export class Client {
     if (!this.#socket) {
       return
     }
-    this.#socket.close(3000, reason)
+    this.#socket.close(4000, reason)
     this.#socket = undefined
+    this.#socketExponentialBackoffTimeout = undefined
   }
 
   // API Layer --
