@@ -2,7 +2,7 @@ import { z } from 'zod'
 import {
   boxCiphertextV1Schema,
   fingerprintSchema,
-  signedHashSchema,
+  signatureSchema,
   timestampSchema,
 } from './schemas/encodings'
 import { identitySchema } from './schemas/identity'
@@ -19,7 +19,7 @@ const sharedKey = z.object({
   payload: boxCiphertextV1Schema,
   nameFingerprint: fingerprintSchema,
   payloadFingerprint: fingerprintSchema,
-  signature: signedHashSchema,
+  signature: signatureSchema,
 })
 
 // --

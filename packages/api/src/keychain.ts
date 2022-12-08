@@ -2,7 +2,7 @@ import { z } from 'zod'
 import {
   fingerprintSchema,
   secretBoxCiphertextV1Schema,
-  signedHashSchema,
+  signatureSchema,
   timestampSchema,
 } from './schemas/encodings'
 import { identitySchema } from './schemas/identity'
@@ -17,7 +17,7 @@ const keychainItemSchema = z.object({
   payloadFingerprint: fingerprintSchema,
   ownerId: identitySchema.shape.userId,
   sharedBy: identitySchema.shape.userId.nullable(),
-  signature: signedHashSchema,
+  signature: signatureSchema,
 })
 
 export const postKeychainItemRequestBody = keychainItemSchema

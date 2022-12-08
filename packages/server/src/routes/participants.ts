@@ -25,10 +25,14 @@ export default async function participantsRoutes(app: App) {
     {
       preValidation: app.usePublicKeyAuth(),
       schema: {
-        params: zodToJsonSchema(getParticipantsUrlParams),
+        params: zodToJsonSchema(getParticipantsUrlParams, {
+          $refStrategy: 'none',
+        }),
         headers: zodToJsonSchema(publicKeyAuthHeaders),
         response: {
-          200: zodToJsonSchema(getParticipantsResponseBody),
+          200: zodToJsonSchema(getParticipantsResponseBody, {
+            $refStrategy: 'none',
+          }),
         },
       },
     },

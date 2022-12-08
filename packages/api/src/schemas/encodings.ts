@@ -4,7 +4,7 @@ export const thirtyTwoBytesBase64Schema = z.string().regex(/^[\w-]{43}$/)
 export const sixtyFourBytesBase64Schema = z.string().regex(/^[\w-]{86}$/)
 
 export const fingerprintSchema = thirtyTwoBytesBase64Schema
-export const signedHashSchema = sixtyFourBytesBase64Schema
+export const signatureSchema = sixtyFourBytesBase64Schema
 
 // Naive ISO-8601 format parser (as returned by Date.toISOString())
 // The regexp is here to translate to a static JSON schema validation,
@@ -19,11 +19,14 @@ export const timestampSchema = z
 export const boxCiphertextV1Schema = z
   .string()
   .regex(/^v1\.box\.(bin|txt|num|bool|json)\.[\w-]{32}\.[\w-]{22,}$/)
+  .describe('Sodium box ciphertext (v1)')
 
 export const secretBoxCiphertextV1Schema = z
   .string()
   .regex(/^v1\.secretBox\.(bin|txt|num|bool|json)\.[\w-]{32}\.[\w-]{22,}$/)
+  .describe('Sodium secret box ciphertext (v1)')
 
 export const sealedBoxCiphertextV1Schema = z
   .string()
   .regex(/^v1\.sealedBox\.(bin|txt|num|bool|json)\.[\w-]{64,}$/)
+  .describe('Sodium sealed box ciphertext (v1)')

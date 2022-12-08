@@ -20,7 +20,7 @@ import {
   PostPermissionRequestBody,
   PostSharedKeyBody,
   publicKeyAuthHeaders,
-  signedHashSchema,
+  signatureSchema,
   signupBody,
   SignupBody,
   sixtyFourBytesBase64Schema,
@@ -144,7 +144,7 @@ const identitySchema = z.object({
   keychainBaseKey: key32Schema,
   sharing: boxKeyPairSchema,
   signature: signatureKeyPairSchema,
-  proof: signedHashSchema,
+  proof: signatureSchema,
 })
 
 type Identity = z.infer<typeof identitySchema>

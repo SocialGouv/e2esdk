@@ -21,7 +21,7 @@ const corsPlugin: FastifyPluginAsync = async (app: App) => {
   }
 
   app.log.debug({ msg: 'CORS options', options })
-  app.register(cors, options)
+  return app.register(cors, options)
 }
 
 export default fp(corsPlugin, {

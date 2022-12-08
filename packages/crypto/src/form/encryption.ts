@@ -1,6 +1,6 @@
 import {
   sealedBoxCiphertextV1Schema,
-  signedHashSchema,
+  signatureSchema,
   thirtyTwoBytesBase64Schema,
 } from '@e2esdk/api'
 import { z } from 'zod'
@@ -28,7 +28,7 @@ const encryptedFieldSchema = z
 
 const encryptedFormSubmissionMetadataSchema = z.object({
   sealedSecret: sealedBoxCiphertextV1Schema,
-  signature: signedHashSchema,
+  signature: signatureSchema,
   publicKey: thirtyTwoBytesBase64Schema,
 })
 

@@ -7,7 +7,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema'
 import { env } from '../env.js'
 import type { App } from '../types'
 
-export const prefixOverride = '/'
+export const prefixOverride = ''
 
 const manifestEntry = z.object({
   path: z.string(),
@@ -56,7 +56,7 @@ export default async function infoRoutes(app: App) {
     deploymentURL: env.DEPLOYMENT_URL,
     signaturePublicKey: env.SIGNATURE_PUBLIC_KEY,
     manifestSignature,
-    manifest: env.NODE_ENV === 'production' ? manifest : undefined,
+    manifest: env.NODE_ENV === 'production' || env.DEBUG ? manifest : undefined,
   }
   app.log.info({
     msg: 'Server info',
