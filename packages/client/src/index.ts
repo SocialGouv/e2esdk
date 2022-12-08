@@ -210,7 +210,10 @@ export class Client {
       serverURL: config.serverURL,
       serverPublicKey: this.decode(config.serverPublicKey),
       handleNotifications: config.handleNotifications ?? true,
-      clientId: crypto.randomUUID(),
+      clientId:
+        typeof crypto === 'object'
+          ? crypto.randomUUID()
+          : 'not-available-in-ssr',
     })
     this.#state = {
       state: 'idle',
