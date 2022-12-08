@@ -8,29 +8,20 @@ import postgres, { Sql } from 'postgres'
 import { spinner } from 'zx/experimental'
 import 'zx/globals'
 import { databaseConnectionOptions } from './connectionOptions.js'
+import {
+  DatabaseMigration,
+  FileSystemMigration,
+  listMigrations as _listMigrations,
+  MIGRATIONS_DIR,
+  MIGRATIONS_TABLE_NAME,
+} from './migrations.js'
 
 // Constants --
 
-const MIGRATIONS_TABLE_NAME = 'e2esdk_migrations'
-const MIGRATIONS_DIR = resolve(__dirname, '../../src/database/migrations')
 const SEED_SCRIPT = resolve(__dirname, 'seeds', 'index.js')
 const INDEX_LEN = 5 // number of digits in indices, eg 00042
 
 const indexRegexp = new RegExp(`^[0-9]{${INDEX_LEN}}_`)
-
-// Types --
-
-type FileSystemMigration = {
-  id: number
-  path: string
-  name: string
-}
-
-type DatabaseMigration = {
-  id: number
-  name: string
-  createdAt: string
-}
 
 // Usage --
 
@@ -189,25 +180,20 @@ export async function apply(sql) {
 async function listMigrations() {
   printConnectionInfo()
   await ensureMigrationsTableExists()
-  const fsMigrations = await getFilesystemMigrations()
-  const dbMigrations = await getDatabaseMigrations()
 
-  const appliedMigrations = dbMigrations.filter(db =>
-    fsMigrations.find(fs => fs.id === db.id && fs.name === db.name)
-  )
-  const pendingMigrations = fsMigrations.filter(
-    fs => !dbMigrations.find(db => fs.id === db.id && fs.name === db.name)
-  )
-  const upstreamMigrations = dbMigrations.filter(
-    db => !fsMigrations.find(fs => fs.id === db.id && fs.name === db.name)
-  )
+  const {
+    fsMigrations,
+    dbMigrations,
+    appliedMigrations,
+    pendingMigrations,
+    upstreamMigrations,
+    conflictingMigrations,
+    mismatchingMigrations,
+  } = await _listMigrations(sql)
+
   const longestNameLength = Math.max(
     fsMigrations.reduce((l, m) => Math.max(l, m.name.length), 0),
     dbMigrations.reduce((l, m) => Math.max(l, m.name.length), 0)
-  )
-
-  const conflictingMigrations = pendingMigrations.filter(fs =>
-    upstreamMigrations.find(db => fs.id >= db.id)
   )
 
   const appliedMigrationsText = `✅ Applied migrations:
@@ -487,13 +473,6 @@ async function getFilesystemMigrations() {
     process.exit(1)
   }
   return migrations
-}
-
-function getDatabaseMigrations(): Promise<DatabaseMigration[]> {
-  return sql`
-    SELECT * FROM ${sql(MIGRATIONS_TABLE_NAME)}
-    ORDER BY id ASC
-  `
 }
 
 function indexToStr(index: number) {
