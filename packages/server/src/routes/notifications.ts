@@ -14,9 +14,12 @@ export default async function notificationsRoutes(app: App) {
   // listening connection to the database, then fan out here
   // to forward to the correct websocket connection.
   const emitter = mitt()
-  app.db.listen(sharedKeyInsertsNotificationChannel, toUserId =>
-    emitter.emit(`sharedKeyInserted:${toUserId}`, null)
-  )
+  app.db.listen(sharedKeyInsertsNotificationChannel, toUserId => {
+    emitter.emit(
+      [sharedKeyInsertsNotificationChannel, toUserId].join(':'),
+      null
+    )
+  })
   app.get<{
     Querystring: z.infer<typeof querystringSchema>
   }>(
@@ -40,12 +43,14 @@ export default async function notificationsRoutes(app: App) {
         msg: 'WebSocket connection established',
         context: req.query.context,
       })
-      const sharedKeyForMe = `sharedKeyInserted:${req.identity.userId}}`
+      const sharedKeyForMe = [
+        sharedKeyInsertsNotificationChannel,
+        req.identity.userId,
+      ].join(':')
       function sendSharedKeyAddedNotification() {
         connection.socket.send(WebSocketNotificationTypes.sharedKeyAdded)
       }
       emitter.on(sharedKeyForMe, sendSharedKeyAddedNotification)
-
       connection.socket.on('error', error =>
         logger.error({
           msg: 'WebSocket error',

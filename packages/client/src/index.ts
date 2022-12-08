@@ -1000,6 +1000,7 @@ export class Client {
     socket.addEventListener('message', event => {
       const res = websocketNotificationTypesSchema.safeParse(event.data)
       if (!res.success) {
+        console.error(res.error)
         return
       }
       if (res.data === WebSocketNotificationTypes.sharedKeyAdded) {
