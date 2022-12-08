@@ -16,7 +16,9 @@ const userIdParams = z.object({
 })
 
 const userIdsParams = z.object({
-  userIds: z.string(),
+  userIds: z
+    .string()
+    .describe('Coma-separated list of user IDs (eg: `alice,bob`)'),
 })
 
 export default async function identitiesRoutes(app: App) {
@@ -29,10 +31,14 @@ export default async function identitiesRoutes(app: App) {
     {
       preValidation: app.usePublicKeyAuth(),
       schema: {
+        tags: ['identity'],
+        summary: 'Get a single user identity',
         params: zodToJsonSchema(userIdParams),
         headers: zodToJsonSchema(publicKeyAuthHeaders),
         response: {
-          200: zodToJsonSchema(getSingleIdentityResponseBody),
+          200: zodToJsonSchema(getSingleIdentityResponseBody, {
+            $refStrategy: 'none',
+          }),
         },
       },
     },
@@ -54,10 +60,14 @@ export default async function identitiesRoutes(app: App) {
     {
       preValidation: app.usePublicKeyAuth(),
       schema: {
+        tags: ['identity'],
+        summary: 'Get multiple user identities',
         params: zodToJsonSchema(userIdsParams),
         headers: zodToJsonSchema(publicKeyAuthHeaders),
         response: {
-          200: zodToJsonSchema(getMultipleIdentitiesResponseBody),
+          200: zodToJsonSchema(getMultipleIdentitiesResponseBody, {
+            $refStrategy: 'none',
+          }),
         },
       },
     },

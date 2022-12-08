@@ -30,6 +30,8 @@ export default async function permissionsRoutes(app: App) {
     {
       preValidation: app.usePublicKeyAuth(),
       schema: {
+        tags: ['permissions'],
+        summary: 'Get permissions for a namespace',
         params: zodToJsonSchema(getPermissionsUrlParams),
         headers: zodToJsonSchema(publicKeyAuthHeaders),
         response: {
@@ -61,6 +63,8 @@ export default async function permissionsRoutes(app: App) {
     {
       preValidation: app.usePublicKeyAuth(),
       schema: {
+        tags: ['permissions'],
+        summary: 'Update permissions for a user & namespace',
         headers: zodToJsonSchema(publicKeyAuthHeaders),
         body: zodToJsonSchema(postPermissionRequestBody),
         response: {

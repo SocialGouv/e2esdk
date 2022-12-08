@@ -27,6 +27,8 @@
     "@e2esdk/api": "workspace:*",
     "@e2esdk/crypto": "workspace:*",
     "@fastify/cors": "^8.2.0",
+    "@fastify/swagger": "^8.2.0",
+    "@fastify/swagger-ui": "^1.3.0",
     "@fastify/websocket": "^7.1.1",
     "dotenv": "^16.0.3",
     "fastify": "^4.10.2",

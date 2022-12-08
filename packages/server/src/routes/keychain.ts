@@ -4,18 +4,18 @@ import {
   postKeychainItemRequestBody,
   PostKeychainItemRequestBody,
   publicKeyAuthHeaders,
-  PublicKeyAuthHeaders
+  PublicKeyAuthHeaders,
 } from '@e2esdk/api'
 import { numberToUint32LE, verifyMultipartSignature } from '@e2esdk/crypto'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import {
   getKeyNameParticipants,
   getOwnKeychainItems,
-  storeKeychainItem
+  storeKeychainItem,
 } from '../database/models/keychain.js'
 import {
   createPermission,
-  getPermission
+  getPermission,
 } from '../database/models/permissions.js'
 import { deleteSharedKey, getSharedKey } from '../database/models/sharedKey.js'
 import type { App } from '../types'
@@ -29,8 +29,12 @@ export default async function keychainRoutes(app: App) {
     {
       preValidation: app.usePublicKeyAuth(),
       schema: {
+        tags: ['keychain'],
+        summary: 'Add a key to my keychain',
         headers: zodToJsonSchema(publicKeyAuthHeaders),
-        body: zodToJsonSchema(postKeychainItemRequestBody),
+        body: zodToJsonSchema(postKeychainItemRequestBody, {
+          $refStrategy: 'none',
+        }),
         response: {
           201: {
             type: 'null',
@@ -168,9 +172,13 @@ export default async function keychainRoutes(app: App) {
     {
       preValidation: app.usePublicKeyAuth(),
       schema: {
+        tags: ['keychain'],
+        summary: 'Get my own keys',
         headers: zodToJsonSchema(publicKeyAuthHeaders),
         response: {
-          200: zodToJsonSchema(getKeychainResponseBody),
+          200: zodToJsonSchema(getKeychainResponseBody, {
+            $refStrategy: 'none',
+          }),
         },
       },
     },

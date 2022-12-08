@@ -30,8 +30,10 @@ export default async function sharedKeysRoutes(app: App) {
     {
       preValidation: app.usePublicKeyAuth(),
       schema: {
+        tags: ['sharedKeys'],
+        summary: 'Share a key with someone',
         headers: zodToJsonSchema(publicKeyAuthHeaders),
-        body: zodToJsonSchema(postSharedKeyBody),
+        body: zodToJsonSchema(postSharedKeyBody, { $refStrategy: 'none' }),
         response: {
           201: {
             type: 'null',
@@ -93,9 +95,13 @@ export default async function sharedKeysRoutes(app: App) {
     {
       preValidation: app.usePublicKeyAuth(),
       schema: {
+        tags: ['sharedKeys'],
+        summary: 'List incoming keys shared with me',
         headers: zodToJsonSchema(publicKeyAuthHeaders),
         response: {
-          200: zodToJsonSchema(getSharedKeysResponseBody),
+          200: zodToJsonSchema(getSharedKeysResponseBody, {
+            $refStrategy: 'none',
+          }),
         },
       },
     },
@@ -113,9 +119,13 @@ export default async function sharedKeysRoutes(app: App) {
     {
       preValidation: app.usePublicKeyAuth(),
       schema: {
+        tags: ['sharedKeys'],
+        summary: 'List keys I have shared with others',
         headers: zodToJsonSchema(publicKeyAuthHeaders),
         response: {
-          200: zodToJsonSchema(getSharedKeysResponseBody),
+          200: zodToJsonSchema(getSharedKeysResponseBody, {
+            $refStrategy: 'none',
+          }),
         },
       },
     },
@@ -138,6 +148,8 @@ export default async function sharedKeysRoutes(app: App) {
     {
       preValidation: app.usePublicKeyAuth(),
       schema: {
+        tags: ['sharedKeys'],
+        summary: 'Remove a shared key',
         params: zodToJsonSchema(deleteSharedKeyUrlParams),
         headers: zodToJsonSchema(publicKeyAuthHeaders),
         response: {

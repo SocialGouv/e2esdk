@@ -9,6 +9,7 @@ import { createIdentity } from '../database/models/identity.js'
 import { App } from '../types'
 
 export default async function signupRoutes(app: App) {
+  const bodySchema = zodToJsonSchema(signupBody, { $refStrategy: 'none' })
   app.post<{
     Headers: PublicKeyAuthHeaders
     Body: SignupBody
@@ -28,9 +29,9 @@ export default async function signupRoutes(app: App) {
       }),
       schema: {
         headers: zodToJsonSchema(publicKeyAuthHeaders),
-        body: zodToJsonSchema(signupBody),
+        body: bodySchema,
         response: {
-          201: zodToJsonSchema(signupBody),
+          201: bodySchema,
         },
       },
     },
