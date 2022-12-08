@@ -6,12 +6,20 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ColorModeSwitch } from 'components/colorModeSwitch'
 import { PageLayout } from 'components/pageLayout'
 import type { AppProps } from 'next/app'
+import dynamic from 'next/dynamic'
 
 const e2esdkClient = new Client({
   serverURL: 'http://localhost:4003',
   serverPublicKey: 'gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE',
 })
 const reactQueryClient = new QueryClient()
+
+const Devtools = dynamic(
+  () => import('../components/devtools').then(m => m.Devtools),
+  {
+    ssr: false,
+  }
+)
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
@@ -33,6 +41,7 @@ function MyApp({ Component, pageProps }: AppProps) {
             />
             <ColorModeSwitch />
           </HStack>
+          <Devtools />
         </ChakraProvider>
       </E2ESDKClientProvider>
     </QueryClientProvider>

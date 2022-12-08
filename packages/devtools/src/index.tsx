@@ -39,6 +39,9 @@ export class E2ESDKDevtoolsElement extends HTMLElement {
   }
 
   set client(client: Client) {
+    if (this.#client === client) {
+      return
+    }
     this.#client = client
     this.render()
   }
