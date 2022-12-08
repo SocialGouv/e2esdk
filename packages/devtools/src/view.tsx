@@ -2,6 +2,7 @@ import {
   Box,
   BoxProps,
   Flex,
+  Grid,
   Heading,
   Icon,
   Tab,
@@ -9,11 +10,14 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
+  Text,
+  Tooltip,
 } from '@chakra-ui/react'
-import { useE2ESDKClientIdentity } from '@e2esdk/react'
+import { useE2ESDKClient, useE2ESDKClientIdentity } from '@e2esdk/react'
 import React from 'react'
 import { FiKey, FiUser } from 'react-icons/fi'
 import { MdOutlineLock } from 'react-icons/md'
+import { usePortalRef } from './components/PortalProvider'
 import { SodiumState } from './components/SodiumState'
 import { useLocalState } from './hooks/useLocalState'
 import { AuthTab } from './tabs/AuthTab'
@@ -21,6 +25,7 @@ import { IdentityTab } from './tabs/IdentityTab'
 import { KeysTab } from './tabs/KeysTab'
 
 export const E2ESdkDevtoolsView: React.FC<BoxProps> = ({ ...props }) => {
+  const client = useE2ESDKClient()
   const identity = useE2ESDKClientIdentity()
   const [tabIndex, setTabIndex] = useLocalState({
     storageKey: 'e2esdk:devtools:tabIndex',
@@ -63,14 +68,39 @@ export const E2ESdkDevtoolsView: React.FC<BoxProps> = ({ ...props }) => {
           fontSize="lg"
         >
           <Icon as={MdOutlineLock} mr={2} />
-          <Heading
-            as="h2"
-            fontSize="lg"
-            fontWeight="semibold"
-            display={{ base: 'none', md: 'block' }}
+          <Tooltip
+            minWidth="lg"
+            py={2}
+            openDelay={500}
+            label={
+              <Grid
+                templateColumns="8rem 1fr"
+                alignItems="baseline"
+                fontSize="xs"
+              >
+                <Text>Client ID</Text>
+                <Text fontFamily="mono">{client.config.clientId}</Text>
+                <Text>Server URL</Text>
+                <Text fontFamily="mono">{client.config.serverURL}</Text>
+                <Text>Server Public key</Text>
+                <Text fontFamily="mono">
+                  {client.encode(client.config.serverPublicKey)}
+                </Text>
+              </Grid>
+            }
+            portalProps={{
+              containerRef: usePortalRef(),
+            }}
           >
-            e2e SDK
-          </Heading>
+            <Heading
+              as="h2"
+              fontSize="lg"
+              fontWeight="semibold"
+              display={{ base: 'none', md: 'block' }}
+            >
+              e2e SDK
+            </Heading>
+          </Tooltip>
           <TabList ml={{ base: 2, md: 8 }} mb="-1px">
             {identity ? (
               <>
