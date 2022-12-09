@@ -26,7 +26,7 @@ const infoResponseBody = z.object({
 type InfoResponseBody = z.infer<typeof infoResponseBody>
 
 const querystring = z.object({
-  manifest: z.literal('true').optional(),
+  manifest: z.literal('true').optional().describe('Show extended manifest'),
 })
 
 type ManifestEntry = z.infer<typeof manifestEntry>
@@ -56,11 +56,11 @@ export default async function infoRoutes(app: App) {
     deploymentURL: env.DEPLOYMENT_URL,
     signaturePublicKey: env.SIGNATURE_PUBLIC_KEY,
     manifestSignature,
-    manifest: env.NODE_ENV === 'production' || env.DEBUG ? manifest : undefined,
   }
   app.log.info({
     msg: 'Server info',
     ...serverInfo,
+    manifest: env.NODE_ENV === 'production' || env.DEBUG ? manifest : undefined,
   })
 
   app.get<{
@@ -79,8 +79,7 @@ export default async function infoRoutes(app: App) {
     async function getServerInfo(req, res) {
       const body = {
         ...serverInfo,
-        manifest:
-          req.query.manifest === 'true' ? serverInfo.manifest : undefined,
+        manifest: req.query.manifest === 'true' ? manifest : undefined,
       }
       return res.send(body)
     }
