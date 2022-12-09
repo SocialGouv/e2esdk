@@ -23,7 +23,7 @@ export default async function participantsRoutes(app: App) {
   }>(
     '/participants/:nameFingerprint/:payloadFingerprint',
     {
-      preValidation: app.usePublicKeyAuth(),
+      preHandler: app.usePublicKeyAuth(),
       schema: {
         params: zodToJsonSchema(getParticipantsUrlParams, {
           $refStrategy: 'none',

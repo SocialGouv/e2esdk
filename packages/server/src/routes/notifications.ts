@@ -26,7 +26,7 @@ export default async function notificationsRoutes(app: App) {
     '/notifications',
     {
       websocket: true,
-      preValidation: app.usePublicKeyAuth({
+      preHandler: app.usePublicKeyAuth({
         mode: 'websocket',
       }),
       schema: {

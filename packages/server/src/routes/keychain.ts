@@ -27,7 +27,7 @@ export default async function keychainRoutes(app: App) {
   }>(
     '/keychain',
     {
-      preValidation: app.usePublicKeyAuth(),
+      preHandler: app.usePublicKeyAuth(),
       schema: {
         tags: ['keychain'],
         summary: 'Add a key to my keychain',
@@ -170,7 +170,7 @@ export default async function keychainRoutes(app: App) {
   }>(
     '/keychain',
     {
-      preValidation: app.usePublicKeyAuth(),
+      preHandler: app.usePublicKeyAuth(),
       schema: {
         tags: ['keychain'],
         summary: 'Get my own keys',

@@ -29,7 +29,7 @@ export default async function identitiesRoutes(app: App) {
   }>(
     '/identity/:userId',
     {
-      preValidation: app.usePublicKeyAuth(),
+      preHandler: app.usePublicKeyAuth(),
       schema: {
         tags: ['identity'],
         summary: 'Get a single user identity',
@@ -58,7 +58,7 @@ export default async function identitiesRoutes(app: App) {
   }>(
     '/identities/:userIds',
     {
-      preValidation: app.usePublicKeyAuth(),
+      preHandler: app.usePublicKeyAuth(),
       schema: {
         tags: ['identity'],
         summary: 'Get multiple user identities',
