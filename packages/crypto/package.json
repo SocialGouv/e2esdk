@@ -41,7 +41,7 @@
     "test": "jest --color"
   },
   "dependencies": {
-    "@e2esdk/api": "workspace:*",
+    "@e2esdk/api": "workspace:^*",
     "@stablelib/hex": "^1.0.1",
     "libsodium-wrappers": "^0.7.10",
     "zod": "^3.19.1"

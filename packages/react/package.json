@@ -38,11 +38,11 @@
     "typecheck": "tsc"
   },
   "peerDependencies": {
-    "@e2esdk/client": "workspace:*",
+    "@e2esdk/client": "workspace:^*",
     "react": "^16.8.0 || ^17.0.0 || ^18.0.0"
   },
   "devDependencies": {
-    "@e2esdk/client": "workspace:*",
+    "@e2esdk/client": "workspace:^*",
     "@types/node": "^18.11.10",
     "@types/react": "^18.0.25",
     "react": "^18.2.0",
