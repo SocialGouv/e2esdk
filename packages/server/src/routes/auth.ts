@@ -8,7 +8,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema'
 import { createIdentity } from '../database/models/identity.js'
 import { App } from '../types'
 
-export default async function signupRoutes(app: App) {
+export default async function authRoutes(app: App) {
   const bodySchema = zodToJsonSchema(signupBody, { $refStrategy: 'none' })
   app.post<{
     Headers: PublicKeyAuthHeaders
@@ -28,6 +28,8 @@ export default async function signupRoutes(app: App) {
         },
       }),
       schema: {
+        tags: ['identity'],
+        summary: 'Create a new user identity',
         headers: zodToJsonSchema(publicKeyAuthHeaders),
         body: bodySchema,
         response: {

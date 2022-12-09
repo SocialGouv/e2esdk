@@ -30,6 +30,7 @@ export default async function notificationsRoutes(app: App) {
         mode: 'websocket',
       }),
       schema: {
+        summary: 'WebSocket notifications',
         querystring: zodToJsonSchema(querystringSchema),
       },
     },

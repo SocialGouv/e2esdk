@@ -70,6 +70,7 @@ export default async function infoRoutes(app: App) {
     '/',
     {
       schema: {
+        summary: 'Get server info',
         querystring: zodToJsonSchema(querystring),
         response: {
           200: zodToJsonSchema(infoResponseBody),

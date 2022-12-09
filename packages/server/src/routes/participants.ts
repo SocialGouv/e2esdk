@@ -25,6 +25,8 @@ export default async function participantsRoutes(app: App) {
     {
       preHandler: app.usePublicKeyAuth(),
       schema: {
+        tags: ['identity', 'permissions'],
+        summary: 'List who has access to a key',
         params: zodToJsonSchema(getParticipantsUrlParams, {
           $refStrategy: 'none',
         }),
