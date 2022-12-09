@@ -1003,14 +1003,17 @@ export class Client {
         console.error(res.error)
         return
       }
+      // By adding a random delay, we might help solve data races
+      // between two clients configured to handle notifications.
+      // One case where that might happen is when two windows are
+      // open and visible (eg: on different screens or each on half of
+      // a shared screen). It does not happen for tabs since the WebSocket
+      // is closed when a tab becomes hidden.
+      const randomDelay = Math.random() * 2000
+      if (res.data === WebSocketNotificationTypes.keychainUpdated) {
+        setTimeout(() => this.#loadKeychain().catch(console.error))
+      }
       if (res.data === WebSocketNotificationTypes.sharedKeyAdded) {
-        // By adding a random delay, we might help solve data races
-        // between two clients configured to handle notifications.
-        // One case where that might happen is when two windows are
-        // open and visible (eg: on different screens or each on half of
-        // a shared screen). It does not happen for tabs since the WebSocket
-        // is closed when a tab becomes hidden.
-        const randomDelay = Math.random() * 2000
         setTimeout(() => this.#processIncomingSharedKeys(), randomDelay)
       }
     })
