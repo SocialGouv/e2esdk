@@ -20,7 +20,7 @@ export default async function banRoutes(app: App) {
   }>(
     '/ban',
     {
-      preValidation: app.usePublicKeyAuth(),
+      preHandler: app.usePublicKeyAuth(),
       schema: {
         headers: zodToJsonSchema(publicKeyAuthHeaders),
         body: zodToJsonSchema(postBanRequestBody),

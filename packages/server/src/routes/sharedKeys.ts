@@ -28,7 +28,7 @@ export default async function sharedKeysRoutes(app: App) {
   }>(
     '/shared-keys',
     {
-      preValidation: app.usePublicKeyAuth(),
+      preHandler: app.usePublicKeyAuth(),
       schema: {
         tags: ['sharedKeys'],
         summary: 'Share a key with someone',
@@ -93,7 +93,7 @@ export default async function sharedKeysRoutes(app: App) {
   }>(
     '/shared-keys/incoming',
     {
-      preValidation: app.usePublicKeyAuth(),
+      preHandler: app.usePublicKeyAuth(),
       schema: {
         tags: ['sharedKeys'],
         summary: 'List incoming keys shared with me',
@@ -117,7 +117,7 @@ export default async function sharedKeysRoutes(app: App) {
   }>(
     '/shared-keys/outgoing',
     {
-      preValidation: app.usePublicKeyAuth(),
+      preHandler: app.usePublicKeyAuth(),
       schema: {
         tags: ['sharedKeys'],
         summary: 'List keys I have shared with others',
@@ -146,7 +146,7 @@ export default async function sharedKeysRoutes(app: App) {
   }>(
     '/shared-keys/:userId/:payloadFingerprint',
     {
-      preValidation: app.usePublicKeyAuth(),
+      preHandler: app.usePublicKeyAuth(),
       schema: {
         tags: ['sharedKeys'],
         summary: 'Remove a shared key',

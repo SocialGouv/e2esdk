@@ -17,7 +17,7 @@ export default async function signupRoutes(app: App) {
   }>(
     '/signup',
     {
-      preValidation: app.usePublicKeyAuth({
+      preHandler: app.usePublicKeyAuth({
         getIdentity(req) {
           return {
             userId: req.body.userId,

@@ -28,7 +28,7 @@ export default async function permissionsRoutes(app: App) {
   }>(
     '/permissions/:nameFingerprint',
     {
-      preValidation: app.usePublicKeyAuth(),
+      preHandler: app.usePublicKeyAuth(),
       schema: {
         tags: ['permissions'],
         summary: 'Get permissions for a namespace',
@@ -61,7 +61,7 @@ export default async function permissionsRoutes(app: App) {
   }>(
     '/permissions',
     {
-      preValidation: app.usePublicKeyAuth(),
+      preHandler: app.usePublicKeyAuth(),
       schema: {
         tags: ['permissions'],
         summary: 'Update permissions for a user & namespace',
