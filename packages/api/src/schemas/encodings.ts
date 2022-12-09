@@ -11,22 +11,29 @@ export const signatureSchema = sixtyFourBytesBase64Schema
 // but won't deal with invalid dates, where the refinement will pick errors up.
 export const timestampSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\\.\d{3}Z$/)
   .refine(v => Number.isSafeInteger(Date.parse(v)))
 
 // Ciphertexts --
 
-export const boxCiphertextV1Schema = z
-  .string()
-  .regex(/^v1\.box\.(bin|txt|num|bool|json)\.[\w-]{32}\.[\w-]{22,}$/)
-  .describe('Sodium box ciphertext (v1)')
+type PayloadType = 'bin' | 'txt' | 'num' | 'bool' | 'json'
 
-export const secretBoxCiphertextV1Schema = z
-  .string()
-  .regex(/^v1\.secretBox\.(bin|txt|num|bool|json)\.[\w-]{32}\.[\w-]{22,}$/)
-  .describe('Sodium secret box ciphertext (v1)')
+export const boxCiphertextV1Schema = (payloadType: PayloadType) =>
+  z
+    .string()
+    .regex(new RegExp(`^v1\\.box\\.${payloadType}\\.[\\w-]{32}\\.[\\w-]{22,}$`))
+    .describe('Sodium box ciphertext (v1)')
 
-export const sealedBoxCiphertextV1Schema = z
-  .string()
-  .regex(/^v1\.sealedBox\.(bin|txt|num|bool|json)\.[\w-]{64,}$/)
-  .describe('Sodium sealed box ciphertext (v1)')
+export const secretBoxCiphertextV1Schema = (payloadType: PayloadType) =>
+  z
+    .string()
+    .regex(
+      new RegExp(`^v1\\.secretBox\\.${payloadType}\\.[\\w-]{32}\\.[\\w-]{22,}$`)
+    )
+    .describe('Sodium secret box ciphertext (v1)')
+
+export const sealedBoxCiphertextV1Schema = (payloadType: PayloadType) =>
+  z
+    .string()
+    .regex(new RegExp(`^v1\\.sealedBox\\.${payloadType}\\.[\\w-]{64,}$`))
+    .describe('Sodium sealed box ciphertext (v1)')
