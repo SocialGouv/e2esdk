@@ -24,6 +24,7 @@
     "verdaccio": "verdaccio --config config/verdaccio/config.yml"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.25.2",
     "@types/jest": "^29.2.3",
     "prettier": "^2.8.0",
     "turbo": "^1.6.3",
