@@ -11,7 +11,7 @@ export const signatureSchema = sixtyFourBytesBase64Schema
 // but won't deal with invalid dates, where the refinement will pick errors up.
 export const timestampSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\\.\d{3}Z$/)
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
   .refine(v => Number.isSafeInteger(Date.parse(v)))
 
 // Ciphertexts --
