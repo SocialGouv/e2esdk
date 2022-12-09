@@ -22,6 +22,10 @@ export default async function banRoutes(app: App) {
     {
       preHandler: app.usePublicKeyAuth(),
       schema: {
+        tags: ['permissions', 'sharedKeys', 'keychain'],
+        summary: 'Remove access to a namespace',
+        description:
+          'This will remove any pending shared keys, owned keychain items and associated permissions.',
         headers: zodToJsonSchema(publicKeyAuthHeaders),
         body: zodToJsonSchema(postBanRequestBody),
         response: {
