@@ -122,8 +122,10 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
         req.clientId = clientId
         req.auditLog = req.log.child({
           category: 'audit',
-          identity,
-          clientId,
+          auth: {
+            identity,
+            clientId,
+          },
         })
       }
   )
