@@ -44,6 +44,7 @@ export default async function banRoutes(app: App) {
           req.body.nameFingerprint
         )
         if (!allowDeletion) {
+          req.auditLog.warn({ msg: 'ban:forbidden', body: req.body })
           throw app.httpErrors.forbidden(
             'You are not allowed to ban members for this key'
           )
@@ -54,6 +55,7 @@ export default async function banRoutes(app: App) {
         deleteKeychainItems(tx, req.body.userId, req.body.nameFingerprint),
         deleteSharedKeysByName(tx, req.body.userId, req.body.nameFingerprint),
       ])
+      req.auditLog.info({ msg: 'ban:success', body: req.body })
       return res.status(204).send()
     }
   )

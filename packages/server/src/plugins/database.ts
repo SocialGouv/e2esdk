@@ -16,30 +16,34 @@ declare module 'fastify' {
 const databasePlugin: FastifyPluginAsync = async (app: App) => {
   const sql = postgres(env.POSTGRESQL_URL, {
     ...databaseConnectionOptions,
-    debug:
-      env.DEBUG &&
-      function debugDatabaseQuery(connection, query, parameters, paramTypes) {
-        if (
-          query ===
-          'SELECT pg_database_size(current_database()::name) AS size_used'
-        ) {
-          // Don't log periodic health check
-          return
-        }
-        app.log.debug({
-          msg: 'database:debug',
-          connection,
-          query: query
-            // Remove comments
-            // https://stackoverflow.com/questions/7690380/regular-expression-to-match-all-comments-in-a-t-sql-script
-            .replace(/(--.*)|(((\/\*)+?[\w\W]+?(\*\/)+))/g, '')
-            // Minify whitespace
-            .replace(/\s+/gm, ' ')
-            .trim(),
-          parameters,
-          paramTypes,
-        })
-      },
+    debug: function traceDatabaseQuery(
+      connection,
+      query,
+      parameters,
+      paramTypes
+    ) {
+      if (
+        query ===
+        'SELECT pg_database_size(current_database()::name) AS size_used'
+      ) {
+        // Don't log periodic health check
+        return
+      }
+      app.log.trace({
+        category: 'database',
+        msg: 'query',
+        connection,
+        query: query
+          // Remove comments
+          // https://stackoverflow.com/questions/7690380/regular-expression-to-match-all-comments-in-a-t-sql-script
+          .replace(/(--.*)|(((\/\*)+?[\w\W]+?(\*\/)+))/g, '')
+          // Minify whitespace
+          .replace(/\s+/gm, ' ')
+          .trim(),
+        parameters,
+        paramTypes,
+      })
+    },
   })
 
   const {

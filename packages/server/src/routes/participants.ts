@@ -39,13 +39,6 @@ export default async function participantsRoutes(app: App) {
       },
     },
     async function getNamePayloadParticipants(req, res) {
-      if (getParticipantsUrlParams.safeParse(req.params).success === false) {
-        req.log.warn({
-          _: 'Invalid request parameters',
-          params: req.params,
-        })
-        throw app.httpErrors.badRequest('Invalid request parameters')
-      }
       const participants = await getNamePayloadParticipantsWithPermissions(
         app.db,
         req.params.nameFingerprint,
@@ -61,10 +54,20 @@ export default async function participantsRoutes(app: App) {
         )
       ) {
         // We're not in the list of participants
+        req.auditLog.warn({
+          msg: 'getNamePayloadParticipants:forbidden',
+          params: req.params,
+          participants,
+        })
         throw app.httpErrors.forbidden(
           'You are not allowed to list participants for this key'
         )
       }
+      req.auditLog.trace({
+        msg: 'getNamePayloadParticipants:success',
+        params: req.params,
+        participants,
+      })
       return res.send(
         participants.map(participant => ({
           ...participant,

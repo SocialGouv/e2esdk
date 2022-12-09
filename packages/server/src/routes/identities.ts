@@ -45,10 +45,12 @@ export default async function identitiesRoutes(app: App) {
     async function getSinglePublicIdentity(req, res) {
       const identity = await getIdentity(app.db, req.params.userId)
       if (!identity) {
+        req.auditLog.warn({ msg: 'getIdentity:notFound', params: req.params })
         throw app.httpErrors.notFound(
           `No identity found for user id ${req.params.userId}`
         )
       }
+      req.auditLog.trace({ msg: 'getIdentity:success', params: req.params })
       return res.send(identity)
     }
   )
@@ -74,6 +76,7 @@ export default async function identitiesRoutes(app: App) {
     async function getMultiplePublicIdentities(req, res) {
       const userIds = req.params.userIds.split(',')
       const identities = await getIdentities(app.db, userIds)
+      req.auditLog.trace({ msg: 'getIdentities:success', userIds })
       return res.send(identities)
     }
   )

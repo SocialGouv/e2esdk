@@ -44,11 +44,11 @@ export default async function keychainRoutes(app: App) {
     },
     async function postKeychainItem(req, res) {
       function forbidden(msg: string, extra?: any): never {
-        req.log.warn({
-          msg,
-          identity: req.identity,
+        req.auditLog.warn({
+          msg: 'postKeychainItem:forbidden',
+          details: msg,
           body: req.body,
-          ...extra,
+          extra,
         })
         throw app.httpErrors.forbidden(msg)
       }
@@ -120,6 +120,11 @@ export default async function keychainRoutes(app: App) {
           }
           await storeKeychainItem(tx, req.body)
         })
+        req.auditLog.info({
+          msg: 'postKeychainItem:success',
+          body: req.body,
+          isAuthor: true,
+        })
         return res.status(201).send()
       }
 
@@ -160,6 +165,12 @@ export default async function keychainRoutes(app: App) {
           )
         }
       )
+      req.auditLog.info({
+        msg: 'postKeychainItem:success',
+        body: req.body,
+        isAuthor: false,
+        sharedKey,
+      })
       return res.status(201).send()
     }
   )
@@ -184,6 +195,7 @@ export default async function keychainRoutes(app: App) {
     },
     async function getKeychain(req, res) {
       const items = await getOwnKeychainItems(app.db, req.identity.userId)
+      req.auditLog.trace({ msg: 'getKeychain:success', items })
       return res.send(items)
     }
   )

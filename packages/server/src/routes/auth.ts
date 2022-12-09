@@ -38,8 +38,13 @@ export default async function authRoutes(app: App) {
       },
     },
     async function signup(req, res) {
-      // todo: Handle insert conflicts and return 409
-      await createIdentity(app.db, req.body)
+      try {
+        await createIdentity(app.db, req.body)
+      } catch {
+        req.auditLog.warn({ msg: 'signup:conflict', body: req.body })
+        throw app.httpErrors.conflict('This account was already registered')
+      }
+      req.auditLog.info({ msg: 'signup:success', body: req.body })
       return res.status(201).send(req.body)
     }
   )

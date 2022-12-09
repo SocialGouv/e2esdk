@@ -45,10 +45,9 @@ export default async function permissionsRoutes(app: App) {
         req.identity.userId,
         req.params.nameFingerprint
       )
-      req.log.debug({
-        msg: 'retrieved permissions from database',
-        nameFingerprint: req.params.nameFingerprint,
-        identity: req.identity,
+      req.auditLog.trace({
+        msg: 'getPermissions:success',
+        params: req.params,
         flags,
       })
       return res.send(flags)
@@ -81,6 +80,7 @@ export default async function permissionsRoutes(app: App) {
         req.body.nameFingerprint
       )
       if (!allowManagement) {
+        req.auditLog.warn({ msg: 'postPermission:forbidden', body: req.body })
         throw app.httpErrors.forbidden(
           'You are not allowed to manage permissions for this key'
         )
@@ -92,11 +92,17 @@ export default async function permissionsRoutes(app: App) {
         req.body.allowManagement === undefined
       ) {
         // Nothing to do really..
-        throw app.httpErrors.badRequest(
-          'At least one permission flag must be set'
-        )
+        const reason = 'At least one permission flag must be set'
+        req.auditLog.warn({
+          msg: 'postPermission:badRequest',
+          body: req.body,
+          reason,
+        })
+        throw app.httpErrors.badRequest(reason)
       }
       await updatePermission(app.db, req.body)
+      // todo: Add before/after in audit log
+      req.auditLog.info({ msg: 'postPermission:success', body: req.body })
       return res.status(204).send()
     }
   )

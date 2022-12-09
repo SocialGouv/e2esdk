@@ -1,14 +1,18 @@
 import {
   Identity,
   isFarFromCurrentTime,
-  publicKeyAuthHeaders
+  publicKeyAuthHeaders,
 } from '@e2esdk/api'
 import {
   signAuth as signResponse,
   verifyAuth as verifyClientSignature,
-  verifyClientIdentity
+  verifyClientIdentity,
 } from '@e2esdk/crypto'
-import type { FastifyPluginAsync, FastifyRequest } from 'fastify'
+import type {
+  FastifyBaseLogger,
+  FastifyPluginAsync,
+  FastifyRequest,
+} from 'fastify'
 import fp from 'fastify-plugin'
 import { getIdentity as getIdentityFromDatabase } from '../database/models/identity.js'
 import { env } from '../env.js'
@@ -30,6 +34,7 @@ declare module 'fastify' {
   interface FastifyRequest {
     identity: Identity
     clientId: string
+    auditLog: FastifyBaseLogger
   }
 }
 
@@ -115,6 +120,11 @@ const publicKeyAuthPlugin: FastifyPluginAsync = async (app: App) => {
         }
         req.identity = identity
         req.clientId = clientId
+        req.auditLog = req.log.child({
+          category: 'audit',
+          identity,
+          clientId,
+        })
       }
   )
 

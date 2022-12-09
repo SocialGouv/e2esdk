@@ -89,6 +89,7 @@ export function deleteSharedKey(
     WHERE ${sql('fromUserId')}          = ${from}
     AND   ${sql('toUserId')}            = ${to}
     AND   ${sql('payloadFingerprint')}  = ${payloadFingerprint}
+    RETURNING *
   `
 }
 

@@ -35,13 +35,8 @@ export default async function notificationsRoutes(app: App) {
       },
     },
     async function websocketNotifications(connection, req) {
-      const logger = req.log.child({
-        category: 'websocket',
-        identity: req.identity,
-        clientId: req.clientId,
-      })
-      logger.info({
-        msg: 'WebSocket connection established',
+      req.auditLog.trace({
+        msg: 'notifications:connected',
         context: req.query.context,
       })
       const sharedKeyForMe = [
@@ -49,18 +44,22 @@ export default async function notificationsRoutes(app: App) {
         req.identity.userId,
       ].join(':')
       function sendSharedKeyAddedNotification() {
+        req.auditLog.trace({
+          msg: 'notifications:send',
+          data: WebSocketNotificationTypes.sharedKeyAdded,
+        })
         connection.socket.send(WebSocketNotificationTypes.sharedKeyAdded)
       }
       emitter.on(sharedKeyForMe, sendSharedKeyAddedNotification)
       connection.socket.on('error', error =>
-        logger.error({
-          msg: 'WebSocket error',
+        req.auditLog.error({
+          msg: 'notifications:error',
           error,
         })
       )
       connection.socket.on('close', (code, reason) => {
-        logger.info({
-          msg: 'WebSocket connection closed',
+        req.auditLog.trace({
+          msg: 'notifications:disconnected',
           code,
           reason: reason.toString('utf8'),
         })

@@ -47,9 +47,13 @@ export default async function sharedKeysRoutes(app: App) {
         req.identity.sharingPublicKey !== req.body.fromSharingPublicKey ||
         req.identity.signaturePublicKey !== req.body.fromSignaturePublicKey
       ) {
-        throw app.httpErrors.forbidden(
-          'You are not allowed to share keys as someone else'
-        )
+        const reason = 'You are not allowed to share keys as someone else'
+        req.auditLog.warn({
+          msg: 'postSharedKey:forbidden',
+          reason,
+          body: req.body,
+        })
+        throw app.httpErrors.forbidden(reason)
       }
       // First, check if the recipient doesn't
       // already have this key in their keychain
@@ -60,6 +64,12 @@ export default async function sharedKeysRoutes(app: App) {
       })
       const conflictMessage = 'The recipient already has a copy of this key'
       if (existingKeychainEntry) {
+        req.auditLog.warn({
+          msg: 'postSharedKey:conflict',
+          reason: conflictMessage,
+          body: req.body,
+          existingKeychainEntry,
+        })
         throw app.httpErrors.conflict(conflictMessage)
       }
       // Then, check if there is already a pending shared key
@@ -71,6 +81,12 @@ export default async function sharedKeysRoutes(app: App) {
       if (existingSharedKey) {
         // We use the same message as the previous check
         // to avoid revealing too much to a potential attacker.
+        req.auditLog.warn({
+          msg: 'postSharedKey:conflict',
+          reason: conflictMessage,
+          body: req.body,
+          existingSharedKey,
+        })
         throw app.httpErrors.conflict(conflictMessage)
       }
       // Then, are we allowed to share this key?
@@ -80,9 +96,16 @@ export default async function sharedKeysRoutes(app: App) {
         req.body.nameFingerprint
       )
       if (!allowSharing) {
-        throw app.httpErrors.forbidden('You are not allowed to share this key')
+        const reason = 'You are not allowed to share this key'
+        req.auditLog.warn({
+          msg: 'postSharedKey:forbidden',
+          reason,
+          body: req.body,
+        })
+        throw app.httpErrors.forbidden(reason)
       }
       await storeSharedKey(app.db, req.body)
+      req.auditLog.info({ msg: 'postSharedKey:success', body: req.body })
       return res.status(201).send()
     }
   )
@@ -107,6 +130,7 @@ export default async function sharedKeysRoutes(app: App) {
     },
     async function getIncomingSharedKeys(req, res) {
       const sharedKeys = await getKeysSharedWithMe(app.db, req.identity.userId)
+      req.auditLog.trace({ msg: 'getIncomingSharedKeys:success', sharedKeys })
       return res.send(sharedKeys)
     }
   )
@@ -131,6 +155,7 @@ export default async function sharedKeysRoutes(app: App) {
     },
     async function getOutgoingSharedKeys(req, res) {
       const sharedKeys = await getKeysSharedByMe(app.db, req.identity)
+      req.auditLog.trace({ msg: 'getOutgoingSharedKeys:success', sharedKeys })
       return res.send(sharedKeys)
     }
   )
@@ -160,12 +185,17 @@ export default async function sharedKeysRoutes(app: App) {
       },
     },
     async function deletePendingSharedKey(req, res) {
-      await deleteSharedKey(
+      const [deleted] = await deleteSharedKey(
         app.db,
         req.identity.userId,
         req.params.userId,
         req.params.payloadFingerprint
       )
+      req.auditLog.info({
+        msg: 'deletePendingSharedKey:success',
+        params: req.params,
+        deleted,
+      })
       return res.send()
     }
   )
