@@ -20,6 +20,8 @@ export const keychainItemSchema = z.object({
 
 export type KeychainItemSchema = z.infer<typeof keychainItemSchema>
 
+export const keychainUpdatedNotificationChannel = `${TABLE_NAME}_updated`
+
 export function storeKeychainItem(
   sql: Sql,
   item: Omit<KeychainItemSchema, 'addedAt'>
