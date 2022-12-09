@@ -21,11 +21,13 @@
     "lint": "turbo run lint",
     "keygen": "pnpm --filter keygen run keygen",
     "db": "pnpm --filter server run db",
-    "verdaccio": "verdaccio --config config/verdaccio/config.yml"
+    "verdaccio": "verdaccio --config config/verdaccio/config.yml",
+    "prepare": "husky install config/husky"
   },
   "devDependencies": {
     "@changesets/cli": "^2.25.2",
     "@types/jest": "^29.2.3",
+    "husky": "^8.0.0",
     "prettier": "^2.8.0",
     "turbo": "^1.6.3",
     "verdaccio": "^5.18.0"
@@ -35,6 +37,16 @@
     "semi": false,
     "singleQuote": true,
     "tabWidth": 2,
-    "useTabs": false
+    "useTabs": false,
+    "overrides": [
+      {
+        "files": [
+          ".changeset/*.md"
+        ],
+        "options": {
+          "proseWrap": "never"
+        }
+      }
+    ]
   }
 }
