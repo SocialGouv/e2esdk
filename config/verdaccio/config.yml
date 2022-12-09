@@ -70,6 +70,10 @@ uplinks:
 # https://verdaccio.org/docs/protect-your-dependencies/
 # https://verdaccio.org/docs/configuration#packages
 packages:
+  '@e2esdk/*':
+    access: $anonymous
+    publish: $anonymous
+
   '@*/*':
     # scoped packages
     access: $all
