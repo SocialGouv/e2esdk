@@ -27,7 +27,7 @@ const encryptedFieldSchema = z
   })
 
 const encryptedFormSubmissionMetadataSchema = z.object({
-  sealedSecret: sealedBoxCiphertextV1Schema,
+  sealedSecret: sealedBoxCiphertextV1Schema('bin'),
   signature: signatureSchema,
   publicKey: thirtyTwoBytesBase64Schema,
 })

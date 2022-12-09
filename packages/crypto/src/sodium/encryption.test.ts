@@ -88,8 +88,9 @@ describe('encryption', () => {
           encodedCiphertextFormatV1
         )
         expect(cleartext).toEqual(input)
-        expect(ciphertext.slice(0, 11)).toBe('v1.box.bin.')
-        expect(boxCiphertextV1Schema.parse(ciphertext)).toEqual(ciphertext)
+        expect(boxCiphertextV1Schema('bin').parse(ciphertext)).toEqual(
+          ciphertext
+        )
       })
 
       test('output format equivalence', async () => {
@@ -126,8 +127,9 @@ describe('encryption', () => {
           encodedCiphertextFormatV1
         )
         expect(cleartext).toEqual(input)
-        expect(ciphertext.slice(0, 11)).toBe('v1.box.txt.')
-        expect(boxCiphertextV1Schema.parse(ciphertext)).toEqual(ciphertext)
+        expect(boxCiphertextV1Schema('txt').parse(ciphertext)).toEqual(
+          ciphertext
+        )
       })
     })
 
@@ -147,8 +149,9 @@ describe('encryption', () => {
           encodedCiphertextFormatV1
         )
         expect(cleartext).toEqual(input)
-        expect(ciphertext.slice(0, 11)).toBe('v1.box.num.')
-        expect(boxCiphertextV1Schema.parse(ciphertext)).toEqual(ciphertext)
+        expect(boxCiphertextV1Schema('num').parse(ciphertext)).toEqual(
+          ciphertext
+        )
         expect(ciphertext.length).toEqual(76)
       })
     })
@@ -169,8 +172,9 @@ describe('encryption', () => {
           encodedCiphertextFormatV1
         )
         expect(cleartext).toEqual(input)
-        expect(ciphertext.slice(0, 12)).toBe('v1.box.bool.')
-        expect(boxCiphertextV1Schema.parse(ciphertext)).toEqual(ciphertext)
+        expect(boxCiphertextV1Schema('bool').parse(ciphertext)).toEqual(
+          ciphertext
+        )
         expect(ciphertext.length).toEqual(68)
       })
     })
@@ -226,7 +230,7 @@ describe('encryption', () => {
         )
         expect(cleartext).toEqual(input)
         expect(ciphertext.slice(0, 17)).toBe('v1.secretBox.bin.')
-        expect(secretBoxCiphertextV1Schema.parse(ciphertext)).toEqual(
+        expect(secretBoxCiphertextV1Schema('bin').parse(ciphertext)).toEqual(
           ciphertext
         )
       })
@@ -265,7 +269,7 @@ describe('encryption', () => {
         )
         expect(cleartext).toEqual(input)
         expect(ciphertext.slice(0, 17)).toBe('v1.secretBox.txt.')
-        expect(secretBoxCiphertextV1Schema.parse(ciphertext)).toEqual(
+        expect(secretBoxCiphertextV1Schema('txt').parse(ciphertext)).toEqual(
           ciphertext
         )
       })
@@ -288,7 +292,7 @@ describe('encryption', () => {
         )
         expect(cleartext).toEqual(input)
         expect(ciphertext.slice(0, 17)).toBe('v1.secretBox.num.')
-        expect(secretBoxCiphertextV1Schema.parse(ciphertext)).toEqual(
+        expect(secretBoxCiphertextV1Schema('num').parse(ciphertext)).toEqual(
           ciphertext
         )
         expect(ciphertext.length).toEqual(82)
@@ -312,7 +316,7 @@ describe('encryption', () => {
         )
         expect(cleartext).toEqual(input)
         expect(ciphertext.slice(0, 18)).toBe('v1.secretBox.bool.')
-        expect(secretBoxCiphertextV1Schema.parse(ciphertext)).toEqual(
+        expect(secretBoxCiphertextV1Schema('bool').parse(ciphertext)).toEqual(
           ciphertext
         )
         expect(ciphertext.length).toEqual(74)
@@ -362,8 +366,7 @@ describe('encryption', () => {
           encodedCiphertextFormatV1
         )
         expect(cleartext).toEqual(input)
-        expect(ciphertext.slice(0, 17)).toBe('v1.sealedBox.bin.')
-        expect(sealedBoxCiphertextV1Schema.parse(ciphertext)).toEqual(
+        expect(sealedBoxCiphertextV1Schema('bin').parse(ciphertext)).toEqual(
           ciphertext
         )
       })
@@ -385,8 +388,7 @@ describe('encryption', () => {
           encodedCiphertextFormatV1
         )
         expect(cleartext).toEqual(input)
-        expect(ciphertext.slice(0, 17)).toBe('v1.sealedBox.txt.')
-        expect(sealedBoxCiphertextV1Schema.parse(ciphertext)).toEqual(
+        expect(sealedBoxCiphertextV1Schema('txt').parse(ciphertext)).toEqual(
           ciphertext
         )
       })
@@ -408,8 +410,7 @@ describe('encryption', () => {
           encodedCiphertextFormatV1
         )
         expect(cleartext).toEqual(input)
-        expect(ciphertext.slice(0, 17)).toBe('v1.sealedBox.num.')
-        expect(sealedBoxCiphertextV1Schema.parse(ciphertext)).toEqual(
+        expect(sealedBoxCiphertextV1Schema('num').parse(ciphertext)).toEqual(
           ciphertext
         )
         expect(ciphertext.length).toEqual(92)
@@ -432,8 +433,7 @@ describe('encryption', () => {
           encodedCiphertextFormatV1
         )
         expect(cleartext).toEqual(input)
-        expect(ciphertext.slice(0, 18)).toBe('v1.sealedBox.bool.')
-        expect(sealedBoxCiphertextV1Schema.parse(ciphertext)).toEqual(
+        expect(sealedBoxCiphertextV1Schema('bool').parse(ciphertext)).toEqual(
           ciphertext
         )
         expect(ciphertext.length).toEqual(84)
