@@ -3,11 +3,18 @@
 import 'zx/globals'
 
 const repoRootDir = path.resolve(__dirname, '../../../')
+const autoCommitFile = path.resolve(repoRootDir, '.changeset', '.autocommit')
 
-const commitMessage = await fs.readFile(
-  path.resolve(repoRootDir, '.git', 'COMMIT_EDITMSG'),
-  { encoding: 'utf8' }
-)
+if (!fs.existsSync(autoCommitFile)) {
+  console.log('Autocommit file not present, aborting')
+  process.exit(0)
+}
+
+await $`rm -f ${autoCommitFile}`
+
+const commitMessage = (await $`git log -1 --pretty=%B`).toString()
+
+console.dir({ commitMessage })
 
 const matches = commitMessage.match(
   /^changesets?:\n((?:- (?:(?:@e2esdk\/)?[\w-]+): (?:major|minor|patch)\n?)+)/gm
@@ -60,7 +67,8 @@ await fs.writeFile(
 
 cd(repoRootDir)
 
-$`git add .changeset/${slug}.md`
+await $`git add .changeset/${slug}.md`
+await $`git commit --amend -C HEAD --no-verify`
 
 process.exit(0)
 

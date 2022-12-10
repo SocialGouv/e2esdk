@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "pre-commit": "zx ./src/pre-commit.mjs"
+    "post-commit": "zx ./src/post-commit.mjs"
   },
   "dependencies": {
     "zod": "^3.19.1",
