@@ -15,10 +15,14 @@ jobs:
       - name: Generate release tag
         id: release-tag
         run: echo "tag=${{ github.ref_name }}@$(date +%Y-%m-%d_%H.%M.%S)_$(echo $GITHUB_SHA | cut -c1-8)" >> $GITHUB_OUTPUT
+      - name: Convert to Docker tag
+        id: docker-tag
+        run: echo "tag=$(echo ${{ steps.release-tag.outputs.tag }} | sed 's/[^a-zA-Z0-9._-]/_/g')" >> $GITHUB_OUTPUT
       - name: Display release tag
         run: echo "::notice title=Release Tag::${{ steps.release-tag.outputs.tag }}"
     outputs:
       tag: ${{ steps.release-tag.outputs.tag }}
+      docker-tag: ${{ steps.docker-tag.outputs.tag }}
 
   ci:
     name: Integration
@@ -76,7 +80,7 @@ jobs:
             RELEASE_TAG=${{ env.RELEASE_TAG }}
           tags: |
             e2esdk/server:ci
-            e2esdk/server:"$(echo -n ${{ env.RELEASE_TAG }} | sed 's/[^a-zA-Z0-9._-]/_/g')"
+            e2esdk/server:${{ needs.tag.outputs.docker-tag }}
           push: false
 
       # - name: Functional tests
