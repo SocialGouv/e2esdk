@@ -16,7 +16,7 @@ RUN turbo prune --scope=@e2esdk/server --docker --out-dir docker-dist
 
 # Add lockfile and package.json's of isolated subworkspace
 FROM node:16-alpine AS builder
-RUN apk add --no-cache libc6-compat jq
+RUN apk add --no-cache libc6-compat
 # this enables support for pnpm - https://nodejs.org/api/corepack.html
 RUN corepack enable
 WORKDIR /app
@@ -38,7 +38,6 @@ RUN pnpm install --offline
 COPY --from=slicer /app/docker-dist/full/ .
 COPY turbo.json .
 RUN pnpm turbo build:server
-RUN cat packages/server/package.json | jq -jr .version > packages/server/build/VERSION
 
 # Only keep runtime dependencies
 RUN rm -rf node_modules
@@ -71,7 +70,6 @@ COPY --from=builder --chown=e2esdk:nodejs /app/ .
 
 LABEL org.opencontainers.image.title="@e2esdk/server"
 LABEL org.opencontainers.image.description="End-to-end encryption server"
-LABEL org.opencontainers.image.version="$(cat packages/server/build/VERSION)"
 LABEL org.opencontainers.image.url="https//github.com/SocialGouv/e2esdk"
 LABEL org.opencontainers.image.documentation="https://github.com/SocialGouv/e2esdk/blob/main/packages/server/README.md"
 LABEL fr.gouv.social.fabrique.e2esdk.build.tag="$RELEASE_TAG"
