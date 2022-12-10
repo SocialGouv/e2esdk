@@ -84,7 +84,7 @@ jobs:
             RELEASE_TAG=${{ env.RELEASE_TAG }}
             BUILD_URL=https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
           labels: |
-            org.opencontainers.image.revision=${{ env.GITHUB_SHA }}
+            org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.created=${{ needs.tag.outputs.timestamp }}
             org.opencontainers.image.version="// todo: Add version from changesets"
           tags: |
