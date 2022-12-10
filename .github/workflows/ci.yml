@@ -76,7 +76,7 @@ jobs:
             RELEASE_TAG=${{ env.RELEASE_TAG }}
           tags: |
             e2esdk/server:ci
-            e2esdk/server:${{ env.RELEASE_TAG }}
+            e2esdk/server:$(echo -n ${{ env.RELEASE_TAG }} | sed 's/[^a-zA-Z0-9._-]/_/g')
           push: false
 
       # - name: Functional tests
