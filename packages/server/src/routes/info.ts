@@ -1,5 +1,6 @@
 import { multipartSignature, numberToUint32LE, Sodium } from '@e2esdk/crypto'
 import fs from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
@@ -17,7 +18,9 @@ const manifestEntry = z.object({
 })
 
 const infoResponseBody = z.object({
+  version: z.string(),
   release: z.string(),
+  buildURL: z.string(),
   deploymentURL: z.string(),
   signaturePublicKey: z.string(),
   manifestSignature: z.string(),
@@ -32,10 +35,10 @@ const querystring = z.object({
 type ManifestEntry = z.infer<typeof manifestEntry>
 
 export default async function infoRoutes(app: App) {
-  const buildDir = path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    '../'
-  )
+  const require = createRequire(import.meta.url)
+  const __dirname = path.dirname(fileURLToPath(import.meta.url))
+  const buildDir = path.resolve(__dirname, '../')
+  const pkg = require(path.resolve(__dirname, '../../package.json'))
   const signaturePrivateKey = app.sodium.from_base64(env.SIGNATURE_PRIVATE_KEY)
   const manifest = await generateManifest(
     app.sodium,
@@ -52,7 +55,9 @@ export default async function infoRoutes(app: App) {
   app.sodium.memzero(signaturePrivateKey)
 
   const serverInfo: InfoResponseBody = {
+    version: pkg.version,
     release: env.RELEASE_TAG,
+    buildURL: env.BUILD_URL,
     deploymentURL: env.DEPLOYMENT_URL,
     signaturePublicKey: env.SIGNATURE_PUBLIC_KEY,
     manifestSignature,
@@ -108,6 +113,9 @@ async function generateManifest(
 ) {
   const manifest: ManifestEntry[] = []
   for await (const filePath of walk(basePath)) {
+    if (filePath.endsWith('.js.map')) {
+      continue // Ignore sourcemaps
+    }
     const buffer = await fs.readFile(filePath, { encoding: null })
     const hash = sodium.crypto_generichash(
       sodium.crypto_generichash_BYTES,
