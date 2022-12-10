@@ -6,15 +6,12 @@ const repoRootDir = path.resolve(__dirname, '../../../')
 const autoCommitFile = path.resolve(repoRootDir, '.changeset', '.autocommit')
 
 if (!fs.existsSync(autoCommitFile)) {
-  console.log('Autocommit file not present, aborting')
   process.exit(0)
 }
 
 await $`rm -f ${autoCommitFile}`
 
 const commitMessage = (await $`git log -1 --pretty=%B`).toString()
-
-console.dir({ commitMessage })
 
 const matches = commitMessage.match(
   /^changesets?:\n((?:- (?:(?:@e2esdk\/)?[\w-]+): (?:major|minor|patch)\n?)+)/gm
