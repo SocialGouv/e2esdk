@@ -98,11 +98,14 @@ jobs:
 
       - name: Display Docker image labels
         run: |
-          docker inspect e2esdk/server:${{ needs.tag.outputs.docker-tag }} --format='{{json .Config.Labels}}' \
-          | sed \
-            -e 's/^{"//' -e 's/"}$//' \
-            -e 's/\",\"/\n/g'         \
-            -e 's/":"/: /g'
+          echo "::notice title=Docker labels::$(  \
+            docker inspect e2esdk/server:${{ needs.tag.outputs.docker-tag }} --format='{{json .Config.Labels}}' \
+            | sed \
+              -e 's/^{"//' -e 's/"}$//' \
+              -e 's/\",\"/\n/g'         \
+              -e 's/":"/: /g'           \
+          )"
+
         # 1. Drop the object curly braces (and surrounding quotes)
         # 2. Replace entry separators by newlines (and drop surrounding quotes)
         # 3. Replace key:value separators with spaces (and drop surrounding quotes)
