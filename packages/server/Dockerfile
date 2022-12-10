@@ -57,6 +57,10 @@ RUN corepack enable
 ENV NODE_ENV production
 ENV PORT 3000
 
+ARG RELEASE_TAG=local
+ENV RELEASE_TAG $RELEASE_TAG
+LABEL release=$RELEASE_TAG
+
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs && \
     adduser  --system --uid 1001 e2esdk

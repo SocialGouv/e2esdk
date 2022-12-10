@@ -8,13 +8,26 @@ env:
   FORCE_COLOR: 3
 
 jobs:
+  tag:
+    name: Release Tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate release tag
+        id: release-tag
+        run: echo "tag=${{ github.ref_name }}@$(date +%Y-%m-%d_%H.%M.%S)_$(echo $GITHUB_SHA | cut -c1-8)" >> $GITHUB_OUTPUT
+      - name: Display release tag
+        run: echo "::notice title=Release Tag::${{ steps.release-tag.outputs.tag }}"
+    outputs:
+      tag: ${{ steps.release-tag.outputs.tag }}
+
   ci:
     name: Integration
     runs-on: ubuntu-latest
-
+    needs: tag
+    env:
+      RELEASE_TAG: ${{ needs.tag.outputs.tag }}
     steps:
       - uses: actions/checkout@v3
-
       - uses: pnpm/action-setup@v2
         with:
           version: 7
@@ -59,7 +72,11 @@ jobs:
         with:
           context: .
           file: packages/server/Dockerfile
-          tags: e2esdk/server:ci
+          build-args: |
+            RELEASE_TAG=${{ env.RELEASE_TAG }}
+          tags: |
+            e2esdk/server:ci
+            e2esdk/server:${{ env.RELEASE_TAG }}
           push: false
 
       # - name: Functional tests
