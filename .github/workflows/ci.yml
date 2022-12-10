@@ -40,6 +40,9 @@ jobs:
         with:
           version: 7
 
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -86,7 +89,7 @@ jobs:
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.created=${{ needs.tag.outputs.timestamp }}
-            org.opencontainers.image.version="// todo: Add version from changesets"
+            org.opencontainers.image.version=${{$(cat packages/server/package.json | jq -jr '.version')}}
           tags: |
             e2esdk/server:ci
             e2esdk/server:${{ needs.tag.outputs.docker-tag }}
