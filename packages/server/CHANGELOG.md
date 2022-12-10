@@ -1,5 +1,11 @@
 # @e2esdk/server
 
+## 0.1.1
+
+### Patch Changes
+
+- 109a14a: doc: Add basic Docker documentation
+
 ## 0.1.0
 
 ### Minor Changes
