@@ -20,18 +20,9 @@ importers:
 
   config/changeset:
     specifiers:
-      tsconfig: workspace:*
-      tsup: ^6.5.0
-      typescript: ^4.9.3
-      zod: ^3.19.1
       zx: ^7.1.1
     dependencies:
-      zod: 3.19.1
       zx: 7.1.1
-    devDependencies:
-      tsconfig: link:../tsconfig
-      tsup: 6.5.0_typescript@4.9.4
-      typescript: 4.9.4
 
   config/jest:
     specifiers:
