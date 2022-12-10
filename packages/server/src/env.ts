@@ -15,6 +15,7 @@ const envSchema = z.object({
   POSTGRESQL_URL: z.string().url(),
   DEPLOYMENT_URL: z.string().url(),
   RELEASE_TAG: z.string(),
+  BUILD_URL: z.string().url(),
   SIGNATURE_PUBLIC_KEY: z.string().regex(/^[\w-]{43}$/),
   SIGNATURE_PRIVATE_KEY: z.string().regex(/^[\w-]{86}$/),
   CORS_ALLOWED_ORIGINS: z

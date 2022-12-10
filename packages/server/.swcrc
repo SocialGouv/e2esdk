@@ -9,5 +9,5 @@
   "module": {
     "type": "es6"
   },
-  "sourceMaps": "inline"
+  "sourceMaps": true
 }
