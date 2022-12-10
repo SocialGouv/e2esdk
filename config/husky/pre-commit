@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-pnpm run --dir "$(dirname -- "$0")/../changeset" pre-commit
+touch "$(dirname -- "$0")/../../.changeset/.autocommit"
