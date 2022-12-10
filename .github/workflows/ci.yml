@@ -93,7 +93,7 @@ jobs:
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.created=${{ needs.tag.outputs.timestamp }}
-            org.opencontainers.image.version=${{ steps.server-pkg.version }}
+            org.opencontainers.image.version=${{ steps.server-pkg.outputs.version }}
           tags: |
             e2esdk/server:ci
             e2esdk/server:${{ needs.tag.outputs.docker-tag }}
