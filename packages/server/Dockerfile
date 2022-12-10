@@ -55,13 +55,12 @@ RUN apk add --no-cache curl
 
 RUN corepack enable
 
-ENV NODE_ENV production
-ENV PORT 3000
-
 ARG RELEASE_TAG=local
 ARG BUILD_URL=local
 ENV RELEASE_TAG $RELEASE_TAG
 ENV BUILD_URL $BUILD_URL
+ENV NODE_ENV production
+ENV PORT 3000
 
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs && \

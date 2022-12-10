@@ -87,6 +87,15 @@ jobs:
             e2esdk/server:${{ needs.tag.outputs.docker-tag }}
           push: false
 
+      - name: Display Docker image labels
+        run: |
+          docker inspect e2esdk/server:${{ needs.tag.outputs.docker-tag }} --format='{{json .Config.Labels}}' \
+          | sed \
+            -e 's/[{}]//g'      \
+            -e 's/\",\"/\n/g'   \
+            -e 's/":"/": "/g'   \
+            -e 's/"//g'
+
       # - name: Functional tests
       #   run: pnpm e2e
 
