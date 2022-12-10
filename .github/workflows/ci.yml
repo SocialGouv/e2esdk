@@ -12,6 +12,9 @@ jobs:
     name: Release Tag
     runs-on: ubuntu-latest
     steps:
+      - name: Generate timestamp
+        id: timestamp
+        run: echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
       - name: Generate release tag
         id: release-tag
         run: echo "tag=${{ github.ref_name }}@$(date +%Y-%m-%d_%H.%M.%S)_$(echo $GITHUB_SHA | cut -c1-8)" >> $GITHUB_OUTPUT
@@ -21,6 +24,7 @@ jobs:
       - name: Display release tag
         run: echo "::notice title=Release Tag::${{ steps.release-tag.outputs.tag }}"
     outputs:
+      timestamp: ${{ steps.timestamp.outputs.timestamp }}
       tag: ${{ steps.release-tag.outputs.tag }}
       docker-tag: ${{ steps.docker-tag.outputs.tag }}
 
@@ -81,7 +85,8 @@ jobs:
             BUILD_URL=https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
           labels: |
             org.opencontainers.image.revision=${{ env.GITHUB_SHA }}
-            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            org.opencontainers.image.created=${{ needs.tag.outputs.timestamp }}
+            org.opencontainers.image.version="// todo: Add version from changesets"
           tags: |
             e2esdk/server:ci
             e2esdk/server:${{ needs.tag.outputs.docker-tag }}
@@ -91,10 +96,12 @@ jobs:
         run: |
           docker inspect e2esdk/server:${{ needs.tag.outputs.docker-tag }} --format='{{json .Config.Labels}}' \
           | sed \
-            -e 's/[{}]//g'      \
-            -e 's/\",\"/\n/g'   \
-            -e 's/":"/": "/g'   \
-            -e 's/"//g'
+            -e 's/^{"//' -e 's/"}$//' \
+            -e 's/\",\"/\n/g'         \
+            -e 's/":"/: /g'
+        # 1. Drop the object curly braces (and surrounding quotes)
+        # 2. Replace entry separators by newlines (and drop surrounding quotes)
+        # 3. Replace key:value separators with spaces (and drop surrounding quotes)
 
       # - name: Functional tests
       #   run: pnpm e2e
