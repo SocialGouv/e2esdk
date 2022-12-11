@@ -79,6 +79,7 @@ jobs:
       - name: Build (NPM)
         run: pnpm build:npm
 
+      # todo: Use docker/metadata-action to organise tags & labels
       - name: Build (Docker)
         uses: docker/build-push-action@v3
         with:
@@ -88,11 +89,18 @@ jobs:
             RELEASE_TAG=${{ env.RELEASE_TAG }}
             BUILD_URL=https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
           labels: |
+            org.opencontainers.image.title="@e2esdk/server"
+            org.opencontainers.image.description="End-to-end encryption server"
+            org.opencontainers.image.version=${{ steps.server-pkg.outputs.version }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.created=${{ needs.tag.outputs.timestamp }}
-            org.opencontainers.image.version=${{ steps.server-pkg.outputs.version }}
+            org.opencontainers.image.licenses="Apache-2.0"
+            org.opencontainers.image.url="https//github.com/SocialGouv/e2esdk"
+            org.opencontainers.image.documentation="https://github.com/SocialGouv/e2esdk/blob/main/packages/server/README.md"
           tags: |
-            e2esdk/server:ci
+            e2esdk/server:edge
+            e2esdk/server:sha-${{ github.sha }}
+            e2esdk/server:${{ steps.server-pkg.outputs.version }}
             e2esdk/server:${{ needs.tag.outputs.docker-tag }}
           push: false
 

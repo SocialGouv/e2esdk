@@ -68,10 +68,6 @@ USER e2esdk
 
 COPY --from=builder --chown=e2esdk:nodejs /app/ .
 
-LABEL org.opencontainers.image.title="@e2esdk/server"
-LABEL org.opencontainers.image.description="End-to-end encryption server"
-LABEL org.opencontainers.image.url="https//github.com/SocialGouv/e2esdk"
-LABEL org.opencontainers.image.documentation="https://github.com/SocialGouv/e2esdk/blob/main/packages/server/README.md"
 LABEL fr.gouv.social.fabrique.e2esdk.build.tag="$RELEASE_TAG"
 LABEL fr.gouv.social.fabrique.e2esdk.build.url="$BUILD_URL"
 
