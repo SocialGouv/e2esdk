@@ -8,33 +8,37 @@ env:
   FORCE_COLOR: 3
 
 jobs:
-  tag:
-    name: Release Tag
-    runs-on: ubuntu-latest
-    steps:
-      - name: Generate timestamp
-        id: timestamp
-        run: echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
-      - name: Generate release tag
-        id: release-tag
-        run: echo "tag=${{ github.ref_name }}@$(date +%Y-%m-%d_%H.%M.%S)_$(echo $GITHUB_SHA | cut -c1-8)" >> $GITHUB_OUTPUT
-      - name: Convert to Docker tag
-        id: docker-tag
-        run: echo "tag=$(echo ${{ steps.release-tag.outputs.tag }} | sed 's/[^a-zA-Z0-9._-]/_/g')" >> $GITHUB_OUTPUT
-      - name: Display release tag
-        run: echo "::notice title=Release Tag::${{ steps.release-tag.outputs.tag }}"
-    outputs:
-      timestamp: ${{ steps.timestamp.outputs.timestamp }}
-      tag: ${{ steps.release-tag.outputs.tag }}
-      docker-tag: ${{ steps.docker-tag.outputs.tag }}
+  # tag:
+  #   name: Release Tag
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Generate timestamp
+  #       id: timestamp
+  #       run: echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+  #     - name: Generate release tag
+  #       id: release-tag
+  #       run: echo "tag=${{ github.ref_name }}@$(date +%Y-%m-%d_%H.%M.%S)_$(echo $GITHUB_SHA | cut -c1-8)" >> $GITHUB_OUTPUT
+  #     - name: Convert to Docker tag
+  #       id: docker-tag
+  #       run: echo "tag=$(echo ${{ steps.release-tag.outputs.tag }} | sed 's/[^a-zA-Z0-9._-]/_/g')" >> $GITHUB_OUTPUT
+  #     - name: Display release tag
+  #       run: echo "::notice title=Release Tag::${{ steps.release-tag.outputs.tag }}"
+  #   outputs:
+  #     timestamp: ${{ steps.timestamp.outputs.timestamp }}
+  #     tag: ${{ steps.release-tag.outputs.tag }}
+  #     docker-tag: ${{ steps.docker-tag.outputs.tag }}
 
   ci:
     name: Integration
     runs-on: ubuntu-latest
-    needs: tag
-    env:
-      RELEASE_TAG: ${{ needs.tag.outputs.tag }}
+    # needs: tag
+    # env:
+    #   RELEASE_TAG: ${{ needs.tag.outputs.tag }}
     steps:
+      - name: Generate timestamp
+        id: timestamp
+        run: echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2
         with:
@@ -79,6 +83,7 @@ jobs:
       - name: Build (NPM)
         run: pnpm build:npm
 
+
       # todo: Use docker/metadata-action to organise tags & labels
       - name: Build (Docker)
         uses: docker/build-push-action@v3
@@ -86,27 +91,24 @@ jobs:
           context: .
           file: packages/server/Dockerfile
           build-args: |
-            RELEASE_TAG=${{ env.RELEASE_TAG }}
             BUILD_URL=https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
           labels: |
-            org.opencontainers.image.title="@e2esdk/server"
-            org.opencontainers.image.description="End-to-end encryption server"
+            org.opencontainers.image.title=@e2esdk/server
+            org.opencontainers.image.description=End-to-end encryption server
             org.opencontainers.image.version=${{ steps.server-pkg.outputs.version }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.created=${{ needs.tag.outputs.timestamp }}
-            org.opencontainers.image.licenses="Apache-2.0"
-            org.opencontainers.image.url="https//github.com/SocialGouv/e2esdk"
-            org.opencontainers.image.documentation="https://github.com/SocialGouv/e2esdk/blob/main/packages/server/README.md"
+            org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}
+            org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.url=https//github.com/SocialGouv/e2esdk
+            org.opencontainers.image.documentation=https://github.com/SocialGouv/e2esdk/blob/main/packages/server/README.md
           tags: |
             e2esdk/server:edge
             e2esdk/server:sha-${{ github.sha }}
-            e2esdk/server:${{ steps.server-pkg.outputs.version }}
-            e2esdk/server:${{ needs.tag.outputs.docker-tag }}
           push: false
 
       - name: Display Docker image labels
         run: |
-          docker inspect e2esdk/server:${{ needs.tag.outputs.docker-tag }} --format='{{json .Config.Labels}}' \
+          docker inspect e2esdk/server:sha-${{ github.sha }} --format='{{json .Config.Labels}}' \
           | sed \
             -e 's/^{"//' -e 's/"}$//' \
             -e 's/\",\"/\n/g'         \
