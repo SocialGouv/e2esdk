@@ -66,7 +66,7 @@ USER e2esdk
 
 COPY --from=builder --chown=e2esdk:nodejs /app/ .
 
-LABEL fr.gouv.social.fabrique.e2esdk.build.url="$BUILD_URL"
+LABEL org.opencontainers.image.url="$BUILD_URL"
 
 EXPOSE 3000
 

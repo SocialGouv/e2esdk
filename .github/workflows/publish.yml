@@ -73,7 +73,7 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}
             org.opencontainers.image.licenses=Apache-2.0
-            org.opencontainers.image.url=https//github.com/SocialGouv/e2esdk
+            org.opencontainers.image.source=https//github.com/SocialGouv/e2esdk/tree/${{ github.sha }}
             org.opencontainers.image.documentation=https://github.com/SocialGouv/e2esdk/blob/main/packages/server/README.md
           tags: |
             ghcr.io/socialgouv/e2esdk/server:${{ steps.server-pkg.outputs.version }}
