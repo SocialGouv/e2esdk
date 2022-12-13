@@ -1,0 +1,92 @@
+name: CD
+on:
+  workflow_run:
+    workflows:
+      - CI
+    branches:
+      - main
+      - beta
+    types:
+      - completed
+
+env:
+  HUSKY: 0
+  FORCE_COLOR: 3
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Generate timestamp
+        id: timestamp
+        run: echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      # Note: we do not use an external Turbo cache for publishing
+      # to prevent against possible cache collision attacks.
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Get server version
+        id: server-pkg
+        run: echo "version=$(cat packages/server/package.json | jq -jr '.version')" >> $GITHUB_OUTPUT
+
+      # todo: NPM publish --
+
+      - name: Build (NPM)
+        run: pnpm build:npm
+
+      # Docker publish --
+
+      - name: Docker registry authentication
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # todo: Use docker/metadata-action to organise tags & labels
+      - name: Build & Publish (Docker)
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: packages/server/Dockerfile
+          build-args: |
+            BUILD_URL=https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
+          labels: |
+            org.opencontainers.image.title=@e2esdk/server
+            org.opencontainers.image.description=End-to-end encryption server
+            org.opencontainers.image.version=${{ steps.server-pkg.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}
+            org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.url=https//github.com/SocialGouv/e2esdk
+            org.opencontainers.image.documentation=https://github.com/SocialGouv/e2esdk/blob/main/packages/server/README.md
+          tags: |
+            ghcr.io/socialgouv/e2esdk/server:${{ steps.server-pkg.outputs.version }}
+            ghcr.io/socialgouv/e2esdk/server:sha-${{ github.sha }}
+          push: true
+
+      - name: Display Docker image labels
+        run: |
+          docker inspect e2esdk/server:sha-${{ github.sha }} --format='{{json .Config.Labels}}' \
+          | sed \
+            -e 's/^{"//' -e 's/"}$//' \
+            -e 's/\",\"/\n/g'         \
+            -e 's/":"/: /g'
+        # 1. Drop the object curly braces (and surrounding quotes)
+        # 2. Replace entry separators by newlines (and drop surrounding quotes)
+        # 3. Replace key:value separators with spaces (and drop surrounding quotes)
