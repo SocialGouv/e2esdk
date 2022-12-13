@@ -83,6 +83,12 @@ jobs:
       - name: Build (NPM)
         run: pnpm build:npm
 
+      - name: Registry authentication
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # todo: Use docker/metadata-action to organise tags & labels
       - name: Build (Docker)
@@ -102,9 +108,9 @@ jobs:
             org.opencontainers.image.url=https//github.com/SocialGouv/e2esdk
             org.opencontainers.image.documentation=https://github.com/SocialGouv/e2esdk/blob/main/packages/server/README.md
           tags: |
-            e2esdk/server:edge
-            e2esdk/server:sha-${{ github.sha }}
-          push: false
+            ghcr.io/socialgouv/e2esdk/server:edge
+            ghcr.io/socialgouv/e2esdk/server:sha-${{ github.sha }}
+          push: true
 
       - name: Display Docker image labels
         run: |
