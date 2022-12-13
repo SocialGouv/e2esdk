@@ -54,21 +54,18 @@ RUN apk add --no-cache curl
 
 RUN corepack enable
 
-ARG RELEASE_TAG=local
 ARG BUILD_URL=local
-ENV RELEASE_TAG $RELEASE_TAG
 ENV BUILD_URL $BUILD_URL
 ENV NODE_ENV production
 ENV PORT 3000
 
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser  --system --uid 1001 e2esdk
+  adduser  --system --uid 1001 e2esdk
 USER e2esdk
 
 COPY --from=builder --chown=e2esdk:nodejs /app/ .
 
-LABEL fr.gouv.social.fabrique.e2esdk.build.tag="$RELEASE_TAG"
 LABEL fr.gouv.social.fabrique.e2esdk.build.url="$BUILD_URL"
 
 EXPOSE 3000
