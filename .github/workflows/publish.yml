@@ -40,16 +40,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Get server version
-        id: server-pkg
-        run: echo "version=$(cat packages/server/package.json | jq -jr '.version')" >> $GITHUB_OUTPUT
-
-      # todo: NPM publish --
 
       - name: Build (NPM)
         run: pnpm build:npm
 
+      # todo: NPM publish --
+
       # Docker publish --
+
+      - name: Get server version
+        id: server-pkg
+        run: echo "version=$(cat packages/server/package.json | jq -jr '.version')" >> $GITHUB_OUTPUT
 
       - name: Docker registry authentication
         uses: docker/login-action@v1

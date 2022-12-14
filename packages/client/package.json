@@ -1,6 +1,6 @@
 {
   "name": "@e2esdk/client",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "license": "Apache-2.0",
   "description": "End-to-end encryption client",
   "author": {
@@ -13,7 +13,7 @@
     "registry": "http://localhost:4873"
   },
   "files": [
-    "/dist"
+    "dist/"
   ],
   "type": "module",
   "main": "./dist/index.cjs",
@@ -45,7 +45,7 @@
     "zod": "^3.19.1"
   },
   "devDependencies": {
-    "tsconfig": "workspace:*",
+    "@e2esdk/config-typescript": "workspace:*",
     "tsup": "^6.5.0",
     "typescript": "^4.9.3"
   }

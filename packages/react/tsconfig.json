@@ -1,5 +1,5 @@
 {
-  "extends": "tsconfig/tsconfig.base.json",
+  "extends": "@e2esdk/config-typescript/tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx"
   },

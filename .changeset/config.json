@@ -1,13 +1,22 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@2.2.0/schema.json",
-  "changelog": "@changesets/cli/changelog",
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "SocialGouv/e2esdk" }
+  ],
   "commit": false,
   "fixed": [],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
+  "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
+    "onlyUpdatePeerDependentsWhenOutOfRange": true
+  },
   "ignore": [
+    "@e2esdk/config-changeset",
+    "@e2esdk/config-jest",
+    "@e2esdk/config-typescript",
     "@e2esdk/examples-fullstack-contact-forms",
     "@e2esdk/examples-with-vue"
   ]

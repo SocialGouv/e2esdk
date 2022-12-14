@@ -1,5 +1,5 @@
 {
-  "name": "changeset",
+  "name": "@e2esdk/config-changeset",
   "version": "0.0.0-internal",
   "private": true,
   "type": "module",
