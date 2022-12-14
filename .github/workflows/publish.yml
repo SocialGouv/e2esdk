@@ -57,7 +57,7 @@ jobs:
         run: echo "version=$(cat packages/server/package.json | jq -jr '.version')" >> $GITHUB_OUTPUT
 
       - name: Docker registry authentication
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
