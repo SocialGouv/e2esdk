@@ -43,15 +43,7 @@
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
-      "@semantic-release/npm",
-      [
-        "@semantic-release/exec",
-        {
-          "verifyConditionsCmd": "echo ${cwd} ${branch.name}",
-          "verifyRelease": "echo ${nextRelease.type} ${nextRelease.gitTag} ${nextRelease.version}",
-          "shell": true
-        }
-      ]
+      "@semantic-release/npm"
     ],
     "branches": [
       "main",
