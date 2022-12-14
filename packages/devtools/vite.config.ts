@@ -9,11 +9,19 @@ import { defineConfig, PluginOption } from 'vite'
 
 // Read the server .env to extract DEPLOYMENT_URL and SIGNATURE_PUBLIC_KEY
 // (thanks PNPM for the symlink!)
+
+const serverDotEnvFile = path.resolve(
+  __dirname,
+  './node_modules/@e2esdk/server/.env'
+)
+
 const serverEnv = dotenv.parse(
-  fs.readFileSync(
-    path.resolve(__dirname, './node_modules/@e2esdk/server/.env'),
-    'utf-8'
-  )
+  fs.existsSync(serverDotEnvFile)
+    ? fs.readFileSync(serverDotEnvFile, 'utf-8')
+    : `
+DEPLOYMENT_URL=http://localhost:3001
+SIGNATURE_PUBLIC_KEY=gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE
+`
 )
 
 // Show `localhost` rather than `127.0.0.1`

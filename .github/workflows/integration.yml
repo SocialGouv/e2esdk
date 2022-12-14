@@ -32,9 +32,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Configure env
-        run: cp ./packages/server/.env.example ./packages/server/.env
-
       - name: Lint
         run: pnpm lint
 
