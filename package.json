@@ -16,6 +16,7 @@
     "build:npm": "turbo run build:npm",
     "build:server": "turbo run build:server",
     "build:docker": "docker build . -f packages/server/Dockerfile -t e2esdk:local",
+    "release:npm": "multi-semantic-release --ignore-private-packages",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "lint": "turbo run lint",
@@ -24,7 +25,9 @@
     "verdaccio": "verdaccio --config config/verdaccio/config.yml"
   },
   "devDependencies": {
+    "@semantic-release/exec": "^6.0.3",
     "@types/jest": "^29.2.3",
+    "multi-semantic-release": "^3.0.1",
     "prettier": "^2.8.0",
     "turbo": "^1.6.3",
     "verdaccio": "^5.18.0"
@@ -34,27 +37,25 @@
     "semi": false,
     "singleQuote": true,
     "tabWidth": 2,
-    "useTabs": false,
-    "overrides": [
-      {
-        "files": [
-          ".changeset/*.md"
-        ],
-        "options": {
-          "proseWrap": "never"
-        }
-      }
-    ]
+    "useTabs": false
   },
   "release": {
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/npm",
+      [
+        "@semantic-release/exec",
+        {
+          "verifyConditionsCmd": "echo ${cwd} ${branch.name}",
+          "verifyRelease": "echo ${nextRelease.type} ${nextRelease.gitTag} ${nextRelease.version}"
+        }
+      ]
+    ],
     "branches": [
       "main",
       {
         "name": "beta",
-        "prerelease": true
-      },
-      {
-        "name": "alpha",
         "prerelease": true
       }
     ]

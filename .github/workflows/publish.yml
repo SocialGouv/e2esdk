@@ -40,11 +40,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      # NPM publish --
 
       - name: Build (NPM)
         run: pnpm build:npm
 
-      # todo: NPM publish --
+      - name: Publish (NPM)
+        run: |
+          echo '//localhost:4873/:_authToken="anonymous"' > ~/.npmrc
+          pnpm publish:npm
 
       # Docker publish --
 
@@ -79,7 +83,7 @@ jobs:
           tags: |
             ghcr.io/socialgouv/e2esdk/server:${{ steps.server-pkg.outputs.version }}
             ghcr.io/socialgouv/e2esdk/server:sha-${{ github.sha }}
-          push: true
+          push: false
 
       - name: Display Docker image labels
         run: |
