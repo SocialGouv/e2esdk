@@ -1,6 +1,6 @@
 {
   "name": "@e2esdk/api",
-  "version": "0.0.1",
+  "version": "0.0.0-semantically-released",
   "license": "Apache-2.0",
   "description": "REST API interfaces shared with e2eSDK client & server",
   "author": {
