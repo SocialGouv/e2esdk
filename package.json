@@ -48,7 +48,8 @@
         "@semantic-release/exec",
         {
           "verifyConditionsCmd": "echo ${cwd} ${branch.name}",
-          "verifyRelease": "echo ${nextRelease.type} ${nextRelease.gitTag} ${nextRelease.version}"
+          "verifyRelease": "echo ${nextRelease.type} ${nextRelease.gitTag} ${nextRelease.version}",
+          "shell": true
         }
       ]
     ],
