@@ -1,6 +1,6 @@
 {
   "name": "@e2esdk/keygen",
-  "version": "0.0.1",
+  "version": "0.0.0-semantically-released",
   "license": "Apache-2.0",
   "description": "Cryptographic key generator for e2eSDK",
   "author": {
@@ -38,7 +38,7 @@
     "keygen": "zx ./dist/keygen.js"
   },
   "dependencies": {
-    "@e2esdk/crypto": "workspace:^*",
+    "@e2esdk/crypto": "workspace:^",
     "zod": "^3.19.1",
     "zx": "^7.1.1"
   },

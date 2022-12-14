@@ -1,6 +1,6 @@
 {
   "name": "@e2esdk/react",
-  "version": "0.0.1",
+  "version": "0.0.0-semantically-released",
   "license": "Apache-2.0",
   "description": "React components & hooks for e2eSDK client",
   "author": {
@@ -38,11 +38,11 @@
     "typecheck": "tsc"
   },
   "peerDependencies": {
-    "@e2esdk/client": "workspace:^*",
+    "@e2esdk/client": "workspace:^",
     "react": "^16.8.0 || ^17.0.0 || ^18.0.0"
   },
   "devDependencies": {
-    "@e2esdk/client": "workspace:^*",
+    "@e2esdk/client": "workspace:^",
     "@e2esdk/config-typescript": "workspace:*",
     "@types/node": "^18.11.10",
     "@types/react": "^18.0.25",
