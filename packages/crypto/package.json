@@ -13,7 +13,7 @@
     "registry": "http://localhost:4873"
   },
   "files": [
-    "/dist"
+    "dist/"
   ],
   "type": "module",
   "sideEffects": false,
@@ -47,11 +47,11 @@
     "zod": "^3.19.1"
   },
   "devDependencies": {
+    "@e2esdk/config-jest": "workspace:*",
+    "@e2esdk/config-typescript": "workspace:*",
     "@types/libsodium-wrappers": "^0.7.10",
     "@types/node": "^18.11.10",
     "jest": "^29.3.1",
-    "jest-config": "workspace:*",
-    "tsconfig": "workspace:*",
     "tsup": "^6.5.0",
     "typescript": "^4.9.3"
   }

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import './env.js'
 import { createServer, startServer } from './server.js'
 
-async function main() {
+export async function main() {
   // Setup environment
   const appServer = createServer()
   await startServer(appServer)
