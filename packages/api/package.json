@@ -13,7 +13,8 @@
     "access": "public"
   },
   "files": [
-    "dist/"
+    "dist/",
+    "sceau.json"
   ],
   "type": "module",
   "sideEffects": false,
@@ -37,7 +38,8 @@
     "build:npm": "tsup --clean --format esm,cjs --dts",
     "build:server": "tsup --clean --format esm",
     "typecheck": "tsc",
-    "test": "jest --color"
+    "test": "jest --color",
+    "prepack": "sceau sign"
   },
   "dependencies": {
     "zod": "^3.19.1"
@@ -47,6 +49,7 @@
     "@socialgouv/e2esdk-config-typescript": "workspace:*",
     "@types/node": "^18.11.10",
     "jest": "^29.3.1",
+    "sceau": "^1.0.0",
     "tsup": "^6.5.0",
     "typescript": "^4.9.3"
   }

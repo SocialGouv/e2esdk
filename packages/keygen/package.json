@@ -13,7 +13,8 @@
     "access": "public"
   },
   "files": [
-    "dist/"
+    "dist/",
+    "sceau.json"
   ],
   "bin": {
     "keygen": "dist/keygen.js"
@@ -35,7 +36,8 @@
     "dev": "tsup --watch",
     "build:npm": "tsup --clean",
     "typecheck": "tsc",
-    "keygen": "zx ./dist/keygen.js"
+    "keygen": "zx ./dist/keygen.js",
+    "prepack": "sceau sign"
   },
   "dependencies": {
     "@socialgouv/e2esdk-crypto": "workspace:^",
@@ -44,6 +46,7 @@
   },
   "devDependencies": {
     "@socialgouv/e2esdk-config-typescript": "workspace:*",
+    "sceau": "^1.0.0",
     "tsup": "^6.5.0",
     "typescript": "^4.9.3"
   }

@@ -96,6 +96,7 @@ jobs:
       - name: Publish (NPM)
         run: npx multi-semantic-release --ignore-packages="config/**,examples/**"
         env:
+          SCEAU_PRIVATE_KEY: ${{ secrets.SCEAU_PRIVATE_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.SOCIALGROOVYBOT_NPM_TOKEN}}
           GIT_AUTHOR_NAME: ${{ secrets.SOCIALGROOVYBOT_NAME }}

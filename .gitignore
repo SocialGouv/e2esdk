@@ -9,3 +9,4 @@ build/
 .vscode
 .changeset/.autocommit
 server-needs-publishing
+sceau.json

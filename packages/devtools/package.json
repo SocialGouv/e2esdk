@@ -24,7 +24,8 @@
     }
   },
   "files": [
-    "dist/"
+    "dist/",
+    "sceau.json"
   ],
   "tsup": {
     "entry": [
@@ -39,7 +40,8 @@
     "build:npm": "run-p build:npm:*",
     "build:npm:bundle": "vite build",
     "build:npm:types": "tsup",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "prepack": "sceau sign"
   },
   "peerDependencies": {
     "@socialgouv/e2esdk-client": "workspace:^"
@@ -72,6 +74,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rollup-plugin-visualizer": "^5.8.3",
+    "sceau": "^1.0.0",
     "tsup": "^6.5.0",
     "typescript": "^4.9.3",
     "vite": "^4.0.0"

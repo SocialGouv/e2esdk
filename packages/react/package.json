@@ -30,12 +30,14 @@
     "treeshake": true
   },
   "files": [
-    "dist/"
+    "dist/",
+    "sceau.json"
   ],
   "scripts": {
     "dev": "tsup --format esm --watch",
     "build:npm": "tsup --clean --format esm,cjs",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "prepack": "sceau sign"
   },
   "peerDependencies": {
     "@socialgouv/e2esdk-client": "workspace:^",
@@ -47,6 +49,7 @@
     "@types/node": "^18.11.10",
     "@types/react": "^18.0.25",
     "react": "^18.2.0",
+    "sceau": "^1.0.0",
     "tsup": "^6.5.0",
     "typescript": "^4.9.3"
   }

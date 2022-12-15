@@ -13,7 +13,8 @@
     "access": "public"
   },
   "files": [
-    "dist/"
+    "dist/",
+    "sceau.json"
   ],
   "type": "module",
   "main": "./dist/index.cjs",
@@ -35,7 +36,8 @@
   "scripts": {
     "dev": "tsup --format esm --watch",
     "build:npm": "tsup --clean --format esm,cjs",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "prepack": "sceau sign"
   },
   "dependencies": {
     "@socialgouv/e2esdk-api": "workspace:^",
@@ -46,6 +48,7 @@
   },
   "devDependencies": {
     "@socialgouv/e2esdk-config-typescript": "workspace:*",
+    "sceau": "^1.0.0",
     "tsup": "^6.5.0",
     "typescript": "^4.9.3"
   }
