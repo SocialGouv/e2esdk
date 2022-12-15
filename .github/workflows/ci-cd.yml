@@ -94,7 +94,10 @@ jobs:
         run: pnpm build:npm
 
       - name: Publish (NPM)
-        run: npx multi-semantic-release --ignore-packages="config/**,examples/**" --debug
+        run: |
+          npx multi-semantic-release                    \
+            --ignore-packages="config/**,examples/**"   \
+            --deps.bump=satisfy
         env:
           DEBUG: '*'
           SCEAU_PRIVATE_KEY: ${{ secrets.SCEAU_PRIVATE_KEY }}

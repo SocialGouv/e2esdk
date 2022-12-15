@@ -13,26 +13,27 @@
   "files": [
     "dist/"
   ],
-  "type": "module",
+  "type": "commonjs",
   "sideEffects": false,
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js",
   "exports": {
     ".": {
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.js"
+      "require": "./dist/index.js"
     }
   },
   "tsup": {
     "entry": [
       "src/index.ts"
     ],
+    "format": [
+      "cjs"
+    ],
+    "dts": false,
     "treeshake": true
   },
   "scripts": {
-    "dev": "tsup --format esm --dts --watch",
-    "build:npm": "tsup --clean --format esm,cjs --dts",
+    "dev": "tsup --watch",
+    "build:npm": "tsup --clean",
     "typecheck": "tsc"
   },
   "dependencies": {
