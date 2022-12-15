@@ -49,24 +49,24 @@ jobs:
         run: pnpm build:npm
 
       - name: Release (NPM)
-        run: pnpm release:npm
+        run: npx multi-semantic-release --ignore-packages="config/**,examples/**"
 
       # Docker release --
 
-      # When the server package is published to NPM,
+      # When the server package needs to be published,
       # the internal @e2esdk/semantic-release plugin
       # will store the new version number into the
-      # `server-was-published` file at the repo root.
+      # `server-needs-publishing` file at the repo root.
       # We detect its presence and store the version
       # in a step output, which will determine whether
       # the Docker build+push step occurs or not.
       - name: Get server version
-        id: server-pkg
-        run: test -f server-was-published && echo "version=$(cat server-was-published)" >> $GITHUB_OUTPUT | true
+        id: server-needs-publishing
+        run: test -f server-needs-publishing && echo "version=$(cat server-needs-publishing)" >> $GITHUB_OUTPUT | true
 
       - name: Docker registry authentication
         uses: docker/login-action@v2
-        if: ${{ steps.server-pkg.outputs.version }}
+        if: ${{ steps.server-needs-publishing.outputs.version }}
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -75,7 +75,7 @@ jobs:
       # todo: Use docker/metadata-action to organise tags & labels
       - name: Build & Publish (Docker)
         uses: docker/build-push-action@v3
-        if: ${{ steps.server-pkg.outputs.version }}
+        if: ${{ steps.server-needs-publishing.outputs.version }}
         with:
           context: .
           file: packages/server/Dockerfile
@@ -84,19 +84,19 @@ jobs:
           labels: |
             org.opencontainers.image.title=@e2esdk/server
             org.opencontainers.image.description=End-to-end encryption server
-            org.opencontainers.image.version=${{ steps.server-pkg.outputs.version }}
+            org.opencontainers.image.version=${{ steps.server-needs-publishing.outputs.version }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}
             org.opencontainers.image.licenses=Apache-2.0
             org.opencontainers.image.source=https//github.com/SocialGouv/e2esdk/tree/${{ github.sha }}
             org.opencontainers.image.documentation=https://github.com/SocialGouv/e2esdk/blob/main/packages/server/README.md
           tags: |
-            ghcr.io/socialgouv/e2esdk/server:${{ steps.server-pkg.outputs.version }}
+            ghcr.io/socialgouv/e2esdk/server:${{ steps.server-needs-publishing.outputs.version }}
             ghcr.io/socialgouv/e2esdk/server:sha-${{ github.sha }}
           push: true
 
       - name: Display Docker image labels
-        if: ${{ steps.server-pkg.outputs.version }}
+        if: ${{ steps.server-needs-publishing.outputs.version }}
         run: |
           docker inspect e2esdk/server:sha-${{ github.sha }} --format='{{json .Config.Labels}}' \
           | sed \

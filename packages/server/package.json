@@ -1,16 +1,13 @@
 {
   "name": "@e2esdk/server",
   "version": "0.0.0-semantically-released",
+  "private": true,
   "license": "Apache-2.0",
   "description": "End-to-end encryption server",
   "author": {
     "name": "François Best",
     "email": "npm.e2esdk@francoisbest.com",
     "url": "https://francoisbest.com"
-  },
-  "publishConfig": {
-    "access": "public",
-    "registry": "http://localhost:4873"
   },
   "files": [
     "build/"

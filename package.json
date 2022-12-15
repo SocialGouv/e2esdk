@@ -16,7 +16,6 @@
     "build:npm": "turbo run build:npm",
     "build:server": "turbo run build:server",
     "build:docker": "docker build . -f packages/server/Dockerfile -t e2esdk:local",
-    "release:npm": "multi-semantic-release --ignore-private-packages",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "lint": "turbo run lint",
