@@ -1,5 +1,5 @@
 {
-  "name": "@e2esdk/examples-fullstack-contact-forms",
+  "name": "@socialgouv/e2esdk-examples-fullstack-contact-forms",
   "version": "0.0.0-internal",
   "private": true,
   "type": "module",
@@ -11,10 +11,10 @@
   },
   "dependencies": {
     "@chakra-ui/react": "^2.4.2",
-    "@e2esdk/client": "workspace:*",
-    "@e2esdk/crypto": "workspace:*",
-    "@e2esdk/devtools": "workspace:*",
-    "@e2esdk/react": "workspace:*",
+    "@socialgouv/e2esdk-client": "workspace:*",
+    "@socialgouv/e2esdk-crypto": "workspace:*",
+    "@socialgouv/e2esdk-devtools": "workspace:*",
+    "@socialgouv/e2esdk-react": "workspace:*",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@tanstack/react-query": "^4.18.0",

@@ -12,7 +12,7 @@ import { defineConfig, PluginOption } from 'vite'
 
 const serverDotEnvFile = path.resolve(
   __dirname,
-  './node_modules/@e2esdk/server/.env'
+  './node_modules/@socialgouv/e2esdk-server/.env'
 )
 
 const serverEnv = dotenv.parse(

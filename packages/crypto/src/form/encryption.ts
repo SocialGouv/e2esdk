@@ -2,7 +2,7 @@ import {
   sealedBoxCiphertextV1Schema,
   signatureSchema,
   thirtyTwoBytesBase64Schema,
-} from '@e2esdk/api'
+} from '@socialgouv/e2esdk-api'
 import { z } from 'zod'
 import { SealedBoxCipher, SecretBoxCipher } from '../sodium/ciphers'
 import { decrypt, encrypt } from '../sodium/encryption'

@@ -10,9 +10,9 @@ import {
   Stack,
   StackProps,
 } from '@chakra-ui/react'
-import { PublicUserIdentity } from '@e2esdk/client'
-import { generateSealedBoxCipher } from '@e2esdk/crypto'
-import { useE2ESDKClient } from '@e2esdk/react'
+import { PublicUserIdentity } from '@socialgouv/e2esdk-client'
+import { generateSealedBoxCipher } from '@socialgouv/e2esdk-crypto'
+import { useE2ESDKClient } from '@socialgouv/e2esdk-react'
 import { CopiableReadOnlyInput } from 'components/CopiableReadOnlyInput'
 import { LoadingButton } from 'components/LoadingButton'
 import { useShareKey } from 'hooks/useShareKey'

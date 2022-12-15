@@ -1,5 +1,5 @@
 {
-  "name": "@e2esdk/examples-with-vue",
+  "name": "@socialgouv/e2esdk-examples-with-vue",
   "version": "0.0.0-internal",
   "private": true,
   "scripts": {
@@ -10,8 +10,8 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@e2esdk/client": "workspace:*",
-    "@e2esdk/devtools": "workspace:*",
+    "@socialgouv/e2esdk-client": "workspace:*",
+    "@socialgouv/e2esdk-devtools": "workspace:*",
     "vue": "^3.2.45",
     "vue-router": "^4.1.6"
   },

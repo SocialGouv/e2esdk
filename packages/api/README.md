@@ -1,4 +1,4 @@
-# @e2esdk/api
+# @socialgouv/e2esdk-api
 
 REST API interfaces shared with e2eSDK client & server
 

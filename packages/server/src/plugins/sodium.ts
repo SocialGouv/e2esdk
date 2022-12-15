@@ -2,7 +2,7 @@ import {
   checkSignaturePublicKey,
   initializeSodium,
   Sodium,
-} from '@e2esdk/crypto'
+} from '@socialgouv/e2esdk-crypto'
 import type { FastifyPluginAsync } from 'fastify'
 import fp from 'fastify-plugin'
 import '../env.js'

@@ -1,26 +1,71 @@
-name: Release
+name: CI/CD
 on:
-  # push:
-  #   branches:
-  #     - beta
-  workflow_run:
-    workflows:
-      - CI
-    branches:
-      # - main
-      - beta
-    types:
-      - completed
+  push:
 
 env:
-  HUSKY: 0
   FORCE_COLOR: 3
 
+# Cancel in-progress runs on new updates,
+# except for deployment runs which could
+# leave the app in an inconsistent state.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.ref_name != 'main' && github.ref_name != 'beta' }}
+
 jobs:
-  release:
+  ci:
+    name: Integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - name: Turbo Cache
+        id: turbo-cache
+        uses: actions/cache@v3
+        with:
+          path: node_modules/.cache/turbo
+          key: turbo-${{ github.sha }}
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Type checking
+        run: pnpm typecheck
+
+      - name: Build (NPM)
+        run: pnpm build:npm
+
+      - name: Build (Docker)
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: packages/server/Dockerfile
+          push: false
+
+  # ----------------------------------------------------------------------------
+
+  cd:
     name: Release
     runs-on: ubuntu-latest
-    #if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: [ci]
+    # todo: Enable main release channel once v1 is ready
+    # if: ${{ github.ref_name == 'main' || github.ref_name == 'beta' }}
+    if: ${{ github.ref_name == 'beta' }}
     steps:
       - name: Generate timestamp
         id: timestamp
@@ -43,24 +88,31 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # NPM release --
+      # NPM publish --
 
       - name: Build (NPM)
         run: pnpm build:npm
 
-      - name: Release (NPM)
+      - name: Publish (NPM)
         run: npx multi-semantic-release --ignore-packages="config/**,examples/**"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          NPM_TOKEN: ${{ secrets.SOCIALGROOVYBOT_NPM_TOKEN}}
+          GIT_AUTHOR_NAME: ${{ secrets.SOCIALGROOVYBOT_NAME }}
+          GIT_AUTHOR_EMAIL: ${{ secrets.SOCIALGROOVYBOT_EMAIL }}
+          GIT_COMMITTER_NAME: ${{ secrets.SOCIALGROOVYBOT_NAME }}
+          GIT_COMMITTER_EMAIL: ${{ secrets.SOCIALGROOVYBOT_EMAIL }}
 
       # Docker release --
 
       # When the server package needs to be published,
-      # the internal @e2esdk/semantic-release plugin
+      # the internal @socialgouv/e2esdk-semantic-release plugin
       # will store the new version number into the
       # `server-needs-publishing` file at the repo root.
       # We detect its presence and store the version
       # in a step output, which will determine whether
       # the Docker build+push step occurs or not.
-      - name: Get server version
+      - name: Check if server needs publishing
         id: server-needs-publishing
         run: test -f server-needs-publishing && echo "version=$(cat server-needs-publishing)" >> $GITHUB_OUTPUT | true
 
@@ -70,7 +122,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ github.token }}
 
       # todo: Use docker/metadata-action to organise tags & labels
       - name: Build & Publish (Docker)
@@ -82,7 +134,7 @@ jobs:
           build-args: |
             BUILD_URL=https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
           labels: |
-            org.opencontainers.image.title=@e2esdk/server
+            org.opencontainers.image.title=@socialgouv/e2esdk-server
             org.opencontainers.image.description=End-to-end encryption server
             org.opencontainers.image.version=${{ steps.server-needs-publishing.outputs.version }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -92,13 +144,13 @@ jobs:
             org.opencontainers.image.documentation=https://github.com/SocialGouv/e2esdk/blob/main/packages/server/README.md
           tags: |
             ghcr.io/socialgouv/e2esdk/server:${{ steps.server-needs-publishing.outputs.version }}
-            ghcr.io/socialgouv/e2esdk/server:sha-${{ github.sha }}
+            ghcr.io/socialgouv/e2esdk/server:sha-${{ github.ref_name }}-${{ github.sha }}
           push: true
 
       - name: Display Docker image labels
         if: ${{ steps.server-needs-publishing.outputs.version }}
         run: |
-          docker inspect e2esdk/server:sha-${{ github.sha }} --format='{{json .Config.Labels}}' \
+          docker inspect ghcr.io/socialgouv/e2esdk/server:sha-${{ github.ref_name }}-${{ github.sha }} --format='{{json .Config.Labels}}' \
           | sed \
             -e 's/^{"//' -e 's/"}$//' \
             -e 's/\",\"/\n/g'         \

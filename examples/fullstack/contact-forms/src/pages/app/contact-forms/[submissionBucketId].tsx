@@ -26,8 +26,8 @@ import {
   Tr,
   useDisclosure,
 } from '@chakra-ui/react'
-import type { KeychainItemMetadata } from '@e2esdk/client'
-import { useE2ESDKClient, useE2ESDKClientKeys } from '@e2esdk/react'
+import type { KeychainItemMetadata } from '@socialgouv/e2esdk-client'
+import { useE2ESDKClient, useE2ESDKClientKeys } from '@socialgouv/e2esdk-react'
 import { useQuery } from '@tanstack/react-query'
 import { CopiableReadOnlyInput } from 'components/CopiableReadOnlyInput'
 import { NoSSR } from 'components/NoSSR'

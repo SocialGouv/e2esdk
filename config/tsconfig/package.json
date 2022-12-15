@@ -1,5 +1,5 @@
 {
-  "name": "@e2esdk/config-typescript",
+  "name": "@socialgouv/e2esdk-config-typescript",
   "version": "0.0.0-internal",
   "private": true,
   "files": [

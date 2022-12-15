@@ -1,4 +1,4 @@
-import type { Optional } from '@e2esdk/api'
+import type { Optional } from '@socialgouv/e2esdk-api'
 import type { Sql } from 'postgres'
 import { z } from 'zod'
 import { getFirst } from './helpers.js'

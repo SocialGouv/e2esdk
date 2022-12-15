@@ -28,7 +28,7 @@ import {
   timestampSchema,
   WebSocketNotificationTypes,
   websocketNotificationTypesSchema,
-} from '@e2esdk/api'
+} from '@socialgouv/e2esdk-api'
 import {
   base64UrlDecode,
   base64UrlEncode,
@@ -56,7 +56,7 @@ import {
   verifyAuth as verifyServerSignature,
   verifyClientIdentity,
   verifyMultipartSignature,
-} from '@e2esdk/crypto'
+} from '@socialgouv/e2esdk-crypto'
 import { LocalStateSync } from 'local-state-sync'
 import mitt, { Emitter } from 'mitt'
 import { z } from 'zod'
@@ -1029,7 +1029,7 @@ export class Client {
       )
       setTimeout(() => {
         console.debug(
-          '@e2esdk/client: WebSocket connection closed, attempting to reconnect...'
+          '@socialgouv/e2esdk-client: WebSocket connection closed, attempting to reconnect...'
         )
         this.#startWebSocket('reconnect')
       }, this.#socketExponentialBackoffTimeout)

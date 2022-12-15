@@ -1,5 +1,5 @@
 {
-  "name": "@e2esdk/server",
+  "name": "@socialgouv/e2esdk-server",
   "version": "0.0.0-semantically-released",
   "private": true,
   "license": "Apache-2.0",
@@ -9,6 +9,7 @@
     "email": "npm.e2esdk@francoisbest.com",
     "url": "https://francoisbest.com"
   },
+  "repository": "https://github.com/SocialGouv/e2esdk",
   "files": [
     "build/"
   ],
@@ -24,17 +25,17 @@
   },
   "scripts": {
     "dev": "run-p dev:*",
-    "dev:mkdir-logs": "mkdir -p ../../.volumes/logs/@e2esdk/server",
+    "dev:mkdir-logs": "mkdir -p ../../.volumes/logs/@socialgouv/e2esdk-server",
     "dev:build": "swc src --copy-files --include-dotfiles -d build --watch",
-    "dev:start": "nodemon ./build/main.js | tee -i ../../.volumes/logs/@e2esdk/server/$(date +%Y-%m-%d_%H.%M.%S).ndjson | pino-pretty",
+    "dev:start": "nodemon ./build/main.js | tee -i ../../.volumes/logs/@socialgouv/e2esdk-server/$(date +%Y-%m-%d_%H.%M.%S).ndjson | pino-pretty",
     "start": "NODE_ENV=production node ./build/main.js",
     "build:server": "swc src --copy-files --include-dotfiles -d build",
     "typecheck": "tsc",
     "db": "zx ./build/database/operations.js"
   },
   "dependencies": {
-    "@e2esdk/api": "workspace:^",
-    "@e2esdk/crypto": "workspace:^",
+    "@socialgouv/e2esdk-api": "workspace:^",
+    "@socialgouv/e2esdk-crypto": "workspace:^",
     "@fastify/cors": "^8.2.0",
     "@fastify/swagger": "^8.2.0",
     "@fastify/swagger-ui": "^1.3.0",
@@ -50,7 +51,7 @@
     "zx": "^7.1.1"
   },
   "devDependencies": {
-    "@e2esdk/config-typescript": "workspace:*",
+    "@socialgouv/e2esdk-config-typescript": "workspace:*",
     "@fastify/sensible": "^5.1.1",
     "@swc/cli": "^0.1.57",
     "@swc/core": "^1.3.21",
@@ -67,7 +68,7 @@
     "watch": [
       "build",
       ".env",
-      "node_modules/@e2esdk"
+      "node_modules/@socialgouv"
     ],
     "ext": "js",
     "delay": 500,

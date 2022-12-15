@@ -1,3 +1,3 @@
-import config from '@e2esdk/config-jest'
+import config from '@socialgouv/e2esdk-config-jest'
 
 export default config

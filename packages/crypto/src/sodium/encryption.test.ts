@@ -2,7 +2,7 @@ import {
   boxCiphertextV1Schema,
   sealedBoxCiphertextV1Schema,
   secretBoxCiphertextV1Schema,
-} from '@e2esdk/api'
+} from '@socialgouv/e2esdk-api'
 import { concat } from '../shared/utils'
 import { generateSealedBoxCipher } from './ciphers'
 import { _generateBoxCipher, _generateSecretBoxCipher } from './ciphers.test'

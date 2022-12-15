@@ -13,7 +13,10 @@ import {
   Text,
   Tooltip,
 } from '@chakra-ui/react'
-import { useE2ESDKClient, useE2ESDKClientIdentity } from '@e2esdk/react'
+import {
+  useE2ESDKClient,
+  useE2ESDKClientIdentity,
+} from '@socialgouv/e2esdk-react'
 import React from 'react'
 import { FiKey, FiUser } from 'react-icons/fi'
 import { MdOutlineLock } from 'react-icons/md'

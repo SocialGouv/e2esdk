@@ -7,7 +7,7 @@ import {
   Stack,
   StackProps,
 } from '@chakra-ui/react'
-import { useE2ESDKClient } from '@e2esdk/react'
+import { useE2ESDKClient } from '@socialgouv/e2esdk-react'
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { FiLogIn, FiPlusCircle } from 'react-icons/fi'

@@ -1,4 +1,7 @@
-import { publicKeyAuthHeaders, WebSocketNotificationTypes } from '@e2esdk/api'
+import {
+  publicKeyAuthHeaders,
+  WebSocketNotificationTypes,
+} from '@socialgouv/e2esdk-api'
 import mitt from 'mitt'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'

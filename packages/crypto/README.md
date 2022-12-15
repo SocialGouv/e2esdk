@@ -1,4 +1,4 @@
-# @e2esdk/crypto
+# @socialgouv/e2esdk-crypto
 
 Cryptographic constructs & algorithms for e2eSDK client & server
 

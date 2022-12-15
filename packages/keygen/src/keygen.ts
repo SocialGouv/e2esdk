@@ -5,7 +5,7 @@ import {
   multipartSignature,
   sodium,
   verifyMultipartSignature,
-} from '@e2esdk/crypto'
+} from '@socialgouv/e2esdk-crypto'
 import crypto from 'node:crypto'
 
 async function main() {

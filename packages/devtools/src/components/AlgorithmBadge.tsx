@@ -1,5 +1,5 @@
 import { Badge, BadgeProps } from '@chakra-ui/react'
-import type { Cipher } from '@e2esdk/crypto'
+import type { Cipher } from '@socialgouv/e2esdk-crypto'
 import React from 'react'
 
 type AlgorithmBadgeProps = BadgeProps & {

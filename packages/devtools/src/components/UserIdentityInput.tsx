@@ -11,8 +11,8 @@ import {
   InputRightElement,
   Spinner,
 } from '@chakra-ui/react'
-import type { PublicUserIdentity } from '@e2esdk/client'
-import { useE2ESDKClient } from '@e2esdk/react'
+import type { PublicUserIdentity } from '@socialgouv/e2esdk-client'
+import { useE2ESDKClient } from '@socialgouv/e2esdk-react'
 import React from 'react'
 import { FiUser } from 'react-icons/fi'
 

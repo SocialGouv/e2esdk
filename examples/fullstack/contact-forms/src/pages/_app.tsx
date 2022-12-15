@@ -1,6 +1,6 @@
 import { ChakraProvider, HStack } from '@chakra-ui/react'
-import { Client } from '@e2esdk/client'
-import { E2ESDKClientProvider } from '@e2esdk/react'
+import { Client } from '@socialgouv/e2esdk-client'
+import { E2ESDKClientProvider } from '@socialgouv/e2esdk-react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ColorModeSwitch } from 'components/colorModeSwitch'

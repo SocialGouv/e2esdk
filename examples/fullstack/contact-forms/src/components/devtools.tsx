@@ -1,6 +1,6 @@
-import '@e2esdk/devtools'
-import { E2ESDKDevtoolsElement } from '@e2esdk/devtools'
-import { useE2ESDKClient } from '@e2esdk/react'
+import '@socialgouv/e2esdk-devtools'
+import { E2ESDKDevtoolsElement } from '@socialgouv/e2esdk-devtools'
+import { useE2ESDKClient } from '@socialgouv/e2esdk-react'
 import React from 'react'
 
 export const Devtools = () => {

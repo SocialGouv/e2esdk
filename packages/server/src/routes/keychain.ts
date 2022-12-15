@@ -5,8 +5,11 @@ import {
   PostKeychainItemRequestBody,
   publicKeyAuthHeaders,
   PublicKeyAuthHeaders,
-} from '@e2esdk/api'
-import { numberToUint32LE, verifyMultipartSignature } from '@e2esdk/crypto'
+} from '@socialgouv/e2esdk-api'
+import {
+  numberToUint32LE,
+  verifyMultipartSignature,
+} from '@socialgouv/e2esdk-crypto'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import {
   getKeyNameParticipants,

@@ -2,12 +2,12 @@ import {
   Identity,
   isFarFromCurrentTime,
   publicKeyAuthHeaders,
-} from '@e2esdk/api'
+} from '@socialgouv/e2esdk-api'
 import {
   signAuth as signResponse,
   verifyAuth as verifyClientSignature,
   verifyClientIdentity,
-} from '@e2esdk/crypto'
+} from '@socialgouv/e2esdk-crypto'
 import type {
   FastifyBaseLogger,
   FastifyPluginAsync,

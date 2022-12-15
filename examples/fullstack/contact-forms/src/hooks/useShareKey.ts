@@ -1,6 +1,6 @@
 import { useToast } from '@chakra-ui/react'
-import { APIError, PublicUserIdentity } from '@e2esdk/client'
-import { useE2ESDKClient } from '@e2esdk/react'
+import { APIError, PublicUserIdentity } from '@socialgouv/e2esdk-client'
+import { useE2ESDKClient } from '@socialgouv/e2esdk-react'
 import React from 'react'
 
 export function useShareKey() {

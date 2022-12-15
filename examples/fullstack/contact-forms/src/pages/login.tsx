@@ -6,7 +6,7 @@ import {
   Input,
   Stack,
 } from '@chakra-ui/react'
-import { useE2ESDKClient } from '@e2esdk/react'
+import { useE2ESDKClient } from '@socialgouv/e2esdk-react'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import React from 'react'
