@@ -1,6 +1,8 @@
 name: CI/CD
 on:
   push:
+    tags-ignore:
+      - '*'
 
 env:
   FORCE_COLOR: 3
