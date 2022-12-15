@@ -1,7 +1,7 @@
 # e2esdk
 
 [![Apache-2.0 License](https://img.shields.io/github/license/SocialGouv/e2esdk.svg?color=blue)](https://github.com/SocialGouv/e2esdk/blob/main/LICENSE)
-[![CI](https://github.com/SocialGouv/e2esdk/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SocialGouv/e2esdk/actions/workflows/ci.yml)
+[![Continuous Integration](https://github.com/SocialGouv/e2esdk/actions/workflows/integration.yml/badge.svg?branch=main)](https://github.com/SocialGouv/e2esdk/actions/workflows/integration.yml)
 
 SDK to build end-to-end encrypted web applications
 
