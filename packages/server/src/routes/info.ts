@@ -38,11 +38,10 @@ const querystring = z.object({
 type ManifestEntry = z.infer<typeof manifestEntry>
 
 async function readVersionFile() {
-  const buildDir = path.resolve(
+  const versionFile = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
-    '../'
+    '../../VERSION'
   )
-  const versionFile = path.resolve(buildDir, 'VERSION')
   try {
     const version = await fs.readFile(versionFile, { encoding: 'utf8' })
     return version.trim()

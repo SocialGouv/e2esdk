@@ -154,7 +154,7 @@ jobs:
       - name: Build & sign server
         run: |
           pnpm build:server
-          echo "${{ needs.cd-npm.outputs.server-version }}" > packages/server/build/VERSION
+          echo "${{ needs.cd-npm.outputs.server-version }}" > packages/server/VERSION
           pnpm --filter @socialgouv/e2esdk-server sign
         env:
           SCEAU_PRIVATE_KEY: ${{ secrets.SCEAU_PRIVATE_KEY }}

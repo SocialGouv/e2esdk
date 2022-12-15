@@ -32,15 +32,15 @@ export async function publish(_: any, context: any) {
 export async function success(_: any, context: any) {
   const ctx = serverContextSchema.omit({ cwd: true }).safeParse(context)
   if (!ctx.success) {
-    console.dir(context, { depth: 2 })
     return
   }
-  const { gitTag, channel, name, version } = ctx.data.nextRelease
-  console.dir({ gitTag, channel, name, version })
+  const { gitTag, name, version } = ctx.data.nextRelease
+  console.dir(context.nextRelease)
+  const nameWithoutVersion = name.replace(`@${version}`, '')
   try {
     await fs.appendFile(
       ctx.data.env.GITHUB_STEP_SUMMARY,
-      `📦 [\`${gitTag}\`](https://www.npmjs.com/package/${name}/v/${version}) was published on NPM  \n`
+      `📦 &nbsp;Published: [\`${gitTag}\`](https://www.npmjs.com/package/${nameWithoutVersion}/v/${version})  \n`
     )
   } catch (error) {
     console.error(error)
