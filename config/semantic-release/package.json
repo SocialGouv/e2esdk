@@ -1,5 +1,5 @@
 {
-  "name": "@e2esdk/semantic-release",
+  "name": "@socialgouv/e2esdk-semantic-release",
   "version": "0.0.0-internal",
   "license": "Apache-2.0",
   "private": true,
@@ -9,6 +9,7 @@
     "email": "npm.e2esdk@francoisbest.com",
     "url": "https://francoisbest.com"
   },
+  "repository": "https://github.com/SocialGouv/e2esdk",
   "files": [
     "dist/"
   ],
@@ -38,7 +39,7 @@
     "zod": "^3.19.1"
   },
   "devDependencies": {
-    "@e2esdk/config-typescript": "workspace:*",
+    "@socialgouv/e2esdk-config-typescript": "workspace:*",
     "@types/node": "^18.11.10",
     "tsup": "^6.5.0",
     "typescript": "^4.9.3"

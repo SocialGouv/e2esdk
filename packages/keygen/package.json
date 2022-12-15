@@ -1,5 +1,5 @@
 {
-  "name": "@e2esdk/keygen",
+  "name": "@socialgouv/e2esdk-keygen",
   "version": "0.0.0-semantically-released",
   "license": "Apache-2.0",
   "description": "Cryptographic key generator for e2eSDK",
@@ -8,9 +8,9 @@
     "email": "npm.e2esdk@francoisbest.com",
     "url": "https://francoisbest.com"
   },
+  "repository": "https://github.com/SocialGouv/e2esdk",
   "publishConfig": {
-    "access": "public",
-    "registry": "http://localhost:4873"
+    "access": "public"
   },
   "files": [
     "dist/"
@@ -38,12 +38,12 @@
     "keygen": "zx ./dist/keygen.js"
   },
   "dependencies": {
-    "@e2esdk/crypto": "workspace:^",
+    "@socialgouv/e2esdk-crypto": "workspace:^",
     "zod": "^3.19.1",
     "zx": "^7.1.1"
   },
   "devDependencies": {
-    "@e2esdk/config-typescript": "workspace:*",
+    "@socialgouv/e2esdk-config-typescript": "workspace:*",
     "tsup": "^6.5.0",
     "typescript": "^4.9.3"
   }

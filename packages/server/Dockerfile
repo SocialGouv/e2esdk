@@ -10,7 +10,7 @@ WORKDIR /app
 # Though the rest of the monorepo uses pnpm, we can use yarn here to save one layer.
 RUN yarn global add turbo
 COPY . .
-RUN turbo prune --scope=@e2esdk/server --docker --out-dir docker-dist
+RUN turbo prune --scope=@socialgouv/e2esdk-server --docker --out-dir docker-dist
 
 # ------------------------------------------------------------------------------
 

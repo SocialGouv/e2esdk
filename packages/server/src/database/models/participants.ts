@@ -1,4 +1,4 @@
-import { identitySchema, permissionFlags } from '@e2esdk/api'
+import { identitySchema, permissionFlags } from '@socialgouv/e2esdk-api'
 import { Sql } from 'postgres'
 import { z } from 'zod'
 import { TABLE_NAME as IDENTITY_TABLE } from './identity.js'

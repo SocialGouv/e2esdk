@@ -1,5 +1,5 @@
 {
-  "name": "@e2esdk/config-jest",
+  "name": "@socialgouv/e2esdk-config-jest",
   "version": "0.0.0-internal",
   "private": true,
   "main": "jest.config.mjs",

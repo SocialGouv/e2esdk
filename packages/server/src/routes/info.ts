@@ -1,4 +1,8 @@
-import { multipartSignature, numberToUint32LE, Sodium } from '@e2esdk/crypto'
+import {
+  multipartSignature,
+  numberToUint32LE,
+  Sodium,
+} from '@socialgouv/e2esdk-crypto'
 import fs from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'

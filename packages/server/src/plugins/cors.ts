@@ -1,5 +1,5 @@
-import { publicKeyAuthHeaders } from '@e2esdk/api'
 import cors, { FastifyCorsOptions } from '@fastify/cors'
+import { publicKeyAuthHeaders } from '@socialgouv/e2esdk-api'
 import type { FastifyPluginAsync } from 'fastify'
 import fp from 'fastify-plugin'
 import { env } from '../env.js'

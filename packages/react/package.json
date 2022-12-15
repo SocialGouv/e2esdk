@@ -1,5 +1,5 @@
 {
-  "name": "@e2esdk/react",
+  "name": "@socialgouv/e2esdk-react",
   "version": "0.0.0-semantically-released",
   "license": "Apache-2.0",
   "description": "React components & hooks for e2eSDK client",
@@ -8,9 +8,9 @@
     "email": "npm.e2esdk@francoisbest.com",
     "url": "https://francoisbest.com"
   },
+  "repository": "https://github.com/SocialGouv/e2esdk",
   "publishConfig": {
-    "access": "public",
-    "registry": "http://localhost:4873"
+    "access": "public"
   },
   "type": "module",
   "main": "./dist/index.cjs",
@@ -38,12 +38,12 @@
     "typecheck": "tsc"
   },
   "peerDependencies": {
-    "@e2esdk/client": "workspace:^",
+    "@socialgouv/e2esdk-client": "workspace:^",
     "react": "^16.8.0 || ^17.0.0 || ^18.0.0"
   },
   "devDependencies": {
-    "@e2esdk/client": "workspace:^",
-    "@e2esdk/config-typescript": "workspace:*",
+    "@socialgouv/e2esdk-client": "workspace:^",
+    "@socialgouv/e2esdk-config-typescript": "workspace:*",
     "@types/node": "^18.11.10",
     "@types/react": "^18.0.25",
     "react": "^18.2.0",

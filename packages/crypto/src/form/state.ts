@@ -1,4 +1,4 @@
-import { thirtyTwoBytesBase64Schema } from '@e2esdk/api'
+import { thirtyTwoBytesBase64Schema } from '@socialgouv/e2esdk-api'
 import type { KeyPair } from 'libsodium-wrappers'
 import { base64UrlDecode, base64UrlEncode } from '../shared/codec'
 import { Sodium, sodium } from '../sodium/sodium'

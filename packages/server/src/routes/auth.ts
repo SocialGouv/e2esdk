@@ -3,7 +3,7 @@ import {
   publicKeyAuthHeaders,
   signupBody,
   SignupBody,
-} from '@e2esdk/api'
+} from '@socialgouv/e2esdk-api'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import { createIdentity } from '../database/models/identity.js'
 import { App } from '../types'

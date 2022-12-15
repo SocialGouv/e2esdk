@@ -5,7 +5,7 @@ import {
   GetSingleIdentityResponseBody,
   publicKeyAuthHeaders,
   PublicKeyAuthHeaders,
-} from '@e2esdk/api'
+} from '@socialgouv/e2esdk-api'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import { getIdentities, getIdentity } from '../database/models/identity.js'

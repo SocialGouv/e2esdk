@@ -9,6 +9,7 @@
     "email": "e2esdk@francoisbest.com",
     "url": "https://francoisbest.com"
   },
+  "repository": "https://github.com/SocialGouv/e2esdk",
   "scripts": {
     "dev": "FORCE_COLOR=3 turbo run dev --filter=./packages/*",
     "dev:examples": "FORCE_COLOR=3 turbo run dev --filter=./examples/*",
@@ -20,16 +21,14 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "keygen": "pnpm --filter keygen run keygen",
-    "db": "pnpm --filter server run db",
-    "verdaccio": "verdaccio --config config/verdaccio/config.yml"
+    "db": "pnpm --filter server run db"
   },
   "devDependencies": {
-    "@e2esdk/semantic-release": "workspace:*",
+    "@socialgouv/e2esdk-semantic-release": "workspace:*",
     "@types/jest": "^29.2.3",
     "multi-semantic-release": "^3.0.1",
     "prettier": "^2.8.0",
-    "turbo": "^1.6.3",
-    "verdaccio": "^5.18.0"
+    "turbo": "^1.6.3"
   },
   "prettier": {
     "arrowParens": "avoid",
@@ -43,7 +42,8 @@
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
       "@semantic-release/npm",
-      "@e2esdk/semantic-release"
+      "@semantic-release/github",
+      "@socialgouv/e2esdk-semantic-release"
     ],
     "branches": [
       "main",

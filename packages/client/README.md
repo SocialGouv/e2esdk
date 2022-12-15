@@ -1,4 +1,4 @@
-# @e2esdk/client
+# @socialgouv/e2esdk-client
 
 End-to-end encryption SDK client
 
@@ -7,5 +7,5 @@ End-to-end encryption SDK client
 Using your favourite package manager, install the following package:
 
 ```
-@e2esdk/client
+@socialgouv/e2esdk-client
 ```

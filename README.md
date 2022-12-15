@@ -1,7 +1,7 @@
 # e2esdk
 
 [![Apache-2.0 License](https://img.shields.io/github/license/SocialGouv/e2esdk.svg?color=blue)](https://github.com/SocialGouv/e2esdk/blob/main/LICENSE)
-[![Continuous Integration](https://github.com/SocialGouv/e2esdk/actions/workflows/integration.yml/badge.svg?branch=main)](https://github.com/SocialGouv/e2esdk/actions/workflows/integration.yml)
+[![Continuous Integration](https://github.com/SocialGouv/e2esdk/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/SocialGouv/e2esdk/actions/workflows/ci-cd.yml)
 
 SDK to build end-to-end encrypted web applications
 
@@ -36,12 +36,12 @@ stack.
 
 ## Client libraries
 
-- [`@e2esdk/client`](./packages/client) - Main client interface
-- [`@e2esdk/crypto`](./packages/crypto) - Cryptographic primitives
-- [`@e2esdk/react`](./packages/react) - React bindings (context provider & hooks)
-- [`@e2esdk/devtools`](./packages/devtools) - Devtools UI in a WebComponent
+- [`@socialgouv/e2esdk-client`](./packages/client) - Main client interface
+- [`@socialgouv/e2esdk-crypto`](./packages/crypto) - Cryptographic primitives
+- [`@socialgouv/e2esdk-react`](./packages/react) - React bindings (context provider & hooks)
+- [`@socialgouv/e2esdk-devtools`](./packages/devtools) - Devtools UI in a WebComponent
 
-> Note: while we do provide React bindings, the `@e2esdk/client` package is
+> Note: while we do provide React bindings, the `@socialgouv/e2esdk-client` package is
 > entirely framework-agnostic, and will work in any modern browser.
 >
 > We do not yet provide a non-browser (Node.js) client implementation.

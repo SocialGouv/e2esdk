@@ -3,7 +3,7 @@ import {
   PostBanRequestBody,
   PublicKeyAuthHeaders,
   publicKeyAuthHeaders,
-} from '@e2esdk/api'
+} from '@socialgouv/e2esdk-api'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import { deleteKeychainItems } from '../database/models/keychain.js'
 import {

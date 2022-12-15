@@ -1,4 +1,4 @@
-# @e2esdk/server
+# @socialgouv/e2esdk-server
 
 ## 0.1.1
 
@@ -15,4 +15,4 @@
 ### Patch Changes
 
 - Updated dependencies [5ca3c94]
-  - @e2esdk/api@0.1.0
+  - @socialgouv/e2esdk-api@0.1.0

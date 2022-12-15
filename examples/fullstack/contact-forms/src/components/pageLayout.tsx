@@ -12,7 +12,10 @@ import {
   Stack,
   Text,
 } from '@chakra-ui/react'
-import { useE2ESDKClient, useE2ESDKClientIdentity } from '@e2esdk/react'
+import {
+  useE2ESDKClient,
+  useE2ESDKClientIdentity,
+} from '@socialgouv/e2esdk-react'
 import { ColorModeSwitch } from 'components/colorModeSwitch'
 import NextLink from 'next/link'
 import { useRouter } from 'next/router'

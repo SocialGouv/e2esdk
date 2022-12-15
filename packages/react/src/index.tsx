@@ -1,4 +1,4 @@
-import type { Client, PublicUserIdentity } from '@e2esdk/client'
+import type { Client, PublicUserIdentity } from '@socialgouv/e2esdk-client'
 import React from 'react'
 
 const E2ESDKClientContext = React.createContext<Client | null>(null)

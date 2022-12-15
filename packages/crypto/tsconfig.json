@@ -1,4 +1,4 @@
 {
-  "extends": "@e2esdk/config-typescript/tsconfig.base.json",
+  "extends": "@socialgouv/e2esdk-config-typescript/tsconfig.base.json",
   "include": ["src/**/*.ts"]
 }

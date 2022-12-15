@@ -15,7 +15,7 @@ import {
   base64UrlDecode,
   encryptFormData,
   initializeEncryptedFormLocalState,
-} from '@e2esdk/crypto'
+} from '@socialgouv/e2esdk-crypto'
 import request, { gql } from 'graphql-request'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'

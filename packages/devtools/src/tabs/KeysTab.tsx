@@ -45,17 +45,17 @@ import {
   Client,
   KeychainItemMetadata,
   PublicUserIdentity,
-} from '@e2esdk/client'
+} from '@socialgouv/e2esdk-client'
 import {
   Cipher,
   generateSealedBoxCipher,
   generateSecretBoxCipher,
-} from '@e2esdk/crypto'
+} from '@socialgouv/e2esdk-crypto'
 import {
   useE2ESDKClient,
   useE2ESDKClientIdentity,
   useE2ESDKClientKeys,
-} from '@e2esdk/react'
+} from '@socialgouv/e2esdk-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import React from 'react'
 import FocusLock from 'react-focus-lock'
