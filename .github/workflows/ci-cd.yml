@@ -94,8 +94,9 @@ jobs:
         run: pnpm build:npm
 
       - name: Publish (NPM)
-        run: npx multi-semantic-release --ignore-packages="config/**,examples/**"
+        run: npx multi-semantic-release --ignore-packages="config/**,examples/**" --debug
         env:
+          DEBUG: '*'
           SCEAU_PRIVATE_KEY: ${{ secrets.SCEAU_PRIVATE_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.SOCIALGROOVYBOT_NPM_TOKEN}}
