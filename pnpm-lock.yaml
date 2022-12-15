@@ -159,9 +159,9 @@ importers:
 
   packages/client:
     specifiers:
-      '@e2esdk/api': 1.0.0-beta.1
+      '@e2esdk/api': workspace:^
       '@e2esdk/config-typescript': workspace:*
-      '@e2esdk/crypto': 1.0.0-beta.1
+      '@e2esdk/crypto': workspace:^
       local-state-sync: 1.0.0-beta.6
       mitt: ^3.0.0
       tsup: ^6.5.0
@@ -180,7 +180,7 @@ importers:
 
   packages/crypto:
     specifiers:
-      '@e2esdk/api': 1.0.0-beta.1
+      '@e2esdk/api': workspace:^
       '@e2esdk/config-jest': workspace:*
       '@e2esdk/config-typescript': workspace:*
       '@stablelib/hex': ^1.0.1
@@ -209,10 +209,10 @@ importers:
     specifiers:
       '@babel/core': ^7.20.5
       '@chakra-ui/react': ^2.4.2
-      '@e2esdk/client': 1.0.0-beta.1
-      '@e2esdk/crypto': 1.0.0-beta.1
-      '@e2esdk/react': 1.0.0-beta.1
-      '@e2esdk/server': 1.0.0-beta.1
+      '@e2esdk/client': workspace:^
+      '@e2esdk/crypto': workspace:^
+      '@e2esdk/react': workspace:^
+      '@e2esdk/server': workspace:^
       '@emotion/cache': ^11.10.5
       '@emotion/react': ^11.10.5
       '@emotion/styled': ^11.10.5
@@ -269,7 +269,7 @@ importers:
   packages/keygen:
     specifiers:
       '@e2esdk/config-typescript': workspace:*
-      '@e2esdk/crypto': 1.0.0-beta.1
+      '@e2esdk/crypto': workspace:^
       tsup: ^6.5.0
       typescript: ^4.9.3
       zod: ^3.19.1
@@ -285,7 +285,7 @@ importers:
 
   packages/react:
     specifiers:
-      '@e2esdk/client': 1.0.0-beta.1
+      '@e2esdk/client': workspace:^
       '@e2esdk/config-typescript': workspace:*
       '@types/node': ^18.11.10
       '@types/react': ^18.0.25
@@ -303,9 +303,9 @@ importers:
 
   packages/server:
     specifiers:
-      '@e2esdk/api': 1.0.0-beta.1
+      '@e2esdk/api': workspace:^
       '@e2esdk/config-typescript': workspace:*
-      '@e2esdk/crypto': 1.0.0-beta.1
+      '@e2esdk/crypto': workspace:^
       '@fastify/cors': ^8.2.0
       '@fastify/sensible': ^5.1.1
       '@fastify/swagger': ^8.2.0
