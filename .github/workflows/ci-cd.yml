@@ -59,18 +59,14 @@ jobs:
 
   # ----------------------------------------------------------------------------
 
-  cd:
-    name: Release
+  cd-npm:
+    name: Release (NPM)
     runs-on: ubuntu-latest
     needs: [ci]
     # todo: Enable main release channel once v1 is ready
     # if: ${{ github.ref_name == 'main' || github.ref_name == 'beta' }}
     if: ${{ github.ref_name == 'beta' }}
     steps:
-      - name: Generate timestamp
-        id: timestamp
-        run: echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
-
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2
         with:
@@ -108,8 +104,6 @@ jobs:
           GIT_COMMITTER_NAME: ${{ secrets.SOCIALGROOVYBOT_NAME }}
           GIT_COMMITTER_EMAIL: ${{ secrets.SOCIALGROOVYBOT_EMAIL }}
 
-      # Docker release --
-
       # When the server package needs to be published,
       # the internal @socialgouv/e2esdk-semantic-release plugin
       # will store the new version number into the
@@ -125,8 +119,40 @@ jobs:
             echo "version=$(cat server-needs-publishing)" >> $GITHUB_OUTPUT;
           fi
 
-      - name: Sign server
-        if: ${{ steps.server-needs-publishing.outputs.version }}
+    outputs:
+      server-version: ${{ steps.server-needs-publishing.outputs.version }}
+
+  # ----------------------------------------------------------------------------
+
+  cd-docker:
+    name: Release (Docker)
+    runs-on: ubuntu-latest
+    needs: [cd-npm]
+    if: ${{ needs.cd-npm.outputs.server-version }}
+    steps:
+      - name: Generate timestamp
+        id: timestamp
+        run: echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      # Note: we do not use an external Turbo cache for publishing
+      # to prevent against possible cache collision attacks.
+
+      - name: Install dependencies
+        run: pnpm install
+
+      # todo: Inject server version to package.json (before signing)
+      - name: Build & sign server
         run: |
           pnpm build:server
           pnpm --filter @socialgouv/e2esdk-server sign
@@ -135,7 +161,6 @@ jobs:
 
       - name: Docker registry authentication
         uses: docker/login-action@v2
-        if: ${{ steps.server-needs-publishing.outputs.version }}
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -144,7 +169,6 @@ jobs:
       # todo: Use docker/metadata-action to organise tags & labels
       - name: Build & Publish (Docker)
         uses: docker/build-push-action@v3
-        if: ${{ steps.server-needs-publishing.outputs.version }}
         with:
           context: .
           file: packages/server/Dockerfile
@@ -154,7 +178,7 @@ jobs:
           labels: |
             org.opencontainers.image.title=@socialgouv/e2esdk-server
             org.opencontainers.image.description=End-to-end encryption server
-            org.opencontainers.image.version=${{ steps.server-needs-publishing.outputs.version }}
+            org.opencontainers.image.version=${{ needs.cd-npm.outputs.server-version }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}
             org.opencontainers.image.licenses=Apache-2.0
@@ -162,12 +186,11 @@ jobs:
             org.opencontainers.image.documentation=https://github.com/SocialGouv/e2esdk/blob/main/packages/server/README.md
           tags: |
             ghcr.io/socialgouv/e2esdk/server:${{ github.ref_name == 'main' && 'latest' || 'beta' }}
-            ghcr.io/socialgouv/e2esdk/server:${{ steps.server-needs-publishing.outputs.version }}
+            ghcr.io/socialgouv/e2esdk/server:${{ needs.cd-npm.outputs.server-version }}
             ghcr.io/socialgouv/e2esdk/server:git-${{ github.ref_name }}-${{ github.sha }}
           push: true
 
       - name: Display Docker image labels
-        if: ${{ steps.server-needs-publishing.outputs.version }}
         run: |
           docker inspect ghcr.io/socialgouv/e2esdk/server:git-${{ github.ref_name }}-${{ github.sha }} --format='{{json .Config.Labels}}' \
           | sed \
