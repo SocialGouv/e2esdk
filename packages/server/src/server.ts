@@ -31,7 +31,6 @@ type HealthCheckReply = z.infer<typeof healthCheckReply>
 
 export function createServer() {
   const __PROD__ = env.NODE_ENV === 'production'
-
   const app = createFastifyServer({
     name: ['e2esdk', env.RELEASE_TAG].join(':'),
     redactEnv: __PROD__ ? ['POSTGRESQL_URL', 'SIGNATURE_PRIVATE_KEY'] : [],
