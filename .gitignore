@@ -8,3 +8,4 @@ build/
 *.env
 .vscode
 .changeset/.autocommit
+server-was-published

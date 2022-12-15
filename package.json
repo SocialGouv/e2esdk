@@ -25,7 +25,7 @@
     "verdaccio": "verdaccio --config config/verdaccio/config.yml"
   },
   "devDependencies": {
-    "@semantic-release/exec": "^6.0.3",
+    "@e2esdk/semantic-release": "workspace:*",
     "@types/jest": "^29.2.3",
     "multi-semantic-release": "^3.0.1",
     "prettier": "^2.8.0",
@@ -43,7 +43,8 @@
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
-      "@semantic-release/npm"
+      "@semantic-release/npm",
+      "@e2esdk/semantic-release"
     ],
     "branches": [
       "main",

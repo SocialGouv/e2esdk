@@ -1,0 +1,46 @@
+{
+  "name": "@e2esdk/semantic-release",
+  "version": "0.0.0-internal",
+  "license": "Apache-2.0",
+  "private": true,
+  "description": "Release automation plugin for semantic-release",
+  "author": {
+    "name": "François Best",
+    "email": "npm.e2esdk@francoisbest.com",
+    "url": "https://francoisbest.com"
+  },
+  "files": [
+    "dist/"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js"
+    }
+  },
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "treeshake": true
+  },
+  "scripts": {
+    "dev": "tsup --format esm --dts --watch",
+    "build:npm": "tsup --clean --format esm,cjs --dts",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "zod": "^3.19.1"
+  },
+  "devDependencies": {
+    "@e2esdk/config-typescript": "workspace:*",
+    "@types/node": "^18.11.10",
+    "tsup": "^6.5.0",
+    "typescript": "^4.9.3"
+  }
+}
