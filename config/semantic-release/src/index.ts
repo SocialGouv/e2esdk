@@ -9,7 +9,29 @@ const serverContextSchema = z.object({
   }),
 })
 
-export async function publish(_pluginConfig: any, context: any) {
+export async function prepare(_: any, context: any) {
+  const ctx = serverContextSchema.safeParse(context)
+  if (!ctx.success) {
+    return
+  }
+  // Inject the version number into package.json
+  // This would otherwise be done by the @semantic-release/npm plugin,
+  // but the server is a private package so it won't be touched.
+  const serverPackageJsonFile = path.resolve(ctx.data.cwd, 'package.json')
+  const serverPackageJson = JSON.parse(
+    await fs.readFile(serverPackageJsonFile, { encoding: 'utf8' })
+  )
+  context.logger.log(
+    `Server package.json version: ${serverPackageJson.version} -> ${ctx.data.nextRelease.version}`
+  )
+  serverPackageJson.version = ctx.data.nextRelease.version
+  await fs.writeFile(
+    serverPackageJsonFile,
+    JSON.stringify(serverPackageJson, null, 2)
+  )
+}
+
+export async function publish(_: any, context: any) {
   const ctx = serverContextSchema.safeParse(context)
   if (!ctx.success) {
     return
