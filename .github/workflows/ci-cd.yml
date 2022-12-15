@@ -121,6 +121,14 @@ jobs:
             echo "version=$(cat server-needs-publishing)" >> $GITHUB_OUTPUT;
           fi
 
+      - name: Sign server
+        if: ${{ steps.server-needs-publishing.outputs.version }}
+        run: |
+          pnpm build:server
+          pnpm --filter @socialgouv/e2esdk-server sign
+        env:
+          SCEAU_PRIVATE_KEY: ${{ secrets.SCEAU_PRIVATE_KEY }}
+
       - name: Docker registry authentication
         uses: docker/login-action@v2
         if: ${{ steps.server-needs-publishing.outputs.version }}

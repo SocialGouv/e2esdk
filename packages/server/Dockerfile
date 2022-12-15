@@ -66,6 +66,8 @@ USER e2esdk
 
 COPY --from=builder --chown=e2esdk:nodejs /app/ .
 
+RUN packages/server/node_modules/.bin/sceau verify --strict --packageDir packages/server
+
 LABEL org.opencontainers.image.url="$BUILD_URL"
 
 EXPOSE 3000
