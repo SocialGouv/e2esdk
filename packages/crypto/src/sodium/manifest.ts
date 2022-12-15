@@ -10,20 +10,16 @@ import { numberToUint32LE } from '../shared/codec'
  *
  * ### Encoding
  *
- * The first byte is the number of elements _(therefore a manifest can only
- * represent up to 255 elements)_.
+ * The first four bytes is the number of elements (little-endian 32 bit unsigned).
  *
  * Each subsequent block of 4 bytes is the little-endian 32 bit unsigned
- * representation of the length of an element.
+ * representation of the length of the associated element.
  */
 export function generateManifest(items: Uint8Array[]) {
-  if (items.length > 255) {
-    throw new RangeError('Cannot sign more than 255 elements')
-  }
-  const manifest = new Uint8Array(1 + items.length * 4)
-  manifest[0] = items.length
+  const manifest = new Uint8Array(4 + items.length * 4)
+  manifest.set(numberToUint32LE(items.length))
   items.forEach((item, index) => {
-    manifest.set(numberToUint32LE(item.byteLength), 1 + index * 4)
+    manifest.set(numberToUint32LE(item.byteLength), 4 + index * 4)
   })
   return manifest
 }

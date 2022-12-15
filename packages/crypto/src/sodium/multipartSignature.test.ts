@@ -19,7 +19,7 @@ describe('multipartSignature', () => {
     const b = sodium.from_hex('80cc62c261b30c32')
     const c = sodium.from_hex('bfe93254c419de3c')
     const signature = sodium.from_hex(
-      '601a4c9face0e4c8d9176a2b41fab25bca2479fc8d893dbe6d41e39b83155b47149d287a9979addcbd9f657edf7cf3f2caba68329da6bdf2838d3ac02462640a'
+      'cad6ed2b3804aed8e8bd56126ce215d8e4b5f12e6fde6e641a1b03d4687edec77f25c9bdc166c26a08e37a3171ac3b7ccddaa162938a2656447d655249a1ff03'
     )
     const verified = verifyMultipartSignature(
       sodium,
