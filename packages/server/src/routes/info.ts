@@ -4,7 +4,6 @@ import {
   Sodium,
 } from '@socialgouv/e2esdk-crypto'
 import fs from 'node:fs/promises'
-import { createRequire } from 'node:module'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
@@ -38,11 +37,26 @@ const querystring = z.object({
 
 type ManifestEntry = z.infer<typeof manifestEntry>
 
+async function readVersionFile() {
+  const buildDir = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '../'
+  )
+  const versionFile = path.resolve(buildDir, 'VERSION')
+  try {
+    const version = await fs.readFile(versionFile, { encoding: 'utf8' })
+    return version.trim()
+  } catch {
+    return Promise.resolve('local')
+  }
+}
+
 export default async function infoRoutes(app: App) {
-  const require = createRequire(import.meta.url)
-  const __dirname = path.dirname(fileURLToPath(import.meta.url))
-  const buildDir = path.resolve(__dirname, '../')
-  const pkg = require(path.resolve(__dirname, '../../package.json'))
+  const buildDir = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '../'
+  )
+  const version = await readVersionFile()
   const signaturePrivateKey = app.sodium.from_base64(env.SIGNATURE_PRIVATE_KEY)
   const manifest = await generateManifest(
     app.sodium,
@@ -59,7 +73,7 @@ export default async function infoRoutes(app: App) {
   app.sodium.memzero(signaturePrivateKey)
 
   const serverInfo: InfoResponseBody = {
-    version: pkg.version,
+    version,
     release: env.RELEASE_TAG,
     buildURL: env.BUILD_URL,
     deploymentURL: env.DEPLOYMENT_URL,
