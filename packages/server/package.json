@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "@socialgouv/e2esdk-config-typescript": "workspace:*",
+    "@socialgouv/e2esdk-semantic-release": "workspace:*",
     "@fastify/sensible": "^5.1.1",
     "@swc/cli": "^0.1.57",
     "@swc/core": "^1.3.21",

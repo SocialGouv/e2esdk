@@ -321,6 +321,7 @@ importers:
       '@socialgouv/e2esdk-api': workspace:^
       '@socialgouv/e2esdk-config-typescript': workspace:*
       '@socialgouv/e2esdk-crypto': workspace:^
+      '@socialgouv/e2esdk-semantic-release': workspace:*
       '@swc/cli': ^0.1.57
       '@swc/core': ^1.3.21
       '@swc/helpers': ^0.4.14
@@ -361,6 +362,7 @@ importers:
     devDependencies:
       '@fastify/sensible': 5.2.0
       '@socialgouv/e2esdk-config-typescript': link:../../config/tsconfig
+      '@socialgouv/e2esdk-semantic-release': link:../../config/semantic-release
       '@swc/cli': 0.1.57_7ld4cg63ifnwowm56nfoz3oceu
       '@swc/core': 1.3.22
       '@swc/helpers': 0.4.14
