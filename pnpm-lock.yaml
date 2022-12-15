@@ -219,7 +219,6 @@ importers:
       '@socialgouv/e2esdk-client': workspace:^
       '@socialgouv/e2esdk-crypto': workspace:^
       '@socialgouv/e2esdk-react': workspace:^
-      '@socialgouv/e2esdk-server': workspace:^
       '@tanstack/react-query': ^4.18.0
       '@tanstack/react-query-devtools': ^4.18.0
       '@types/node': ^18.11.10
@@ -245,6 +244,7 @@ importers:
       '@emotion/cache': 11.10.5
       '@emotion/react': 11.10.5_xl5my4wapvq2ctl7qwehtbgorq
       '@emotion/styled': 11.10.5_3djhvnr4jirfvebjqpipo7gthy
+      '@socialgouv/e2esdk-crypto': link:../crypto
       '@socialgouv/e2esdk-react': link:../react
       '@tanstack/react-query': 4.19.1_biqbaboplfbrettd7655fr4n2y
       '@tanstack/react-query-devtools': 4.19.1_xnkyuugmv5unvdsxvtkktqsuae
@@ -256,8 +256,6 @@ importers:
     devDependencies:
       '@babel/core': 7.20.5
       '@socialgouv/e2esdk-client': link:../client
-      '@socialgouv/e2esdk-crypto': link:../crypto
-      '@socialgouv/e2esdk-server': link:../server
       '@types/node': 18.11.12
       '@types/react': 18.0.26
       '@types/react-dom': 18.0.9

@@ -8,12 +8,8 @@ import type { TemplateType } from 'rollup-plugin-visualizer/dist/plugin/template
 import { defineConfig, PluginOption } from 'vite'
 
 // Read the server .env to extract DEPLOYMENT_URL and SIGNATURE_PUBLIC_KEY
-// (thanks PNPM for the symlink!)
 
-const serverDotEnvFile = path.resolve(
-  __dirname,
-  './node_modules/@socialgouv/e2esdk-server/.env'
-)
+const serverDotEnvFile = path.resolve(__dirname, '../server/.env')
 
 const serverEnv = dotenv.parse(
   fs.existsSync(serverDotEnvFile)
