@@ -95,7 +95,6 @@ jobs:
             --ignore-packages="config/**,examples/**"   \
             --deps.bump=satisfy
         env:
-          DEBUG: '*'
           SCEAU_PRIVATE_KEY: ${{ secrets.SCEAU_PRIVATE_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.SOCIALGROOVYBOT_NPM_TOKEN}}
@@ -162,22 +161,22 @@ jobs:
       - name: Collect Docker labels & tags
         id: docker-labels-tags
         run: |
-            echo 'labels<<__LABELS_EOF__' >> $GITHUB_OUTPUT
-            echo "org.opencontainers.image.title=@socialgouv/e2esdk-server" >> $GITHUB_OUTPUT
-            echo "org.opencontainers.image.description=End-to-end encryption server" >> $GITHUB_OUTPUT
-            echo "org.opencontainers.image.version=${{ needs.cd-npm.outputs.server-version }}" >> $GITHUB_OUTPUT
-            echo "org.opencontainers.image.revision=${{ github.sha }}" >> $GITHUB_OUTPUT
-            echo "org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}" >> $GITHUB_OUTPUT
-            echo "org.opencontainers.image.licenses=Apache-2.0" >> $GITHUB_OUTPUT
-            echo "org.opencontainers.image.source=https//github.com/${{github.repository}}/tree/${{ github.sha }}" >> $GITHUB_OUTPUT
-            echo "org.opencontainers.image.documentation=https://github.com/${{github.repository}}/blob/main/packages/server/README.md" >> $GITHUB_OUTPUT
-            echo "org.opencontainers.image.url=https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}" >> $GITHUB_OUTPUT
-            echo '__LABELS_EOF__' >> $GITHUB_OUTPUT
-            echo 'tags<<__TAGS_EOF__' >> $GITHUB_OUTPUT
-            echo "ghcr.io/socialgouv/e2esdk/server:${{ github.ref_name == 'main' && 'latest' || 'edge' }}" >> $GITHUB_OUTPUT
-            echo "ghcr.io/socialgouv/e2esdk/server:${{ needs.cd-npm.outputs.server-version }}" >> $GITHUB_OUTPUT
-            echo "ghcr.io/socialgouv/e2esdk/server:git-${{ github.ref_name }}-${{ github.sha }}" >> $GITHUB_OUTPUT
-            echo '__TAGS_EOF__' >> $GITHUB_OUTPUT
+          echo 'labels<<__LABELS_EOF__' >> $GITHUB_OUTPUT
+          echo "org.opencontainers.image.title=@socialgouv/e2esdk-server" >> $GITHUB_OUTPUT
+          echo "org.opencontainers.image.description=End-to-end encryption server" >> $GITHUB_OUTPUT
+          echo "org.opencontainers.image.version=${{ needs.cd-npm.outputs.server-version }}" >> $GITHUB_OUTPUT
+          echo "org.opencontainers.image.revision=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}" >> $GITHUB_OUTPUT
+          echo "org.opencontainers.image.licenses=Apache-2.0" >> $GITHUB_OUTPUT
+          echo "org.opencontainers.image.source=https//github.com/${{github.repository}}/tree/${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "org.opencontainers.image.documentation=https://github.com/${{github.repository}}/blob/main/packages/server/README.md" >> $GITHUB_OUTPUT
+          echo "org.opencontainers.image.url=https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}" >> $GITHUB_OUTPUT
+          echo '__LABELS_EOF__' >> $GITHUB_OUTPUT
+          echo 'tags<<__TAGS_EOF__' >> $GITHUB_OUTPUT
+          echo "ghcr.io/socialgouv/e2esdk/server:${{ github.ref_name == 'main' && 'latest' || 'beta' }}" >> $GITHUB_OUTPUT
+          echo "ghcr.io/socialgouv/e2esdk/server:${{ needs.cd-npm.outputs.server-version }}" >> $GITHUB_OUTPUT
+          echo "ghcr.io/socialgouv/e2esdk/server:git-${{ github.ref_name }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo '__TAGS_EOF__' >> $GITHUB_OUTPUT
 
       - name: Docker registry authentication
         uses: docker/login-action@v2
