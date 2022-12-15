@@ -1,9 +1,6 @@
 name: CI
 on:
   push:
-    # todo: remove this once CD has stabilised
-    branches-ignore:
-      - beta
 
 env:
   HUSKY: 0

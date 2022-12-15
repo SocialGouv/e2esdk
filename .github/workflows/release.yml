@@ -1,16 +1,16 @@
 name: Release
 on:
-  push:
-    branches:
-      - beta
-  # workflow_run:
-  #   workflows:
-  #     - CI
+  # push:
   #   branches:
-  #     # - main
   #     - beta
-  #   types:
-  #     - completed
+  workflow_run:
+    workflows:
+      - CI
+    branches:
+      # - main
+      - beta
+    types:
+      - completed
 
 env:
   HUSKY: 0
