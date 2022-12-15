@@ -143,14 +143,15 @@ jobs:
             org.opencontainers.image.source=https//github.com/SocialGouv/e2esdk/tree/${{ github.sha }}
             org.opencontainers.image.documentation=https://github.com/SocialGouv/e2esdk/blob/main/packages/server/README.md
           tags: |
+            ghcr.io/socialgouv/e2esdk/server:${{ github.ref_name == 'main' && 'latest' || 'beta' }}
             ghcr.io/socialgouv/e2esdk/server:${{ steps.server-needs-publishing.outputs.version }}
-            ghcr.io/socialgouv/e2esdk/server:sha-${{ github.ref_name }}-${{ github.sha }}
+            ghcr.io/socialgouv/e2esdk/server:git-${{ github.ref_name }}-${{ github.sha }}
           push: true
 
       - name: Display Docker image labels
         if: ${{ steps.server-needs-publishing.outputs.version }}
         run: |
-          docker inspect ghcr.io/socialgouv/e2esdk/server:sha-${{ github.ref_name }}-${{ github.sha }} --format='{{json .Config.Labels}}' \
+          docker inspect ghcr.io/socialgouv/e2esdk/server:git-${{ github.ref_name }}-${{ github.sha }} --format='{{json .Config.Labels}}' \
           | sed \
             -e 's/^{"//' -e 's/"}$//' \
             -e 's/\",\"/\n/g'         \
