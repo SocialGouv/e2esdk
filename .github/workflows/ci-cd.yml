@@ -147,6 +147,7 @@ jobs:
           file: packages/server/Dockerfile
           build-args: |
             BUILD_URL=https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
+            SCEAU_VERIFICATION_MODE=--strict
           labels: |
             org.opencontainers.image.title=@socialgouv/e2esdk-server
             org.opencontainers.image.description=End-to-end encryption server
