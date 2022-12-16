@@ -103,6 +103,23 @@ jobs:
           GIT_COMMITTER_NAME: ${{ secrets.SOCIALGROOVYBOT_NAME }}
           GIT_COMMITTER_EMAIL: ${{ secrets.SOCIALGROOVYBOT_EMAIL }}
 
+      - name: Generate step summary
+        run: |
+          if test -f GITHUB_STEP_SUMMARY_PACKAGES;
+          then
+            echo "## 📦 &nbsp;Published NPM packages" >> $GITHUB_STEP_SUMMARY;
+            cat GITHUB_STEP_SUMMARY_PACKAGES >> $GITHUB_STEP_SUMMARY;
+          fi
+          if test -f GITHUB_STEP_SUMMARY_SERVER;
+          then
+            echo "## Server" >> $GITHUB_STEP_SUMMARY;
+            cat GITHUB_STEP_SUMMARY_SERVER >> $GITHUB_STEP_SUMMARY;
+          fi
+          if ! test -f GITHUB_STEP_SUMMARY_SERVER && ! test -f GITHUB_STEP_SUMMARY_PACKAGES;
+          then
+            echo "No packages were published." >> $GITHUB_STEP_SUMMARY;
+          fi
+
       # When the server package needs to be published,
       # the internal @socialgouv/e2esdk-semantic-release plugin
       # will store the new version number into the
