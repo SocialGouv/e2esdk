@@ -58,10 +58,10 @@ importers:
       '@chakra-ui/react': ^2.4.3
       '@emotion/react': ^11.10.5
       '@emotion/styled': ^11.10.5
-      '@socialgouv/e2esdk-client': workspace:*
-      '@socialgouv/e2esdk-crypto': workspace:*
-      '@socialgouv/e2esdk-devtools': workspace:*
-      '@socialgouv/e2esdk-react': workspace:*
+      '@socialgouv/e2esdk-client': ^1.0.0-beta.3
+      '@socialgouv/e2esdk-crypto': ^1.0.0-beta.3
+      '@socialgouv/e2esdk-devtools': ^1.0.0-beta.8
+      '@socialgouv/e2esdk-react': ^1.0.0-beta.3
       '@tanstack/react-query': ^4.20.4
       '@tanstack/react-query-devtools': ^4.20.4
       '@types/node': 18.11.10
@@ -83,10 +83,10 @@ importers:
       '@chakra-ui/react': 2.4.3_mjtuncu5tysnx7zotef4snfxsa
       '@emotion/react': 11.10.5_xl5my4wapvq2ctl7qwehtbgorq
       '@emotion/styled': 11.10.5_3djhvnr4jirfvebjqpipo7gthy
-      '@socialgouv/e2esdk-client': link:../../../packages/client
-      '@socialgouv/e2esdk-crypto': link:../../../packages/crypto
-      '@socialgouv/e2esdk-devtools': link:../../../packages/devtools
-      '@socialgouv/e2esdk-react': link:../../../packages/react
+      '@socialgouv/e2esdk-client': 1.0.0-beta.3
+      '@socialgouv/e2esdk-crypto': 1.0.0-beta.3
+      '@socialgouv/e2esdk-devtools': 1.0.0-beta.8_dvplnyyvm4jaiu7odt5wndi3vm
+      '@socialgouv/e2esdk-react': 1.0.0-beta.3_qglwml33jsmov3cwzvjvpja3hu
       '@tanstack/react-query': 4.20.4_biqbaboplfbrettd7655fr4n2y
       '@tanstack/react-query-devtools': 4.20.4_fu3ixcwltlssi3ozitelgaebme
       framer-motion: 7.10.0_biqbaboplfbrettd7655fr4n2y
@@ -3261,6 +3261,68 @@ packages:
     dependencies:
       '@sinonjs/commons': 1.8.6
     dev: true
+
+  /@socialgouv/e2esdk-api/1.0.0-beta.3:
+    resolution: {integrity: sha512-0bQtaXNFGza+NDrozS8DloS5n/UngMGrW74FYTtN+CuW3auV/cbp0d+42dE1CNorcVgqN5AuEGEOMSwzJvlgRw==}
+    dependencies:
+      zod: 3.20.2
+    dev: false
+
+  /@socialgouv/e2esdk-client/1.0.0-beta.3:
+    resolution: {integrity: sha512-kVKTIAF3/omtTJOH2zoHhOKuEsmxumzzLMRrSxlvGrEqNQ9JfWWP+VabXpe18yZJtQeMF3VXZL4SzH8lNvGwbA==}
+    dependencies:
+      '@socialgouv/e2esdk-api': 1.0.0-beta.3
+      '@socialgouv/e2esdk-crypto': 1.0.0-beta.3
+      local-state-sync: 1.0.0-beta.6
+      mitt: 3.0.0
+      zod: 3.20.2
+    dev: false
+
+  /@socialgouv/e2esdk-crypto/1.0.0-beta.3:
+    resolution: {integrity: sha512-hYlY2/uYHkbfU2vWQ/l5lxY44ZH2TSX7aEkvrl0Khe7iJZmBTUKwdfj/u6m4scEnLu3WY4roNjP5RANN0T1dPg==}
+    dependencies:
+      '@socialgouv/e2esdk-api': 1.0.0-beta.3
+      '@stablelib/hex': 1.0.1
+      libsodium-wrappers: 0.7.10
+      zod: 3.20.2
+    dev: false
+
+  /@socialgouv/e2esdk-devtools/1.0.0-beta.8_dvplnyyvm4jaiu7odt5wndi3vm:
+    resolution: {integrity: sha512-dkNTNk0o84eJTLoz1WEOTePKW4uX0bqDF4oTTBHepDQgbTfAKmonbfcyZrxJKhPUh29+4fUS4infanQeWkgdsg==}
+    peerDependencies:
+      '@socialgouv/e2esdk-client': ^1.0.0-beta.3
+    dependencies:
+      '@chakra-ui/react': 2.4.3_mjtuncu5tysnx7zotef4snfxsa
+      '@emotion/cache': 11.10.5
+      '@emotion/react': 11.10.5_xl5my4wapvq2ctl7qwehtbgorq
+      '@emotion/styled': 11.10.5_3djhvnr4jirfvebjqpipo7gthy
+      '@socialgouv/e2esdk-client': 1.0.0-beta.3
+      '@socialgouv/e2esdk-crypto': 1.0.0-beta.3
+      '@socialgouv/e2esdk-react': 1.0.0-beta.3_qglwml33jsmov3cwzvjvpja3hu
+      '@tanstack/react-query': 4.20.4_biqbaboplfbrettd7655fr4n2y
+      '@tanstack/react-query-devtools': 4.20.4_fu3ixcwltlssi3ozitelgaebme
+      framer-motion: 7.10.0_biqbaboplfbrettd7655fr4n2y
+      react-focus-lock: 2.9.2_kzbn2opkn2327fwg5yzwzya5o4
+      react-hook-form: 7.40.0_react@18.2.0
+      react-icons: 4.7.1_react@18.2.0
+      zod: 3.20.2
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@types/react'
+      - react
+      - react-dom
+      - react-native
+    dev: false
+
+  /@socialgouv/e2esdk-react/1.0.0-beta.3_qglwml33jsmov3cwzvjvpja3hu:
+    resolution: {integrity: sha512-bhoytz1wasQn+5rd1S+/aFml6Z9S21UYCLABTRO6h9SGLWlQ9FSJqtX37zw/dweyzhP10RHJ3wP4ch/YH7e8xQ==}
+    peerDependencies:
+      '@socialgouv/e2esdk-client': ^1.0.0-beta.3
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@socialgouv/e2esdk-client': 1.0.0-beta.3
+      react: 18.2.0
+    dev: false
 
   /@stablelib/hex/1.0.1:
     resolution: {integrity: sha512-PQOEChVBjhYGgAD+ehO2ow1gSj1slre3jW4oMD4kV8VrhYhzmtsQDWDZej3BQO8qkVezdczDvISxVSF24PuYNA==}
