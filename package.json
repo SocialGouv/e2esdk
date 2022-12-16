@@ -25,9 +25,9 @@
   },
   "devDependencies": {
     "@socialgouv/e2esdk-semantic-release": "workspace:*",
-    "@types/jest": "^29.2.3",
+    "@types/jest": "^29.2.4",
     "multi-semantic-release": "^3.0.1",
-    "prettier": "^2.8.0",
+    "prettier": "^2.8.1",
     "turbo": "^1.6.3"
   },
   "prettier": {
@@ -39,7 +39,31 @@
   },
   "release": {
     "plugins": [
-      "@semantic-release/commit-analyzer",
+      [
+        "@semantic-release/commit-analyzer",
+        {
+          "releaseRules": [
+            {
+              "type": "refactor",
+              "release": "patch"
+            },
+            {
+              "type": "perf",
+              "release": "patch"
+            },
+            {
+              "type": "chore",
+              "scope": "deps",
+              "release": "patch"
+            },
+            {
+              "type": "docs",
+              "scope": "README",
+              "release": "patch"
+            }
+          ]
+        }
+      ],
       "@semantic-release/release-notes-generator",
       "@semantic-release/npm",
       "@socialgouv/e2esdk-semantic-release"
