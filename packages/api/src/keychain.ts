@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import {
   fingerprintSchema,
+  PayloadType,
   secretBoxCiphertextV1Schema,
   signatureSchema,
   timestampSchema,
@@ -11,8 +12,8 @@ const keychainItemSchema = z.object({
   createdAt: timestampSchema,
   expiresAt: timestampSchema.nullable(),
   subkeyIndex: z.number().int(),
-  name: secretBoxCiphertextV1Schema('txt'),
-  payload: secretBoxCiphertextV1Schema('txt'),
+  name: secretBoxCiphertextV1Schema(PayloadType.string),
+  payload: secretBoxCiphertextV1Schema(PayloadType.string),
   nameFingerprint: fingerprintSchema,
   payloadFingerprint: fingerprintSchema,
   ownerId: identitySchema.shape.userId,

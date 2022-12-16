@@ -1,3 +1,4 @@
+import { PayloadType } from '@socialgouv/e2esdk-api'
 import type { Uint8ArrayOutputFormat } from 'libsodium-wrappers'
 import {
   boolToByte,
@@ -10,14 +11,6 @@ import type { Cipher } from './ciphers'
 import type { Sodium } from './sodium'
 
 // --
-
-export enum PayloadType {
-  bin = 'bin', // Uint8Array
-  txt = 'txt', // string
-  num = 'num', // number
-  bool = 'bool', // boolean
-  json = 'json', // other
-}
 
 export const encodedCiphertextFormatV1 = 'application/e2esdk.ciphertext.v1'
 export type EncodedCiphertextFormat = typeof encodedCiphertextFormatV1
@@ -69,22 +62,22 @@ export function encrypt<DataType extends Uint8Array | EncryptableJSONDataType>(
 ) {
   const { payloadType, payload } = isUint8Array(input)
     ? {
-        payloadType: PayloadType.bin,
+        payloadType: PayloadType.buffer,
         payload: input,
       }
     : typeof input === 'string'
     ? {
-        payloadType: PayloadType.txt,
+        payloadType: PayloadType.string,
         payload: sodium.from_string(input),
       }
     : typeof input === 'number'
     ? {
-        payloadType: PayloadType.num,
+        payloadType: PayloadType.number,
         payload: numberToIEEE754Bytes(input),
       }
     : typeof input === 'boolean'
     ? {
-        payloadType: PayloadType.bool,
+        payloadType: PayloadType.boolean,
         payload: boolToByte(input),
       }
     : {
@@ -245,16 +238,16 @@ function decodePayload(
     return plaintext
   }
   const payloadType = payload[2]
-  if (payloadType === PayloadType.bin) {
+  if (payloadType === PayloadType.buffer) {
     return plaintext
   }
-  if (payloadType === PayloadType.txt) {
+  if (payloadType === PayloadType.string) {
     return sodium.to_string(plaintext)
   }
-  if (payloadType === PayloadType.num) {
+  if (payloadType === PayloadType.number) {
     return ieee754BytesToNumber(plaintext)
   }
-  if (payloadType === PayloadType.bool) {
+  if (payloadType === PayloadType.boolean) {
     return byteToBool(plaintext)
   }
   if (payloadType === PayloadType.json) {

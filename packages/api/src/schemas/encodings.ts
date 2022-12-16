@@ -16,24 +16,33 @@ export const timestampSchema = z
 
 // Ciphertexts --
 
-type PayloadType = 'bin' | 'txt' | 'num' | 'bool' | 'json'
+export const PayloadType = {
+  buffer: 'bin', // Uint8Array
+  string: 'txt', // string
+  number: 'num', // number
+  boolean: 'bool', // boolean
+  json: 'json', // other
+} as const
 
-export const boxCiphertextV1Schema = (payloadType: PayloadType) =>
+export type PayloadType = typeof PayloadType
+export type PayloadTag = PayloadType[keyof PayloadType]
+
+export const boxCiphertextV1Schema = (payloadTag: PayloadTag) =>
   z
     .string()
-    .regex(new RegExp(`^v1\\.box\\.${payloadType}\\.[\\w-]{32}\\.[\\w-]{22,}$`))
+    .regex(new RegExp(`^v1\\.box\\.${payloadTag}\\.[\\w-]{32}\\.[\\w-]{22,}$`))
     .describe('Sodium box ciphertext (v1)')
 
-export const secretBoxCiphertextV1Schema = (payloadType: PayloadType) =>
+export const secretBoxCiphertextV1Schema = (payloadTag: PayloadTag) =>
   z
     .string()
     .regex(
-      new RegExp(`^v1\\.secretBox\\.${payloadType}\\.[\\w-]{32}\\.[\\w-]{22,}$`)
+      new RegExp(`^v1\\.secretBox\\.${payloadTag}\\.[\\w-]{32}\\.[\\w-]{22,}$`)
     )
     .describe('Sodium secret box ciphertext (v1)')
 
-export const sealedBoxCiphertextV1Schema = (payloadType: PayloadType) =>
+export const sealedBoxCiphertextV1Schema = (payloadTag: PayloadTag) =>
   z
     .string()
-    .regex(new RegExp(`^v1\\.sealedBox\\.${payloadType}\\.[\\w-]{64,}$`))
+    .regex(new RegExp(`^v1\\.sealedBox\\.${payloadTag}\\.[\\w-]{64,}$`))
     .describe('Sodium sealed box ciphertext (v1)')
