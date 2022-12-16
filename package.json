@@ -20,8 +20,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "keygen": "pnpm --filter keygen run keygen",
-    "db": "pnpm --filter server run db"
+    "keygen": "pnpm --filter @socialgouv/e2esdk-keygen run keygen",
+    "db": "pnpm --filter @socialgouv/e2esdk-server run db"
   },
   "devDependencies": {
     "@socialgouv/e2esdk-semantic-release": "workspace:*",
