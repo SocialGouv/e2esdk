@@ -35,13 +35,14 @@ export async function success(_: any, context: any) {
     return
   }
   const { gitTag, name, version } = ctx.data.nextRelease
-  console.dir(context.nextRelease)
   const nameWithoutVersion = name.replace(`@${version}`, '')
+  const summaryLine =
+    nameWithoutVersion === '@socialgouv/e2esdk-server'
+      ? `✨ &nbsp;Bumped server version to \`${version}\`  \n`
+      : `📦 &nbsp;Published: [\`${gitTag}\`](https://www.npmjs.com/package/${nameWithoutVersion}/v/${version})  \n`
+
   try {
-    await fs.appendFile(
-      ctx.data.env.GITHUB_STEP_SUMMARY,
-      `📦 &nbsp;Published: [\`${gitTag}\`](https://www.npmjs.com/package/${nameWithoutVersion}/v/${version})  \n`
-    )
+    await fs.appendFile(ctx.data.env.GITHUB_STEP_SUMMARY, summaryLine)
   } catch (error) {
     console.error(error)
   }
