@@ -12,8 +12,7 @@
   "repository": "https://github.com/SocialGouv/e2esdk",
   "files": [
     "build/",
-    "sceau.json",
-    "VERSION"
+    "sceau.json"
   ],
   "type": "module",
   "module": "./build/main.js",

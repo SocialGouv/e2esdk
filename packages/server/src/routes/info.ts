@@ -37,14 +37,14 @@ const querystring = z.object({
 
 type ManifestEntry = z.infer<typeof manifestEntry>
 
-async function readVersionFile() {
-  const versionFile = path.resolve(
+async function readVersion() {
+  const packageJsonPath = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
-    '../../VERSION'
+    '../../package.json'
   )
   try {
-    const version = await fs.readFile(versionFile, { encoding: 'utf8' })
-    return version.trim()
+    const packageJson = await fs.readFile(packageJsonPath, { encoding: 'utf8' })
+    return JSON.parse(packageJson).version
   } catch {
     return Promise.resolve('local')
   }
@@ -55,7 +55,7 @@ export default async function infoRoutes(app: App) {
     path.dirname(fileURLToPath(import.meta.url)),
     '../'
   )
-  const version = await readVersionFile()
+  const version = await readVersion()
   const signaturePrivateKey = app.sodium.from_base64(env.SIGNATURE_PRIVATE_KEY)
   const manifest = await generateManifest(
     app.sodium,
