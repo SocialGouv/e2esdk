@@ -37,11 +37,64 @@ export async function success(_: any, context: any) {
     return
   }
   const repoRoot = path.resolve(ctx.data.cwd, '../..')
-  const { gitTag, name, version } = ctx.data.nextRelease
-  const nameWithoutVersion = name.replace(`@${version}`, '')
-  const summaryLine = `- [\`${gitTag}\`](https://www.npmjs.com/package/${nameWithoutVersion}/v/${version})  \n`
+  const { gitTag, version } = ctx.data.nextRelease
+  const name = gitTag.replace(`@${version}`, '')
+  const sceau = JSON.parse(
+    await fs.readFile(path.resolve(ctx.data.cwd, 'sceau.json'), {
+      encoding: 'utf8',
+    })
+  )
+  const packageJson = JSON.parse(
+    await fs.readFile(path.resolve(ctx.data.cwd, 'package.json'), {
+      encoding: 'utf8',
+    })
+  )
+  const depsText = [
+    renderDependencies(packageJson.dependencies ?? {}, 'Dependencies'),
+    renderDependencies(packageJson.peerDependencies ?? {}, 'Peer dependencies'),
+    renderDependencies(
+      packageJson.devDependencies ?? {},
+      'Development dependencies'
+    ),
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  const summaryLine = `### [\`${gitTag}\`](https://www.npmjs.com/package/${name}/v/${version})
+${depsText}
+
+<details>
+<summary>🔏 Code signature</summary>
+
+\`\`\`json
+${JSON.stringify(sceau, null, 2)}
+\`\`\`
+
+</details>
+
+`
   await fs.appendFile(
     path.resolve(repoRoot, 'GITHUB_STEP_SUMMARY_PACKAGES'),
     summaryLine
   )
+}
+
+function renderDependencies(input: Record<string, string>, heading: string) {
+  const deps = Object.fromEntries(
+    Object.entries(input).filter(
+      ([packageName, version]) =>
+        packageName.startsWith('@socialgouv/e2esdk-') &&
+        version !== '0.0.0-internal'
+    )
+  )
+  return Object.keys(deps).length > 0
+    ? `#### ${heading}
+| Package | Version |
+|:------- |:------- |
+${Object.entries(deps)
+  .map(([name, version]) => `| \`${name}\` | \`${version}\` |`)
+  .join('\n')}
+
+`
+    : null
 }
