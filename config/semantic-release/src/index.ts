@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { setTimeout } from 'node:timers/promises'
 import { z } from 'zod'
 
 const contextSchema = z.object({
@@ -77,6 +78,22 @@ ${JSON.stringify(sceau, null, 2)}
     path.resolve(repoRoot, 'GITHUB_STEP_SUMMARY_PACKAGES'),
     summaryLine
   )
+
+  // Add a delay to stagger the GitHub releases running next,
+  // otherwise we end up hitting rate limiting errors.
+  const packages = [
+    '@socialgouv/e2esdk-api',
+    '@socialgouv/e2esdk-client',
+    '@socialgouv/e2esdk-crypto',
+    '@socialgouv/e2esdk-devtools',
+    '@socialgouv/e2esdk-keygen',
+    '@socialgouv/e2esdk-react',
+    '@socialgouv/e2esdk-server',
+  ]
+  const packageIndex = packages.indexOf(name)
+  const staggerDelay =
+    2000 * (packageIndex < 0 ? Math.random() * packages.length : packageIndex)
+  await setTimeout(staggerDelay)
 }
 
 function renderDependencies(input: Record<string, string>, heading: string) {

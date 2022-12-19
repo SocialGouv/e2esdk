@@ -66,7 +66,20 @@
       ],
       "@semantic-release/release-notes-generator",
       "@semantic-release/npm",
-      "@socialgouv/e2esdk-semantic-release"
+      "@socialgouv/e2esdk-semantic-release",
+      [
+        "@semantic-release/github",
+        {
+          "successComment": false,
+          "addReleases": "bottom",
+          "assets": [
+            {
+              "path": "sceau.json",
+              "label": "Code signature"
+            }
+          ]
+        }
+      ]
     ],
     "branches": [
       "main",
