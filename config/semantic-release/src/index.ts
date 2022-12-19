@@ -101,7 +101,7 @@ function renderDependencies(input: Record<string, string>, heading: string) {
     Object.entries(input).filter(
       ([packageName, version]) =>
         packageName.startsWith('@socialgouv/e2esdk-') &&
-        version !== '0.0.0-internal'
+        !['0.0.0-internal', 'workspace:*'].includes(version)
     )
   )
   return Object.keys(deps).length > 0
