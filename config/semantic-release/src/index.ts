@@ -50,19 +50,22 @@ export async function success(_: any, context: any) {
       encoding: 'utf8',
     })
   )
-  const depsText = [
-    renderDependencies(packageJson.dependencies ?? {}, 'Dependencies'),
-    renderDependencies(packageJson.peerDependencies ?? {}, 'Peer dependencies'),
-    renderDependencies(
-      packageJson.devDependencies ?? {},
-      'Development dependencies'
-    ),
+  const depsTable = [
+    renderDependencies(packageJson.dependencies ?? {}, 'dependencies'),
+    renderDependencies(packageJson.peerDependencies ?? {}, 'peerDependencies'),
+    renderDependencies(packageJson.devDependencies ?? {}, 'devDependencies'),
   ]
     .filter(Boolean)
     .join('\n')
 
   const summaryLine = `### [\`${gitTag}\`](https://www.npmjs.com/package/${name}/v/${version})
-${depsText}
+<details><summary>📦 Dependencies</summary>
+
+| Package | Version | Type |
+|:------- |:------- |: --- |
+${depsTable}
+
+</details>
 
 <details>
 <summary>🔏 Code signature</summary>
@@ -96,7 +99,7 @@ ${JSON.stringify(sceau, null, 2)}
   await setTimeout(staggerDelay)
 }
 
-function renderDependencies(input: Record<string, string>, heading: string) {
+function renderDependencies(input: Record<string, string>, type: string) {
   const deps = Object.fromEntries(
     Object.entries(input).filter(
       ([packageName, version]) =>
@@ -105,13 +108,10 @@ function renderDependencies(input: Record<string, string>, heading: string) {
     )
   )
   return Object.keys(deps).length > 0
-    ? `#### ${heading}
-| Package | Version |
-|:------- |:------- |
-${Object.entries(deps)
-  .map(([name, version]) => `| \`${name}\` | \`${version}\` |`)
-  .join('\n')}
-
-`
+    ? Object.entries(deps)
+        .map(
+          ([name, version]) => `| \`${name}\` | \`${version}\` | \`${type}\` |`
+        )
+        .join('\n')
     : null
 }
