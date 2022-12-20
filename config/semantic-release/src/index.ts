@@ -62,7 +62,7 @@ export async function success(_: any, context: any) {
 <details><summary>📦 Dependencies</summary>
 
 | Package | Version | Type |
-|:------- |:------- |: --- |
+|:------- |:------- |:---- |
 ${depsTable}
 
 </details>
