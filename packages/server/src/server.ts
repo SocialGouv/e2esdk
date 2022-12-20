@@ -32,7 +32,7 @@ type HealthCheckReply = z.infer<typeof healthCheckReply>
 export function createServer() {
   const __PROD__ = env.NODE_ENV === 'production'
   const app = createFastifyServer({
-    name: ['e2esdk', env.RELEASE_TAG].join(':'),
+    name: ['e2esdk', env.DEPLOYMENT_TAG].join(':'),
     redactEnv: __PROD__ ? ['POSTGRESQL_URL', 'SIGNATURE_PRIVATE_KEY'] : [],
     redactLogPaths: env.DEBUG
       ? []
@@ -58,7 +58,7 @@ export function createServer() {
     },
     printRoutes: __PROD__ ? 'logger' : false,
     sentry: {
-      release: env.RELEASE_TAG,
+      release: env.DEPLOYMENT_TAG,
       getUser(_app, request) {
         return Promise.resolve({
           id: request.identity?.userId,

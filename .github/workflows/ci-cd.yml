@@ -210,7 +210,6 @@ jobs:
           context: .
           file: packages/server/Dockerfile
           build-args: |
-            BUILD_URL=https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
             SCEAU_VERIFICATION_MODE=--strict
           labels: "${{ steps.docker-labels-tags.outputs.labels }}"
           tags: "${{ steps.docker-labels-tags.outputs.tags }}"

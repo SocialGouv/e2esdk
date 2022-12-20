@@ -54,9 +54,7 @@ RUN apk add --no-cache curl
 
 RUN corepack enable
 
-ARG BUILD_URL=local
 ARG SCEAU_VERIFICATION_MODE
-ENV BUILD_URL $BUILD_URL
 ENV NODE_ENV production
 ENV PORT 3000
 
@@ -68,8 +66,6 @@ USER e2esdk
 COPY --from=builder --chown=e2esdk:nodejs /app/ .
 
 RUN packages/server/node_modules/.bin/sceau verify --packageDir packages/server $SCEAU_VERIFICATION_MODE
-
-LABEL org.opencontainers.image.url="$BUILD_URL"
 
 EXPOSE 3000
 

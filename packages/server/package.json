@@ -48,7 +48,7 @@
     "fastify-plugin": "^4.4.0",
     "mitt": "^3.0.0",
     "postgres": "^3.3.2",
-    "sceau": "^1.1.0",
+    "sceau": "^1.2.0",
     "zod": "^3.20.2",
     "zod-to-json-schema": "^3.20.1",
     "zx": "^7.1.1"

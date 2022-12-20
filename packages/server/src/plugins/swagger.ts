@@ -19,7 +19,7 @@ const swaggerPlugin: FastifyPluginAsync = async (app: App) => {
       ],
       info: {
         title: pkg.name,
-        version: `${pkg.version} (${env.RELEASE_TAG})`,
+        version: `${pkg.version} (${env.DEPLOYMENT_TAG})`,
         description: pkg.description,
         license: {
           name: pkg.license,
@@ -27,6 +27,7 @@ const swaggerPlugin: FastifyPluginAsync = async (app: App) => {
         },
       },
       externalDocs: {
+        // todo: Use source URL in sceau
         description: 'GitHub repository',
         url: 'https://github.com/SocialGouv/e2esdk',
       },
