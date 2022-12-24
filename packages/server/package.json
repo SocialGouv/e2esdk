@@ -22,7 +22,7 @@
     }
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "scripts": {
     "dev": "run-p dev:*",

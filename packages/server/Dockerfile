@@ -1,7 +1,7 @@
 # Based on Turbo's Docker pruning technique:
 # https://turbo.build/repo/docs/handbook/deploying-with-docker
 
-FROM node:16-alpine AS slicer
+FROM node:18-alpine AS slicer
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine
 # to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
@@ -15,7 +15,7 @@ RUN turbo prune --scope=@socialgouv/e2esdk-server --docker --out-dir docker-dist
 # ------------------------------------------------------------------------------
 
 # Add lockfile and package.json's of isolated subworkspace
-FROM node:16-alpine AS builder
+FROM node:18-alpine AS builder
 RUN apk add --no-cache libc6-compat
 # this enables support for pnpm - https://nodejs.org/api/corepack.html
 RUN corepack enable
@@ -47,7 +47,7 @@ RUN pnpm install --offline --prod --ignore-scripts
 
 # ------------------------------------------------------------------------------
 
-FROM node:16-alpine AS runner
+FROM node:18-alpine AS runner
 WORKDIR /app
 
 RUN apk add --no-cache curl
