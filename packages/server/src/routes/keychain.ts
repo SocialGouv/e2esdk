@@ -128,6 +128,14 @@ export default async function keychainRoutes(app: App) {
           body: req.body,
           isAuthor: true,
         })
+        app.webhook.notifyKeyAdded(req, {
+          createdAt: req.body.createdAt,
+          expiresAt: req.body.expiresAt,
+          nameFingerprint: req.body.nameFingerprint,
+          payloadFingerprint: req.body.payloadFingerprint,
+          ownerId: req.body.ownerId,
+          sharedBy: req.body.sharedBy,
+        })
         return res.status(201).send()
       }
 
@@ -173,6 +181,14 @@ export default async function keychainRoutes(app: App) {
         body: req.body,
         isAuthor: false,
         sharedKey,
+      })
+      app.webhook.notifyKeyAdded(req, {
+        createdAt: req.body.createdAt,
+        expiresAt: req.body.expiresAt,
+        nameFingerprint: req.body.nameFingerprint,
+        payloadFingerprint: req.body.payloadFingerprint,
+        ownerId: req.body.ownerId,
+        sharedBy: req.body.sharedBy,
       })
       return res.status(201).send()
     }

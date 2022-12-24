@@ -1,6 +1,3 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import { env } from '../env.js'
@@ -19,25 +16,11 @@ const infoResponseBody = z.object({
 })
 type InfoResponseBody = z.infer<typeof infoResponseBody>
 
-async function readVersion() {
-  const packageJsonPath = path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    '../../package.json'
-  )
-  try {
-    const packageJson = await fs.readFile(packageJsonPath, { encoding: 'utf8' })
-    return JSON.parse(packageJson).version
-  } catch {
-    return Promise.resolve('local')
-  }
-}
-
 // --
 
 export default async function infoRoutes(app: App) {
-  const version = await readVersion()
   const serverInfo: InfoResponseBody = {
-    version,
+    version: app.pkg.version,
     builtAt: app.codeSignature.timestamp,
     buildURL: app.codeSignature.buildURL,
     sourceURL: app.codeSignature.sourceURL,

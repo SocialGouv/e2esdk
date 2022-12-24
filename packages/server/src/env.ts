@@ -30,6 +30,8 @@ const envSchema = z.object({
     ),
 
   // Optional variables
+  ENABLE_SIGNUP: booleanSchema.optional().default('true'),
+  WEBHOOK_URL: z.string().url().optional(),
   DEBUG: booleanSchema.default('false'),
   CORS_FORCE_ENABLE: booleanSchema.default('false'),
   DATABASE_MAX_SIZE_BYTES: z
