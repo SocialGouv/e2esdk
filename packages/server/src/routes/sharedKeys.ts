@@ -104,6 +104,16 @@ export default async function sharedKeysRoutes(app: App) {
         })
         throw app.httpErrors.forbidden(reason)
       }
+      // Finally, ask the application server through a webhook
+      if (!(await app.webhook.authorizeKeyShare(req, req.body))) {
+        const reason = 'You are not allowed to share this key'
+        req.auditLog.warn({
+          msg: 'postSharedKey:forbidden',
+          reason,
+          body: req.body,
+        })
+        throw app.httpErrors.forbidden(reason)
+      }
       await storeSharedKey(app.db, req.body)
       req.auditLog.info({ msg: 'postSharedKey:success', body: req.body })
       return res.status(201).send()

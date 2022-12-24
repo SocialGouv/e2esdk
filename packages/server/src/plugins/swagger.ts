@@ -2,13 +2,10 @@ import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
 import type { FastifyPluginAsync } from 'fastify'
 import fp from 'fastify-plugin'
-import { createRequire } from 'node:module'
 import { env } from '../env.js'
 import type { App } from '../types'
 
 const swaggerPlugin: FastifyPluginAsync = async (app: App) => {
-  const require = createRequire(import.meta.url)
-  const pkg = require('../../package.json')
   await app.register(swagger, {
     openapi: {
       tags: [
@@ -18,18 +15,17 @@ const swaggerPlugin: FastifyPluginAsync = async (app: App) => {
         { name: 'permissions', description: 'Managing authorization' },
       ],
       info: {
-        title: pkg.name,
-        version: `${pkg.version} (${env.DEPLOYMENT_TAG})`,
-        description: pkg.description,
+        title: app.pkg.name,
+        version: `${app.pkg.version} (${env.DEPLOYMENT_TAG})`,
+        description: app.pkg.description,
         license: {
-          name: pkg.license,
+          name: app.pkg.license,
           url: 'https://github.com/SocialGouv/e2esdk/blob/main/LICENSE',
         },
       },
       externalDocs: {
-        // todo: Use source URL in sceau
         description: 'GitHub repository',
-        url: 'https://github.com/SocialGouv/e2esdk',
+        url: app.codeSignature.sourceURL,
       },
     },
   })
@@ -42,4 +38,8 @@ const swaggerPlugin: FastifyPluginAsync = async (app: App) => {
 export default fp(swaggerPlugin, {
   fastify: '4.x',
   name: 'swagger',
+  dependencies: ['pkg', 'codeSignature'],
+  decorators: {
+    fastify: ['pkg', 'codeSignature'],
+  },
 })
