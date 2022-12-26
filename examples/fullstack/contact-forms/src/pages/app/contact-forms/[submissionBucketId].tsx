@@ -45,9 +45,14 @@ import { z } from 'zod'
 import { ShareAccess } from './new'
 import {
   base64UrlDecode,
+  encrypt,
   encryptFormData,
   initializeEncryptedFormLocalState,
+  multipartSignature,
+  SealedBoxCipher,
+  SecretBoxCipher,
 } from '@socialgouv/e2esdk-crypto'
+import { useShareKey } from 'hooks/useShareKey'
 
 // https://github.com/colinhacks/zod/issues/310
 const emptyStringToUndefined = z.literal('').transform(() => undefined)
@@ -130,6 +135,9 @@ const CommentBox: React.FC<CommentBoxProps> = ({ submissionId, ...rest }) => {
       content: 'blablalala zefze zefze zeg  zgerzg erg  er',
     },
   ]
+  //  const shareKey = useShareKey()
+  const allKeys = useE2ESDKClientKeys()
+
   const onSendMessage: ReactEventHandler = async e => {
     const inputValue = input && input.current && input.current.value
     if (inputValue) {
@@ -138,23 +146,25 @@ const CommentBox: React.FC<CommentBoxProps> = ({ submissionId, ...rest }) => {
       console.log(
         'should submit encrypted and shared comment on that submission'
       )
-      // const state = await initializeEncryptedFormLocalState(submissionBucketId)
-      // console.log('state', state)
-      // const { metadata, encrypted } = encryptFormData(
-      //   { authorName: 'me', content: inputValue },
-      //   state
-      // )
-      // const variables: SubmitCommentVariables = {
-      //   submissionBucketId,
-      //   submissionId,
-      //   sealedSecret: metadata.sealedSecret,
-      //   signature: metadata.signature,
-      //   publicKey: metadata.publicKey,
-      //   ...encrypted,
-      // }
-      // console.log(variables)
+
+      // TODO
+
+      // encrypt some obj
+      const encrypted = client.encryptObject({
+        authorName: 'me',
+        content: inputValue,
+      })
+
+      // push to hasura
+      const variables = {}
+      const res = await request<CommentResponseData>(
+        'http://localhost:4002/v1/graphql', // todo: Use env
+        SUBMIT_COMMENT_MUTATION,
+        variables
+      )
     }
   }
+
   const onKeyDown: KeyboardEventHandler = e => {
     if (e.key === 'Enter') {
       onSendMessage(e)
@@ -457,6 +467,43 @@ const GET_CONTACT_FORM_SUBMISSIONS_QUERY = gql`
       sealedSecret
       signature
       publicKey
+    }
+  }
+`
+
+// TODO
+const SUBMIT_COMMENT_MUTATION = gql`
+  mutation SubmitComment(
+    $submissionBucketId: String!
+    $signature: String!
+    $sealedSecret: String!
+    $publicKey: String!
+    $subject: String!
+    $message: String!
+    $firstName: String!
+    $lastName: String!
+    $age: String
+    $contactMe: String!
+    $email: String
+    $phoneNumber: String
+  ) {
+    inserted: insert_contactFormSubmissions_one(
+      object: {
+        submissionBucketId: $submissionBucketId
+        signature: $signature
+        sealedSecret: $sealedSecret
+        publicKey: $publicKey
+        subject: $subject
+        message: $message
+        firstName: $firstName
+        lastName: $lastName
+        age: $age
+        contactMe: $contactMe
+        email: $email
+        phoneNumber: $phoneNumber
+      }
+    ) {
+      id
     }
   }
 `

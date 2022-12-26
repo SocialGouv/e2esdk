@@ -74,27 +74,25 @@ const ContactFormPage: NextPage = () => {
         return
       }
       console.time('onSubmit')
-      for (let i = 0; i < 1000; i++) {
-        const state = await initializeEncryptedFormLocalState(
-          submissionBucketId
-        )
-        const { metadata, encrypted } = encryptFormData(
-          { ...values, firstName: `Test B${i}` },
-          state
-        )
-        const variables: SubmitContactFormVariables = {
-          submissionBucketId,
-          sealedSecret: metadata.sealedSecret,
-          signature: metadata.signature,
-          publicKey: metadata.publicKey,
-          ...encrypted,
-        }
-        const res = await request<InsertResponseData>(
-          'http://localhost:4002/v1/graphql', // todo: Use env
-          SUBMIT_CONTACT_FORM_MUTATION,
-          variables
-        )
+      //for (let i = 0; i < 10; i++) {
+      const state = await initializeEncryptedFormLocalState(submissionBucketId)
+      const { metadata, encrypted } = encryptFormData(
+        { ...values, firstName: `Test A${i}` },
+        state
+      )
+      const variables: SubmitContactFormVariables = {
+        submissionBucketId,
+        sealedSecret: metadata.sealedSecret,
+        signature: metadata.signature,
+        publicKey: metadata.publicKey,
+        ...encrypted,
       }
+      const res = await request<InsertResponseData>(
+        'http://localhost:4002/v1/graphql', // todo: Use env
+        SUBMIT_CONTACT_FORM_MUTATION,
+        variables
+      )
+      // }
       console.timeEnd('onSubmit')
       resetForm()
 

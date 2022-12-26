@@ -76,11 +76,12 @@ export function clearEncryptedFormLocalState(namespace: string) {
 
 // --
 
-function deriveState(
+export function deriveState(
   sodium: Sodium,
   mainSecret: Uint8Array,
   formPublicKey: Uint8Array
 ): EncryptedFormLocalState {
+  //console.log('deriveState')
   const intermediateKey = sodium.crypto_generichash(
     sodium.crypto_kdf_KEYBYTES,
     formPublicKey,
