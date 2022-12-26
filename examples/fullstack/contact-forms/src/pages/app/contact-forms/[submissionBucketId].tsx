@@ -1,7 +1,11 @@
 import {
+  Box,
   Button,
   Center,
+  ChakraComponent,
+  ChakraProps,
   Divider,
+  Flex,
   FormControl,
   FormHelperText,
   FormLabel,
@@ -21,6 +25,7 @@ import {
   Tbody,
   Td,
   Text,
+  Textarea,
   Th,
   Thead,
   Tr,
@@ -34,10 +39,21 @@ import { NoSSR } from 'components/NoSSR'
 import request, { gql } from 'graphql-request'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
-import React from 'react'
+import React, { KeyboardEventHandler, ReactEventHandler, useRef } from 'react'
 import { FiCheck, FiMail, FiPhone } from 'react-icons/fi'
 import { z } from 'zod'
 import { ShareAccess } from './new'
+import {
+  base64UrlDecode,
+  encryptFormData,
+  initializeEncryptedFormLocalState,
+} from '@socialgouv/e2esdk-crypto'
+
+// https://github.com/colinhacks/zod/issues/310
+const emptyStringToUndefined = z.literal('').transform(() => undefined)
+function asOptionalField<T extends z.ZodTypeAny>(schema: T) {
+  return schema.optional().or(emptyStringToUndefined)
+}
 
 const formSchema = z.object({
   subject: z.string(),
@@ -46,7 +62,7 @@ const formSchema = z.object({
   lastName: z.string(),
   age: z.number().nullish(),
   contactMe: z.boolean(),
-  email: z.string().email().nullish(),
+  email: asOptionalField(z.string().email()),
   phoneNumber: z.string().nullish(),
 })
 
@@ -69,6 +85,157 @@ type QueryResult = {
         : string
     }
   >
+}
+
+const commentSchema = z.object({
+  content: z.string(),
+  authorName: z.string(),
+})
+
+type CommentValues = z.infer<typeof commentSchema>
+type SubmitCommentVariables = {
+  submissionBucketId: string
+  submissionId: number
+  signature: string
+  sealedSecret: string
+  publicKey: string
+} & {
+  [K in keyof CommentValues]: CommentValues[K] extends null
+    ? string | undefined
+    : string
+}
+
+type CommentBoxProps = ChakraProps & {
+  submissionId: number
+}
+
+const CommentBox: React.FC<CommentBoxProps> = ({ submissionId, ...rest }) => {
+  const router = useRouter()
+  const submissionBucketId = router.query.submissionBucketId as string
+
+  const comments = [
+    {
+      createdAt: '2022-12-26T10:10:20.19336+00:00',
+      authorName: 'andré',
+      content: 'blablalala',
+    },
+    {
+      createdAt: '2022-12-26T10:10:20.19336+00:00',
+      authorName: 'lauren',
+      content: 'blablalala zefze zefze zeg  zgerzg erg  er',
+    },
+    {
+      createdAt: '2022-12-26T10:10:20.19336+00:00',
+      authorName: 'chris',
+      content: 'blablalala zefze zefze zeg  zgerzg erg  er',
+    },
+  ]
+  const onSendMessage: ReactEventHandler = async e => {
+    const inputValue = input && input.current && input.current.value
+    if (inputValue) {
+      console.log('send', submissionBucketId, submissionId, inputValue)
+
+      console.log(
+        'should submit encrypted and shared comment on that submission'
+      )
+      // const state = await initializeEncryptedFormLocalState(submissionBucketId)
+      // console.log('state', state)
+      // const { metadata, encrypted } = encryptFormData(
+      //   { authorName: 'me', content: inputValue },
+      //   state
+      // )
+      // const variables: SubmitCommentVariables = {
+      //   submissionBucketId,
+      //   submissionId,
+      //   sealedSecret: metadata.sealedSecret,
+      //   signature: metadata.signature,
+      //   publicKey: metadata.publicKey,
+      //   ...encrypted,
+      // }
+      // console.log(variables)
+    }
+  }
+  const onKeyDown: KeyboardEventHandler = e => {
+    if (e.key === 'Enter') {
+      onSendMessage(e)
+    }
+  }
+  const input = React.useRef<HTMLTextAreaElement>(null)
+  return (
+    <Box {...rest}>
+      <b>Commentaires:</b>
+      <br />
+      {comments.map(comment => (
+        <li style={{ listStyleType: 'none' }}>
+          <b>{comment.authorName}</b>
+          <br />
+          {comment.content}
+        </li>
+      ))}
+      <Textarea onKeyDown={onKeyDown} ref={input} w="100%" h="100px" />
+      <Button onClick={onSendMessage}>Envoyer</Button>
+    </Box>
+  )
+}
+
+const SubmissionDetails: React.FC<TableRowProps> = ({ data }) => {
+  return (
+    <ModalContent h="600px" w="1000px">
+      <ModalHeader>{data.subject}</ModalHeader>
+      <ModalCloseButton />
+      <ModalBody>
+        <Flex>
+          <Box w="100%">
+            <Text fontWeight="semibold">
+              {data.firstName} {data.lastName}{' '}
+              {Boolean(data.age) && (
+                <Text
+                  as="span"
+                  fontWeight="normal"
+                  fontSize="sm"
+                  color="gray.500"
+                >
+                  • {data.age} years old
+                </Text>
+              )}
+            </Text>
+            <Text fontSize="sm" color="gray.500">
+              {data.createdAt.toLocaleString(['se-SE'])}
+            </Text>
+            <Divider my={4} />
+            <Text whiteSpace="pre-wrap">{data.message}</Text>
+            <Divider my={4} />
+            {data.contactMe && data.email && (
+              <Button
+                as={Link}
+                _hover={{
+                  textDecoration: 'none',
+                }}
+                href={`mailto:${data.email}`}
+                leftIcon={<FiMail />}
+              >
+                Send email
+              </Button>
+            )}
+            {data.contactMe && data.phoneNumber && (
+              <Button
+                as={Link}
+                _hover={{
+                  textDecoration: 'none',
+                }}
+                href={`tel:${data.phoneNumber}`}
+                leftIcon={<FiPhone />}
+              >
+                Call
+              </Button>
+            )}
+          </Box>
+          <CommentBox submissionId={data.id} w="350px" />
+        </Flex>
+      </ModalBody>
+      <ModalFooter gap={4}></ModalFooter>
+    </ModalContent>
+  )
 }
 
 const ContactFormResultsPage: NextPage = () => {
@@ -209,58 +376,9 @@ const TableRow: React.FC<TableRowProps> = ({ data }) => {
           {data.createdAt.toLocaleString(['se-SE'])}
         </Td>
       </Tr>
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={onClose} size="6xl">
         <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{data.subject}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Text fontWeight="semibold">
-              {data.firstName} {data.lastName}{' '}
-              {Boolean(data.age) && (
-                <Text
-                  as="span"
-                  fontWeight="normal"
-                  fontSize="sm"
-                  color="gray.500"
-                >
-                  • {data.age} years old
-                </Text>
-              )}
-            </Text>
-            <Text fontSize="sm" color="gray.500">
-              {data.createdAt.toLocaleString(['se-SE'])}
-            </Text>
-            <Divider my={4} />
-            <Text whiteSpace="pre-wrap">{data.message}</Text>
-          </ModalBody>
-          <ModalFooter gap={4}>
-            {data.contactMe && data.email && (
-              <Button
-                as={Link}
-                _hover={{
-                  textDecoration: 'none',
-                }}
-                href={`mailto:${data.email}`}
-                leftIcon={<FiMail />}
-              >
-                Send email
-              </Button>
-            )}
-            {data.contactMe && data.phoneNumber && (
-              <Button
-                as={Link}
-                _hover={{
-                  textDecoration: 'none',
-                }}
-                href={`tel:${data.phoneNumber}`}
-                leftIcon={<FiPhone />}
-              >
-                Call
-              </Button>
-            )}
-          </ModalFooter>
-        </ModalContent>
+        <SubmissionDetails data={data} />
       </Modal>
     </>
   )

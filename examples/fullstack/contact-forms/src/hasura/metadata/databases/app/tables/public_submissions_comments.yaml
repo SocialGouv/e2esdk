@@ -1,0 +1,43 @@
+table:
+  schema: public
+  name: submissions_comments
+object_relationships:
+  - name: submission
+    using:
+      foreign_key_constraint_on: submissionId
+insert_permissions:
+  - role: public
+    permission:
+      check: {}
+      columns:
+        - id
+        - authorName
+        - createdAt
+        - submissionId
+        - content
+      backend_only: false
+select_permissions:
+  - role: public
+    permission:
+      columns:
+        - submissionId
+        - authorName
+        - content
+        - createdAt
+        - id
+      filter: {}
+update_permissions:
+  - role: public
+    permission:
+      columns:
+        - submissionId
+        - authorName
+        - content
+        - createdAt
+        - id
+      filter: {}
+      check: {}
+delete_permissions:
+  - role: public
+    permission:
+      filter: {}

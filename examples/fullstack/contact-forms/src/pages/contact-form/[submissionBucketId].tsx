@@ -73,38 +73,49 @@ const ContactFormPage: NextPage = () => {
       if (!publicKey || !submissionBucketId) {
         return
       }
-      const state = await initializeEncryptedFormLocalState(submissionBucketId)
-      const { metadata, encrypted } = encryptFormData(values, state)
-      const variables: SubmitContactFormVariables = {
-        submissionBucketId,
-        sealedSecret: metadata.sealedSecret,
-        signature: metadata.signature,
-        publicKey: metadata.publicKey,
-        ...encrypted,
+      console.time('onSubmit')
+      for (let i = 0; i < 1000; i++) {
+        const state = await initializeEncryptedFormLocalState(
+          submissionBucketId
+        )
+        const { metadata, encrypted } = encryptFormData(
+          { ...values, firstName: `Test B${i}` },
+          state
+        )
+        const variables: SubmitContactFormVariables = {
+          submissionBucketId,
+          sealedSecret: metadata.sealedSecret,
+          signature: metadata.signature,
+          publicKey: metadata.publicKey,
+          ...encrypted,
+        }
+        const res = await request<InsertResponseData>(
+          'http://localhost:4002/v1/graphql', // todo: Use env
+          SUBMIT_CONTACT_FORM_MUTATION,
+          variables
+        )
       }
-      const res = await request<InsertResponseData>(
-        'http://localhost:4002/v1/graphql', // todo: Use env
-        SUBMIT_CONTACT_FORM_MUTATION,
-        variables
-      )
-      if (res.inserted?.id) {
-        toast({
-          status: 'success',
-          title: 'Thanks!',
-          description: (
-            <>
-              Your message has been sent.
-              {values.contactMe && (
-                <>
-                  <br />
-                  We will contact you back shortly.
-                </>
-              )}
-            </>
-          ),
-        })
-        resetForm()
-      }
+      console.timeEnd('onSubmit')
+      resetForm()
+
+      // if (res.inserted?.id) {
+      //   toast({
+      //     status: 'success',
+      //     title: 'Thanks!',
+      //     description: (
+      //       <>
+      //         Your message has been sent.
+      //         {values.contactMe && (
+      //           <>
+      //             <br />
+      //             We will contact you back shortly.
+      //           </>
+      //         )}
+      //       </>
+      //     ),
+      //   })
+      //   resetForm()
+      // }
     },
     [publicKey, submissionBucketId, toast, resetForm]
   )

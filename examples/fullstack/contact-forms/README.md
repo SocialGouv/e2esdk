@@ -44,3 +44,16 @@ pnpm dev
 ```
 
 The application will be available on http://localhost:4000
+
+### FAQ
+
+How to change the data model with Hasura UI ?
+
+Go to hasura admin consol in http://localhost:4000 and use the password defined in `./src/hasura/.env`.
+
+Make your changes then `npx hasura-cli metadata export` from the CLI to update your hasura metadata.
+
+### Todo
+
+- [ ] a way to persist my ID on signup (qr-code?)
+- [ ] better hasura data permissions

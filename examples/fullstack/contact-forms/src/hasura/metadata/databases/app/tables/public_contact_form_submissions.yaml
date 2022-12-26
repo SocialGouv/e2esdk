@@ -8,11 +8,11 @@ configuration:
     first_name: firstName
     phone_number: phoneNumber
     submission_bucket_id: submissionBucketId
+    public_key: publicKey
     contact_me: contactMe
     last_name: lastName
     created_at: createdAt
     sealed_secret: sealedSecret
-    public_key: publicKey
 insert_permissions:
   - role: public
     permission:
