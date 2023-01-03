@@ -2,6 +2,7 @@ import {
   Identity,
   PostKeychainItemRequestBody,
   PostSharedKeyBody,
+  WebhookRoutes,
 } from '@socialgouv/e2esdk-api'
 import { signAuth } from '@socialgouv/e2esdk-crypto'
 import type { FastifyPluginAsync, FastifyRequest } from 'fastify'
@@ -36,11 +37,13 @@ declare module 'fastify' {
 
 // --
 
-type WebhookAPICallArgs = {
+type WebhookPaths = keyof WebhookRoutes
+
+type WebhookAPICallArgs<Path extends WebhookPaths> = {
   name: keyof Decoration
   req: FastifyRequest
-  path: string
-  body?: any
+  path: Path
+  body: WebhookRoutes[Path]['body']
 }
 
 // --
@@ -63,12 +66,12 @@ const webhookPlugin: FastifyPluginAsync = async (app: App) => {
   }
   app.log.info({ msg: 'Setting up webhook', url: baseURL })
 
-  async function webhookApiCall({
+  async function webhookApiCall<Path extends WebhookPaths>({
     req,
     path,
     name,
     body: payload,
-  }: WebhookAPICallArgs) {
+  }: WebhookAPICallArgs<Path>) {
     try {
       const method = 'POST'
       const url = baseURL + path
@@ -110,7 +113,7 @@ const webhookPlugin: FastifyPluginAsync = async (app: App) => {
         referrer,
         body,
         headers: {
-          ...(body ? { 'content-type': 'application/json' } : {}),
+          'content-type': 'application/json',
           origin: env.DEPLOYMENT_URL,
           'user-agent': `${app.pkg.name}@${app.pkg.version} Webhook`,
           'x-e2esdk-user-id': userId,
