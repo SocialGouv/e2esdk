@@ -44,7 +44,7 @@ export async function initializeEncryptedFormLocalState(
       storageKey(namespace)
     )
     if (!serializedMainSecret) {
-      throw new Error('No main secret to load, generarint a new state')
+      throw new Error('No main secret to load, generating a new state')
     }
     const mainSecret = base64UrlDecode(serializedMainSecret)
     const formPublicKey = retrievePublicKeyFromURLHash()
