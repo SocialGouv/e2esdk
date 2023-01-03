@@ -1,11 +1,12 @@
 import { SecretBoxCipher } from './ciphers'
+import { encrypt } from './encryption'
 import { Sodium } from './sodium'
 
 export const DEFAULT_FILE_CHUNK_SIZE = 4096
 
-export async function encryptFile(
+export async function encryptFileContents(
   sodium: Sodium,
-  file: Blob,
+  file: File,
   cipher: SecretBoxCipher,
   chunkSize = DEFAULT_FILE_CHUNK_SIZE
 ) {
@@ -52,7 +53,31 @@ export async function encryptFile(
   return ciphertextBuffer
 }
 
-export function decryptFile(
+export async function encryptFile(
+  sodium: Sodium,
+  file: File,
+  cipher: SecretBoxCipher,
+  chunkSize = DEFAULT_FILE_CHUNK_SIZE
+): Promise<File> {
+  const ciphertextBuffer = await encryptFileContents(
+    sodium,
+    file,
+    cipher,
+    chunkSize
+  )
+  const encryptedName = encrypt(
+    sodium,
+    file.name,
+    cipher,
+    'application/e2esdk.ciphertext.v1'
+  )
+  return new File([ciphertextBuffer], encryptedName, {
+    type: file.type,
+    lastModified: file.lastModified,
+  })
+}
+
+export function decryptFileContents(
   sodium: Sodium,
   ciphertext: Uint8Array,
   cipher: SecretBoxCipher
