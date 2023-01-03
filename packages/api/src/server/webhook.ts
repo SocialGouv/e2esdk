@@ -30,8 +30,12 @@ export const webhookRoutes = {
     body: postKeychainItemRequestBody.omit({
       name: true,
       payload: true,
-      subkeyIndex: true,
-      signature: true,
+    }),
+  },
+  '/notify/key-shared': {
+    body: postSharedKeyBody.omit({
+      name: true,
+      payload: true,
     }),
   },
 } as const

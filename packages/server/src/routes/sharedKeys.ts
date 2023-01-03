@@ -116,6 +116,7 @@ export default async function sharedKeysRoutes(app: App) {
       }
       await storeSharedKey(app.db, req.body)
       req.auditLog.info({ msg: 'postSharedKey:success', body: req.body })
+      app.webhook.notifyKeyShared(req, req.body)
       return res.status(201).send()
     }
   )

@@ -135,6 +135,8 @@ export default async function keychainRoutes(app: App) {
           payloadFingerprint: req.body.payloadFingerprint,
           ownerId: req.body.ownerId,
           sharedBy: req.body.sharedBy,
+          subkeyIndex: req.body.subkeyIndex,
+          signature: req.body.signature,
         })
         return res.status(201).send()
       }
@@ -189,6 +191,8 @@ export default async function keychainRoutes(app: App) {
         payloadFingerprint: req.body.payloadFingerprint,
         ownerId: req.body.ownerId,
         sharedBy: req.body.sharedBy,
+        subkeyIndex: req.body.subkeyIndex,
+        signature: req.body.signature,
       })
       return res.status(201).send()
     }

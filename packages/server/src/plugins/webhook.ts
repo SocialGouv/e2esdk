@@ -22,10 +22,11 @@ type Decoration = {
   notifySignup(req: FastifyRequest, identity: Identity): void
   notifyKeyAdded(
     req: FastifyRequest,
-    item: Omit<
-      PostKeychainItemRequestBody,
-      'name' | 'payload' | 'subkeyIndex' | 'signature'
-    >
+    item: Omit<PostKeychainItemRequestBody, 'name' | 'payload'>
+  ): void
+  notifyKeyShared(
+    req: FastifyRequest,
+    item: Omit<PostSharedKeyBody, 'name' | 'payload'>
   ): void
 }
 
@@ -60,6 +61,7 @@ const webhookPlugin: FastifyPluginAsync = async (app: App) => {
       },
       notifySignup() {},
       notifyKeyAdded() {},
+      notifyKeyShared() {},
     }
     app.decorate('webhook', decoration)
     return
@@ -173,6 +175,14 @@ const webhookPlugin: FastifyPluginAsync = async (app: App) => {
         req,
         name: 'notifyKeyAdded',
         path: '/notify/key-added',
+        body: item,
+      })
+    },
+    notifyKeyShared(req, item) {
+      webhookApiCall({
+        req,
+        name: 'notifyKeyShared',
+        path: '/notify/key-shared',
         body: item,
       })
     },
