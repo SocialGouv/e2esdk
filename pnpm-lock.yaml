@@ -3624,6 +3624,7 @@ packages:
     resolution: {integrity: sha512-BlX3wIxYTwdtR22dIqZ3FEIOJPqnlByAp4JY46OMZi2UXMB3ZbOzefawD2ZlLafRUWyy5NtiZZty5waKzaYRnA==}
     engines: {node: '>= 12.13'}
     hasBin: true
+    requiresBuild: true
     peerDependencies:
       '@swc/core': ^1.2.66
       chokidar: ^3.5.1
