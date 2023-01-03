@@ -47,11 +47,6 @@ import {
   PublicUserIdentity,
 } from '@socialgouv/e2esdk-client'
 import {
-  Cipher,
-  generateSealedBoxCipher,
-  generateSecretBoxCipher,
-} from '@socialgouv/e2esdk-crypto'
-import {
   useE2ESDKClient,
   useE2ESDKClientIdentity,
   useE2ESDKClientKeys,
@@ -252,19 +247,13 @@ const CreateKeyPanel: React.FC<CreateKeyPanelProps> = ({
   onClose,
   onKeyCreated,
 }) => {
+  type CipherAlgorithm = 'secretBox' | 'sealedBox'
+
   const client = useE2ESDKClient()
   const [name, setName] = React.useState('')
-  const [type, setType] = React.useState<Cipher['algorithm']>('secretBox')
+  const [type, setType] = React.useState<CipherAlgorithm>('secretBox')
   const createKey = React.useCallback(async () => {
-    const cipher =
-      type === 'secretBox'
-        ? generateSecretBoxCipher(client.sodium)
-        : generateSealedBoxCipher(client.sodium)
-
-    const key = await client.addKey({
-      name,
-      cipher,
-    })
+    const key = await client.createKey(name, type)
     setName('')
     onKeyCreated(key.nameFingerprint)
   }, [client, name, type, onKeyCreated])
@@ -311,7 +300,7 @@ const CreateKeyPanel: React.FC<CreateKeyPanelProps> = ({
           <FormLabel>Type</FormLabel>
           <Select
             value={type}
-            onChange={e => setType(e.target.value as Cipher['algorithm'])}
+            onChange={e => setType(e.target.value as CipherAlgorithm)}
           >
             <option value={'secretBox'}>Secret Box</option>
             <option value={'sealedBox'}>Sealed Box</option>

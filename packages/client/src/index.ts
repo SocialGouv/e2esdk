@@ -44,6 +44,8 @@ import {
   EncryptableJSONDataType,
   EncryptedFormSubmission,
   fingerprint,
+  generateSealedBoxCipher,
+  generateSecretBoxCipher,
   memzeroCipher,
   multipartSignature,
   numberToUint32LE,
@@ -332,6 +334,59 @@ export class Client {
 
   // Key Ops --
 
+  public async createKey(
+    name: string,
+    algorithm: 'secretBox' | 'sealedBox',
+    expiresAt?: Date
+  ) {
+    await this.sodium.ready
+    const cipher =
+      algorithm === 'sealedBox'
+        ? generateSealedBoxCipher(this.sodium)
+        : generateSecretBoxCipher(this.sodium)
+    return this.addKey({
+      name,
+      cipher,
+      createdAt: new Date(),
+      expiresAt,
+      sharedBy: null,
+    })
+  }
+
+  public async rotateKey(name: string, expiresAt?: Date) {
+    await this.sodium.ready
+    if (this.#state.state !== 'loaded') {
+      throw new Error('Account is locked')
+    }
+    const nameFingerprint = fingerprint(this.sodium, name)
+    if (!this.#state.keychain.has(nameFingerprint)) {
+      throw new Error('Cannot rotate key: no previous key found in keychain')
+    }
+    const [existingKey] = this.#state.keychain.get(nameFingerprint)!
+    const cipher =
+      existingKey.cipher.algorithm === 'sealedBox'
+        ? generateSealedBoxCipher(this.sodium)
+        : existingKey.cipher.algorithm === 'secretBox'
+        ? generateSecretBoxCipher(this.sodium)
+        : (() => {
+            throw new Error('Unsupported algorithm')
+          })()
+    return this.addKey({
+      name,
+      cipher,
+      expiresAt,
+      createdAt: new Date(),
+      sharedBy: null,
+    })
+  }
+
+  /**
+   * Add an existing key to your keychain
+   *
+   * Note: prefer using the `createKey` and `rotateKey` methods,
+   * which deal with cipher generation. You would only need to use this
+   * method to import a key from another source.
+   */
   public async addKey({
     name,
     cipher,
