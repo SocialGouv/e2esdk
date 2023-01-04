@@ -9,6 +9,7 @@ const contextSchema = z.object({
     version: z.string(),
     gitTag: z.string(),
     channel: z.string(),
+    notes: z.string().optional(),
   }),
   env: z.object({
     GITHUB_STEP_SUMMARY: z.string(),
@@ -57,7 +58,15 @@ export async function success(_: any, context: any) {
     .filter(Boolean)
     .join('\n')
 
+  console.dir({
+    pkg: name,
+    releaseNotes: ctx.data.nextRelease.notes,
+  })
+
   const summaryLine = `### [\`${gitTag}\`](https://www.npmjs.com/package/${name}/v/${version})
+
+${ctx.data.nextRelease.notes ?? ''}
+
 <details><summary>📦 Dependencies</summary>
 
 | Package | Version | Type |
