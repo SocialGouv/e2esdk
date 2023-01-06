@@ -56,9 +56,6 @@ export function encryptFormData<FormData extends object>(
   input: FormData,
   state: EncryptedFormLocalState
 ): EncryptedFormSubmission<FormData> {
-  const keyDerivationContext = state.sodium
-    .to_base64(state.formPublicKey)
-    .slice(0, 8)
   const sealedBoxCipher: SealedBoxCipher = {
     algorithm: 'sealedBox',
     publicKey: state.formPublicKey,
@@ -80,7 +77,7 @@ export function encryptFormData<FormData extends object>(
       key: state.sodium.crypto_kdf_derive_from_key(
         state.sodium.crypto_secretbox_KEYBYTES,
         subkeyIndex,
-        keyDerivationContext,
+        state.keyDerivationContext,
         state.keyDerivationSecret
       ),
     }
