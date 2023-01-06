@@ -14,7 +14,6 @@ import type { Sodium } from './sodium'
 
 export const encodedCiphertextFormatV1 = 'application/e2esdk.ciphertext.v1'
 export type EncodedCiphertextFormat = typeof encodedCiphertextFormatV1
-export type EncryptableJSONDataType = string | number | boolean
 
 type CipherWithOptionalNonce = Cipher & {
   nonce?: Uint8Array
@@ -27,7 +26,7 @@ type CipherWithOptionalNonce = Cipher & {
  * @param cipher The algorithm to use and its parameters
  * @param outputFormat The format to use
  */
-export function encrypt<DataType extends Uint8Array | EncryptableJSONDataType>(
+export function encrypt<DataType>(
   sodium: Sodium,
   input: DataType,
   cipher: CipherWithOptionalNonce,
@@ -51,7 +50,7 @@ export function encrypt(
   outputFormat?: Uint8ArrayOutputFormat
 ): Uint8Array
 
-export function encrypt<DataType extends Uint8Array | EncryptableJSONDataType>(
+export function encrypt<DataType>(
   sodium: Sodium,
   input: DataType,
   cipher: CipherWithOptionalNonce,
