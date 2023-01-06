@@ -11,6 +11,7 @@ export type EncryptedFormLocalState = {
   formPublicKey: Uint8Array
   mainSecret: Uint8Array
   keyDerivationSecret: Uint8Array
+  keyDerivationContext: string
   identity: Omit<KeyPair, 'keyType'>
 }
 
@@ -101,11 +102,13 @@ function deriveState(
   const { publicKey, privateKey } = sodium.crypto_sign_seed_keypair(seed)
   sodium.memzero(intermediateKey)
   sodium.memzero(seed)
+  const keyDerivationContext = sodium.to_base64(formPublicKey).slice(0, 8)
   return {
     sodium,
     formPublicKey,
     mainSecret,
     keyDerivationSecret,
+    keyDerivationContext,
     identity: {
       publicKey,
       privateKey,
