@@ -14,7 +14,7 @@ describe('files', () => {
     const fileContent = new Uint8Array(await fs.readFile(__filename))
     const blob: any = new Blob([fileContent])
     const cipher = generateSecretBoxCipher(sodium)
-    const ciphertext = await encryptFileContents(sodium, blob, cipher)
+    const { ciphertext } = await encryptFileContents(sodium, blob, cipher)
     const cleartext = decryptFileContents(sodium, ciphertext, cipher)
     expect(ciphertext[0]).toEqual(12) // 4096 byte chunk by default
     expect(cleartext).toEqual(fileContent)

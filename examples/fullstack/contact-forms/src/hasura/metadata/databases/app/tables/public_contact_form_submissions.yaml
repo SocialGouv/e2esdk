@@ -13,6 +13,8 @@ configuration:
     created_at: createdAt
     sealed_secret: sealedSecret
     public_key: publicKey
+    proof_of_identity: proofOfIdentity
+    identity_photo: identityPhoto
 insert_permissions:
   - role: public
     permission:
@@ -32,6 +34,8 @@ insert_permissions:
         - sealed_secret
         - public_key
         - signature
+        - proof_of_identity
+        - identity_photo
       backend_only: false
 select_permissions:
   - role: public
@@ -51,4 +55,6 @@ select_permissions:
         - sealed_secret
         - public_key
         - signature
+        - proof_of_identity
+        - identity_photo
       filter: {}

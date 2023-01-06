@@ -1,4 +1,6 @@
 import {
+  Avatar,
+  AvatarProps,
   Button,
   Center,
   Divider,
@@ -27,15 +29,17 @@ import {
   useDisclosure,
 } from '@chakra-ui/react'
 import type { KeychainItemMetadata } from '@socialgouv/e2esdk-client'
+import { FileMetadata, fileMetadataSchema } from '@socialgouv/e2esdk-crypto'
 import { useE2ESDKClient, useE2ESDKClientKeys } from '@socialgouv/e2esdk-react'
 import { useQuery } from '@tanstack/react-query'
 import { CopiableReadOnlyInput } from 'components/CopiableReadOnlyInput'
 import { NoSSR } from 'components/NoSSR'
 import request, { gql } from 'graphql-request'
+import { downloadAndDecryptFile, saveFile } from 'lib/files'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import React from 'react'
-import { FiCheck, FiMail, FiPhone } from 'react-icons/fi'
+import { FiCheck, FiDownloadCloud, FiMail, FiPhone, FiX } from 'react-icons/fi'
 import { z } from 'zod'
 import { ShareAccess } from './new'
 
@@ -48,6 +52,8 @@ const formSchema = z.object({
   contactMe: z.boolean(),
   email: z.string().email().nullish(),
   phoneNumber: z.string().nullish(),
+  proofOfIdentity: fileMetadataSchema.nullish(),
+  identityPhoto: fileMetadataSchema.nullish(),
 })
 
 const formWithMetadata = formSchema.extend({
@@ -105,6 +111,7 @@ const ContactFormResultsPage: NextPage = () => {
                 <Th>Email</Th>
                 <Th>Phone</Th>
                 <Th>Received</Th>
+                <Th textAlign="center">ID</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -154,6 +161,7 @@ type TableRowProps = {
 
 const TableRow: React.FC<TableRowProps> = ({ data }) => {
   const { isOpen, onOpen, onClose } = useDisclosure()
+  const client = useE2ESDKClient()
   return (
     <>
       <Tr
@@ -208,6 +216,13 @@ const TableRow: React.FC<TableRowProps> = ({ data }) => {
         <Td color="gray.500" fontSize="xs">
           {data.createdAt.toLocaleString(['se-SE'])}
         </Td>
+        <Td textAlign="center">
+          {Boolean(data.proofOfIdentity) ? (
+            <Icon as={FiCheck} aria-label="yes" color="green.500" />
+          ) : (
+            <Icon as={FiX} aria-label="no" color="red.500" />
+          )}
+        </Td>
       </Tr>
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
@@ -215,6 +230,9 @@ const TableRow: React.FC<TableRowProps> = ({ data }) => {
           <ModalHeader>{data.subject}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
+            {data.identityPhoto && (
+              <EncryptedAvatar metadata={data.identityPhoto} />
+            )}
             <Text fontWeight="semibold">
               {data.firstName} {data.lastName}{' '}
               {Boolean(data.age) && (
@@ -259,6 +277,18 @@ const TableRow: React.FC<TableRowProps> = ({ data }) => {
                 Call
               </Button>
             )}
+            {data.proofOfIdentity && (
+              <Button
+                leftIcon={<FiDownloadCloud />}
+                onClick={() =>
+                  downloadAndDecryptFile(client.sodium, data.proofOfIdentity!)
+                    .then(saveFile)
+                    .catch(console.error)
+                }
+              >
+                Download ID
+              </Button>
+            )}
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -289,33 +319,46 @@ function useContactFormSubmissions(currentKey: KeychainItemMetadata | null) {
         }
       )
       return (
-        res.contactFormSubmissions?.map(
-          ({
-            id,
-            createdAt,
-            publicKey,
-            sealedSecret,
-            signature,
-            ...encryptedFields
-          }) => {
-            const decrypted = client.unsealFormData(
-              {
-                metadata: {
-                  publicKey,
-                  sealedSecret,
-                  signature,
-                },
-                encrypted: encryptedFields,
-              },
-              currentKey.nameFingerprint
-            )
-            return formWithMetadata.parse({
+        res.contactFormSubmissions
+          ?.map(
+            ({
               id,
               createdAt,
-              ...decrypted,
-            })
-          }
-        ) ?? []
+              publicKey,
+              sealedSecret,
+              signature,
+              ...encryptedFields
+            }) => {
+              const values = client.unsealFormData(
+                {
+                  metadata: {
+                    publicKey,
+                    sealedSecret,
+                    signature,
+                  },
+                  encrypted: encryptedFields,
+                },
+                currentKey.nameFingerprint
+              )
+              const res = formWithMetadata.safeParse({
+                id,
+                createdAt,
+                ...values,
+              })
+              if (!res.success) {
+                console.warn({
+                  _: 'Dropping invalid form data:',
+                  values,
+                  id,
+                  reason: res.error,
+                })
+                // @ts-ignore
+                return null as FormValues
+              }
+              return res.data
+            }
+          )
+          .filter(Boolean) ?? []
       )
     },
   })
@@ -339,6 +382,42 @@ const GET_CONTACT_FORM_SUBMISSIONS_QUERY = gql`
       sealedSecret
       signature
       publicKey
+      proofOfIdentity
+      identityPhoto
     }
   }
 `
+
+// --
+
+type EncryptedAvatarProps = Omit<AvatarProps, 'src'> & {
+  metadata: FileMetadata
+}
+
+const objectURLs: Record<string, string> = {}
+
+const EncryptedAvatar: React.FC<EncryptedAvatarProps> = ({
+  metadata,
+  ...props
+}) => {
+  const client = useE2ESDKClient()
+  const [src, setSrc] = React.useState<string | undefined>()
+  React.useEffect(() => {
+    const id = Math.random().toString(36).slice(2)
+    downloadAndDecryptFile(client.sodium, metadata)
+      .then(file => {
+        const objectURL = URL.createObjectURL(file)
+        setSrc(objectURL)
+        objectURLs[id] = objectURL
+      })
+      .catch(console.error)
+    return () => {
+      if (!objectURLs[id]) {
+        return
+      }
+      URL.revokeObjectURL(objectURLs[id])
+      delete objectURLs[id]
+    }
+  }, [metadata, client])
+  return <Avatar src={src} {...props} />
+}

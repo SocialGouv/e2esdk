@@ -49,15 +49,15 @@ services:
       start_period: 3s
       retries: 50
 
-  e2esdk-db-verify-image-signature:
-    image: ghcr.io/socialgouv/e2esdk/server:beta
-    command: packages/server/node_modules/.bin/sceau verify --packageDir packages/server --strict
+  # e2esdk-db-verify-image-signature:
+  #   image: ghcr.io/socialgouv/e2esdk/server:beta
+  #   command: packages/server/node_modules/.bin/sceau verify --packageDir packages/server --strict
 
   e2esdk-db-ops:
-    image: ghcr.io/socialgouv/e2esdk/server:beta
-    #build:
-    #  context: ../../../
-    #  dockerfile: ./packages/server/Dockerfile
+    #image: ghcr.io/socialgouv/e2esdk/server:beta
+    build:
+      context: ../../../
+      dockerfile: ./packages/server/Dockerfile
     environment:
       - POSTGRESQL_URL=postgres://postgres:password@e2esdk-db:5432/e2esdk
     command: pnpm db migrations apply
@@ -68,10 +68,10 @@ services:
         condition: service_healthy
 
   e2esdk-server:
-    image: ghcr.io/socialgouv/e2esdk/server:beta
-    # build:
-    #   context: ../../../
-    #   dockerfile: ./packages/server/Dockerfile
+    #image: ghcr.io/socialgouv/e2esdk/server:beta
+    build:
+      context: ../../../
+      dockerfile: ./packages/server/Dockerfile
     ports:
       - '4003:3000'
     environment:
@@ -86,8 +86,8 @@ services:
     depends_on:
       app-db:
         condition: service_healthy
-      e2esdk-db-verify-image-signature:
-        condition: service_completed_successfully
+      # e2esdk-db-verify-image-signature:
+      #   condition: service_completed_successfully
       e2esdk-db-ops:
         condition: service_completed_successfully
 
