@@ -76,4 +76,4 @@ HEALTHCHECK \
   --retries=5 \
   CMD curl -f http://localhost:3000/_health || exit 1
 
-CMD ["node", "packages/server/build/main.js"]
+CMD ["node", "--trace-warnings", "packages/server/build/main.js"]
