@@ -41,7 +41,6 @@ import {
   deriveClientIdentity,
   encodedCiphertextFormatV1,
   encrypt,
-  EncryptableJSONDataType,
   EncryptedFormSubmission,
   fingerprint,
   generateSealedBoxCipher,
@@ -713,10 +712,7 @@ export class Client {
 
   // Encryption / Decryption --
 
-  public encrypt<DataType extends EncryptableJSONDataType | Uint8Array>(
-    input: DataType,
-    nameFingerprint: string
-  ) {
+  public encrypt<DataType>(input: DataType, nameFingerprint: string) {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked: cannot encrypt')
     }
