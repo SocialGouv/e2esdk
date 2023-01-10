@@ -120,6 +120,7 @@ export type KeychainItemMetadata = Pick<
 > & {
   algorithm: Cipher['algorithm']
   publicKey?: string
+  label: string
 }
 
 // --
@@ -193,6 +194,12 @@ type Events = {
 // --
 
 type HTTPMethod = 'GET' | 'POST' | 'DELETE'
+
+// --
+
+const NAME_PREFIX_LENGTH_BYTES = 32
+const NAME_PREFIX_LENGTH_CHARS =
+  1 + Math.round((NAME_PREFIX_LENGTH_BYTES * 4) / 3)
 
 // --
 
@@ -334,7 +341,7 @@ export class Client {
   // Key Ops --
 
   public async createKey(
-    name: string,
+    label: string,
     algorithm: 'secretBox' | 'sealedBox',
     expiresAt?: Date
   ) {
@@ -343,6 +350,11 @@ export class Client {
       algorithm === 'sealedBox'
         ? generateSealedBoxCipher(this.sodium)
         : generateSecretBoxCipher(this.sodium)
+    const prefix = this.sodium.randombytes_buf(
+      NAME_PREFIX_LENGTH_BYTES,
+      'base64'
+    )
+    const name = `${prefix}:${label}`
     return this.addKey({
       name,
       cipher,
@@ -352,12 +364,11 @@ export class Client {
     })
   }
 
-  public async rotateKey(name: string, expiresAt?: Date) {
+  public async rotateKey(nameFingerprint: string, expiresAt?: Date) {
     await this.sodium.ready
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked')
     }
-    const nameFingerprint = fingerprint(this.sodium, name)
     if (!this.#state.keychain.has(nameFingerprint)) {
       throw new Error('Cannot rotate key: no previous key found in keychain')
     }
@@ -371,7 +382,7 @@ export class Client {
             throw new Error('Unsupported algorithm')
           })()
     return this.addKey({
-      name,
+      name: existingKey.name,
       cipher,
       expiresAt,
       createdAt: new Date(),
@@ -464,6 +475,9 @@ export class Client {
     this.#sync.setState(this.#state)
     return {
       name,
+      get label() {
+        return name.slice(NAME_PREFIX_LENGTH_CHARS)
+      },
       nameFingerprint,
       payloadFingerprint,
       algorithm: cipher.algorithm,
@@ -1370,6 +1384,10 @@ function getKeychainItemMetadata(item: KeychainItem): KeychainItemMetadata {
     createdAt: item.createdAt,
     expiresAt: item.expiresAt,
     name: item.name,
+    get label() {
+      // Remove the 32 bytes base64-encoded plus separator `:`
+      return item.name.slice(NAME_PREFIX_LENGTH_CHARS)
+    },
     nameFingerprint: item.nameFingerprint,
     payloadFingerprint: item.payloadFingerprint,
     sharedBy: item.sharedBy,
