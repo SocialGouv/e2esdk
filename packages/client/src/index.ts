@@ -493,6 +493,32 @@ export class Client {
     return out
   }
 
+  public async deleteKey(nameFingerprint: string, payloadFingerprint: string) {
+    if (this.#state.state !== 'loaded') {
+      throw new Error('Account is locked')
+    }
+    const keys = this.#state.keychain.get(nameFingerprint)
+    if (!keys || keys.length === 0) {
+      throw new Error(
+        `No available key to delete with fingerprint ${nameFingerprint}`
+      )
+    }
+    // First, delete locally
+    this.#state.keychain.set(
+      nameFingerprint,
+      keys.filter(key => key.payloadFingerprint !== payloadFingerprint)
+    )
+    this.#mitt.emit('keychainUpdated', null)
+
+    // Then delete on the server
+    const url = `/v1/keychain/${nameFingerprint}/${payloadFingerprint}`
+    await this.#apiCall('DELETE', url)
+
+    // This should trigger a WebSocket notification which will
+    // force reloading the keychain from the server, if we're online.
+    // By deleting locally first, we prevent race conditions.
+  }
+
   // Sharing --
 
   public async shareKey(
