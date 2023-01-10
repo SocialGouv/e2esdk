@@ -370,6 +370,9 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
   })
   const otherParticipants =
     participants?.filter(p => !!identity && p.userId !== identity.userId) ?? []
+  const rotateKey = React.useCallback(() => {
+    client.rotateKey(currentKey.nameFingerprint)
+  }, [client, currentKey])
 
   if (!currentKey) {
     return (
@@ -382,7 +385,37 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
     permissions?.allowManagement || permissions?.allowDeletion
   return (
     <>
-      <SectionHeader icon={FiKey}>Current key</SectionHeader>
+      <SectionHeader icon={FiKey} display="flex" alignItems="center">
+        Current key
+        <Stack isInline spacing={2} ml="auto" my={-2} mr={-3}>
+          <Button
+            ml="auto"
+            size="xs"
+            variant="ghost"
+            rounded="full"
+            colorScheme="yellow"
+            leftIcon={<FiRefreshCw />}
+            onClick={rotateKey}
+          >
+            Rotate
+          </Button>
+          <Button
+            size="xs"
+            variant="ghost"
+            rounded="full"
+            colorScheme="red"
+            leftIcon={<FiTrash2 />}
+            onClick={() =>
+              client.deleteKey(
+                currentKey.nameFingerprint,
+                currentKey.payloadFingerprint
+              )
+            }
+          >
+            Delete
+          </Button>
+        </Stack>
+      </SectionHeader>
       <Grid
         templateColumns="8rem 1fr"
         px={4}
@@ -605,6 +638,7 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
                   <Th>Created</Th>
                   <Th>Expires</Th>
                   <Th>Shared from</Th>
+                  <Th></Th>
                 </Tr>
               </Thead>
               <Tbody
@@ -627,6 +661,22 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
                       )}
                     </Td>
                     <Td>{key.sharedBy ?? <em>null</em>}</Td>
+                    <Td>
+                      <IconButton
+                        aria-label="Delete"
+                        icon={<FiTrash2 />}
+                        size="xs"
+                        variant="ghost"
+                        colorScheme="red"
+                        rounded="full"
+                        onClick={() =>
+                          client.deleteKey(
+                            key.nameFingerprint,
+                            key.payloadFingerprint
+                          )
+                        }
+                      />
+                    </Td>
                   </Tr>
                 ))}
               </Tbody>
@@ -732,7 +782,7 @@ const ShareKeyPopup: React.FC<ShareKeyPopupProps> = ({
           {...props}
           onClick={onToggle}
         >
-          Share key
+          Share
         </Button>
       </PopoverTrigger>
       <Portal containerRef={portalRef}>

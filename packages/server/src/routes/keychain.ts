@@ -10,10 +10,13 @@ import {
   numberToUint32LE,
   verifyMultipartSignature,
 } from '@socialgouv/e2esdk-crypto'
+import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import {
+  deleteKeychainItem,
   getKeyNameParticipants,
   getOwnKeychainItems,
+  keychainItemSchema,
   storeKeychainItem,
 } from '../database/models/keychain.js'
 import {
@@ -220,6 +223,45 @@ export default async function keychainRoutes(app: App) {
       const items = await getOwnKeychainItems(app.db, req.identity.userId)
       req.auditLog.trace({ msg: 'getKeychain:success', items })
       return res.send(items)
+    }
+  )
+
+  const deleteKeychainEntryURLParams = keychainItemSchema.pick({
+    nameFingerprint: true,
+    payloadFingerprint: true,
+  })
+
+  app.delete<{
+    Headers: PublicKeyAuthHeaders
+    Params: z.infer<typeof deleteKeychainEntryURLParams>
+  }>(
+    '/keychain/:nameFingerprint/:payloadFingerprint',
+    {
+      preHandler: app.usePublicKeyAuth(),
+      schema: {
+        tags: ['keychain'],
+        summary: 'Delete a keychain entry',
+        params: zodToJsonSchema(deleteKeychainEntryURLParams),
+        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        response: {
+          200: {
+            type: 'null',
+          },
+        },
+      },
+    },
+    async function deleteKeychainItemEndpoint(req, res) {
+      await deleteKeychainItem(
+        app.db,
+        req.identity.userId,
+        req.params.nameFingerprint,
+        req.params.payloadFingerprint
+      )
+      req.auditLog.trace({
+        msg: 'deleteKeychainItem:success',
+        params: req.params,
+      })
+      return res.send()
     }
   )
 }
