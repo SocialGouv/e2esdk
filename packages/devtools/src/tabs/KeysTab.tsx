@@ -215,8 +215,8 @@ const KeySelectorPanel: React.FC<KeySelectorPanelProps> = ({
               aria-label={keys[0].algorithm}
             />
             <Box flex={1}>
-              <Text fontFamily="mono" fontSize="sm">
-                {keys[0].name}
+              <Text fontFamily="mono" fontSize="xs">
+                {keys[0].label}
               </Text>
               <Text fontFamily="mono" fontSize="xs" color="gray.500">
                 {keys[0].nameFingerprint}
@@ -248,15 +248,14 @@ const CreateKeyPanel: React.FC<CreateKeyPanelProps> = ({
   onKeyCreated,
 }) => {
   type CipherAlgorithm = 'secretBox' | 'sealedBox'
-
   const client = useE2ESDKClient()
-  const [name, setName] = React.useState('')
+  const [label, setLabel] = React.useState('')
   const [type, setType] = React.useState<CipherAlgorithm>('secretBox')
   const createKey = React.useCallback(async () => {
-    const key = await client.createKey(name, type)
-    setName('')
+    const key = await client.createKey(label, type)
+    setLabel('')
     onKeyCreated(key.nameFingerprint)
-  }, [client, name, type, onKeyCreated])
+  }, [client, label, type, onKeyCreated])
   return (
     <>
       <SectionHeader mt={0} display="flex" alignItems="center">
@@ -273,9 +272,9 @@ const CreateKeyPanel: React.FC<CreateKeyPanelProps> = ({
       </SectionHeader>
       <Stack spacing={4} px={4}>
         <FormControl>
-          <FormLabel>Name</FormLabel>
+          <FormLabel>Label</FormLabel>
           <InputGroup>
-            <Input value={name} onChange={e => setName(e.target.value)} />
+            <Input value={label} onChange={e => setLabel(e.target.value)} />
             <InputRightElement>
               <Tooltip
                 label="Generate random UUIDv4"
@@ -289,7 +288,7 @@ const CreateKeyPanel: React.FC<CreateKeyPanelProps> = ({
                   variant="ghost"
                   rounded="full"
                   size="sm"
-                  onClick={() => setName(crypto.randomUUID())}
+                  onClick={() => setLabel(crypto.randomUUID())}
                 />
               </Tooltip>
             </InputRightElement>
@@ -425,6 +424,10 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
       >
         <Text fontWeight="semibold">Algorithm</Text>
         <AlgorithmBadge algorithm={currentKey.algorithm} />
+        <Text fontWeight="semibold">Name</Text>
+        <Text fontFamily="mono" color="gray.500">
+          {currentKey.name}
+        </Text>
         <Text fontWeight="semibold">Fingerprint</Text>
         <Text fontFamily="mono" color="gray.500">
           {currentKey.payloadFingerprint}
