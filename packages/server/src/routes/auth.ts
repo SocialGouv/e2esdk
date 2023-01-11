@@ -39,7 +39,7 @@ export default async function authRoutes(app: App) {
       },
     },
     async function signup(req, res) {
-      if (!env.ENABLE_SIGNUP) {
+      if (env.DISABLE_SIGNUP) {
         const reason = 'Signup is not allowed on this server'
         req.auditLog.warn({ msg: 'signup:forbidden', body: req.body, reason })
         throw app.httpErrors.forbidden(reason)
