@@ -1,5 +1,6 @@
 // https://chadalen.com/blog/how-to-use-a-multipart-form-in-nextjs-using-api-routes
 
+import { fileMetadataSchema } from '@socialgouv/e2esdk-crypto'
 import formidable from 'formidable'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createReadStream } from 'node:fs'
@@ -17,15 +18,32 @@ const storageDir = path.resolve(
   '../../../../../../../.volumes/docker/e2esdk-examples-contact-forms/storage'
 )
 
+// SHA-512 hex output
+const validFileName = fileMetadataSchema.shape.hash
+
 const form = formidable({
   multiples: true,
   uploadDir: storageDir,
+  hashAlgorithm: 'sha512',
   filename(name, ext, part, form) {
     if (!part.originalFilename) {
       throw new Error('Missing file name (should be hash of content)')
     }
-    return part.originalFilename
+    return validFileName.parse(part.originalFilename)
   },
+})
+
+form.on('file', (_formName, file) => {
+  if (!file.hash) {
+    return
+  }
+  if (file.newFilename === file.hash) {
+    return
+  }
+  console.error(`Invalid file name (does not match SHA-512 hash)
+  Received: ${file.newFilename}
+  Hashed:   ${file.hash}`)
+  fs.rm(path.resolve(storageDir, file.newFilename))
 })
 
 export default async function storageEndpoint(
@@ -43,25 +61,29 @@ export default async function storageEndpoint(
         .status(415)
         .send('Invalid content-type, only multipart/form-data is accepted')
     }
-    form.parse(req, (err, _, files) => {
-      if (err) {
-        return res.status(400).json({
-          error: 'Invalid request',
-          message: 'Failed to parse multipart body',
-          reason: err,
+    await new Promise<void>((resolve, reject) =>
+      form.parse(req, (err, _, files) => {
+        if (err) {
+          res.status(400).json({
+            error: 'Invalid request',
+            message: 'Failed to parse multipart body',
+            reason: err,
+          })
+          reject(err)
+        }
+        Object.entries(files).forEach(([formField, files]) => {
+          ;[files]
+            .flat()
+            .forEach(file =>
+              console.info(`Saved file ${file.filepath} (${formField})`)
+            )
         })
-      }
-      Object.entries(files).forEach(([formField, files]) => {
-        ;[files]
-          .flat()
-          .forEach(file =>
-            console.info(`Saved file ${file.filepath} (${formField})`)
-          )
+        resolve()
       })
-      res.status(201).send(null)
-    })
+    )
+    res.status(201).send(null)
   } else if (req.method === 'GET') {
-    const hash = [req.query['hash']].flat()[0]
+    const hash = validFileName.parse([req.query['hash']].flat()[0])
     if (!hash) {
       return res.status(400).send('Expected hash query string')
     }

@@ -1,3 +1,4 @@
+import { thirtyTwoBytesBase64Schema } from '@socialgouv/e2esdk-api'
 import { z } from 'zod'
 import { generateSecretBoxCipher, SecretBoxCipher } from './ciphers'
 import { Sodium } from './sodium'
@@ -5,11 +6,20 @@ import { Sodium } from './sodium'
 export const DEFAULT_FILE_CHUNK_SIZE = 4096
 
 export const fileMetadataSchema = z.object({
+  /** Original file name */
   name: z.string(),
-  lastModified: z.number(),
+
+  /** Timestamp of last modification */
+  lastModified: z.number().int().positive(),
+
+  /** MIME type */
   type: z.string(),
-  hash: z.string(),
-  key: z.string(),
+
+  /** SHA-512, hex-encoded */
+  hash: z.string().regex(/^[0-9a-f]{128}$/i),
+
+  /** Symmetric key to encrypt/decrypt file contents */
+  key: thirtyTwoBytesBase64Schema,
 })
 
 export type FileMetadata = z.infer<typeof fileMetadataSchema>
@@ -35,16 +45,10 @@ export async function encryptFileContents(
     file.size +
     sodium.crypto_secretstream_xchacha20poly1305_ABYTES * numChunks
   const ciphertextBuffer = new Uint8Array(ciphertextLength)
-  const ciphertextHash = sodium.crypto_generichash_init(null, 64)
   const { header, state } =
     sodium.crypto_secretstream_xchacha20poly1305_init_push(cipher.key)
   ciphertextBuffer[0] = chunkSizeBits
-  sodium.crypto_generichash_update(
-    ciphertextHash,
-    new Uint8Array([chunkSizeBits])
-  )
   ciphertextBuffer.set(header, 1)
-  sodium.crypto_generichash_update(ciphertextHash, header)
   for (let chunkIndex = 0; chunkIndex < numChunks; chunkIndex++) {
     const tag =
       chunkIndex === numChunks - 1
@@ -67,12 +71,8 @@ export async function encryptFileContents(
         chunkIndex *
           (chunkSize + sodium.crypto_secretstream_xchacha20poly1305_ABYTES)
     )
-    sodium.crypto_generichash_update(ciphertextHash, ciphertext)
   }
-  return {
-    ciphertext: ciphertextBuffer,
-    hash: sodium.crypto_generichash_final(ciphertextHash, 64, 'base64'),
-  }
+  return ciphertextBuffer
 }
 
 export function decryptFileContents(
@@ -135,27 +135,36 @@ export async function encryptFile(
   file: File,
   chunkSize = DEFAULT_FILE_CHUNK_SIZE
 ) {
+  // Validate & extract input file metadata
+  const { name, type, lastModified } = fileMetadataSchema
+    .pick({ name: true, type: true, lastModified: true })
+    .parse(file)
+
+  // File contents are encrypted with a dedicated symmetric key
   const cipher = generateSecretBoxCipher(sodium)
-  const { ciphertext, hash } = await encryptFileContents(
-    sodium,
-    file,
-    cipher,
-    chunkSize
+  const ciphertext = await encryptFileContents(sodium, file, cipher, chunkSize)
+
+  // Libsodium.js unfortunately does not expose SHA-512,
+  // but it's available in WebCrypto.
+  const hash = sodium.to_hex(
+    new Uint8Array(
+      await window.crypto.subtle.digest({ name: 'SHA-512' }, ciphertext)
+    )
   )
   const metadata: FileMetadata = {
-    name: file.name,
-    type: file.type,
-    lastModified: file.lastModified,
+    name,
+    type,
+    lastModified,
     hash,
     key: sodium.to_base64(cipher.key),
   }
   sodium.memzero(cipher.key)
   return {
-    metadata: fileMetadataSchema.parse(metadata),
+    metadata,
     encryptedFile: new File([ciphertext], hash, {
       // Keep those in clear text as the server may have a use for it.
-      type: file.type,
-      lastModified: file.lastModified,
+      type,
+      lastModified,
     }),
   }
 }
