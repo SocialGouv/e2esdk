@@ -1,4 +1,5 @@
 packages:
   - "config/*"
-  - "packages/**"
-  - "examples/**"
+  - "packages/*"
+  - "examples/*"
+  - "examples/fullstack/*"

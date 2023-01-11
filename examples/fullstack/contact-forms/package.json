@@ -10,15 +10,15 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@chakra-ui/react": "^2.4.6",
+    "@chakra-ui/react": "^2.4.7",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@socialgouv/e2esdk-client": "workspace:*",
     "@socialgouv/e2esdk-crypto": "workspace:*",
     "@socialgouv/e2esdk-devtools": "workspace:*",
     "@socialgouv/e2esdk-react": "workspace:*",
-    "@tanstack/react-query": "^4.20.4",
-    "@tanstack/react-query-devtools": "^4.20.4",
+    "@tanstack/react-query": "^4.22.0",
+    "@tanstack/react-query-devtools": "^4.22.0",
     "formidable": "^2.1.1",
     "framer-motion": "^7.10.3",
     "graphql": "^16.6.0",
@@ -32,7 +32,7 @@
     "zod": "^3.20.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.7",
+    "@babel/core": "^7.20.12",
     "@types/formidable": "^2.0.5",
     "@types/node": "18.11.10",
     "@types/react": "^18.0.26",
