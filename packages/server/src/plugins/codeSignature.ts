@@ -21,13 +21,18 @@ declare module 'fastify' {
 }
 
 const codeSignaturePlugin: FastifyPluginAsync = async (app: App) => {
+  const defaultDecoration: Decoration = {
+    timestamp: 'unknown',
+    buildURL: 'local',
+    sourceURL: 'local',
+  }
   if (env.NODE_ENV !== 'production') {
-    const decoration: Decoration = {
-      timestamp: 'unknown',
-      buildURL: 'local',
-      sourceURL: 'local',
-    }
-    app.decorate('codeSignature', decoration)
+    app.decorate('codeSignature', defaultDecoration)
+    return
+  }
+  if (env.DISABLE_CODE_SIGNATURE_CHECK) {
+    app.log.warn('Code signature disabled by env flag')
+    app.decorate('codeSignature', defaultDecoration)
     return
   }
   const rootDir = path.resolve(
