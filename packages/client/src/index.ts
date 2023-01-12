@@ -111,7 +111,6 @@ type KeychainItem = z.infer<typeof keychainItemSchema>
 
 export type KeychainItemMetadata = Pick<
   KeychainItem,
-  | 'name'
   | 'nameFingerprint'
   | 'payloadFingerprint'
   | 'createdAt'
@@ -355,7 +354,7 @@ export class Client {
       'base64'
     )
     const name = `${prefix}:${label}`
-    return this.addKey({
+    return this.#addKey({
       name,
       cipher,
       createdAt: new Date(),
@@ -381,7 +380,7 @@ export class Client {
         : (() => {
             throw new Error('Unsupported algorithm')
           })()
-    return this.addKey({
+    return this.#addKey({
       name: existingKey.name,
       cipher,
       expiresAt,
@@ -390,14 +389,7 @@ export class Client {
     })
   }
 
-  /**
-   * Add an existing key to your keychain
-   *
-   * Note: prefer using the `createKey` and `rotateKey` methods,
-   * which deal with cipher generation. You would only need to use this
-   * method to import a key from another source.
-   */
-  public async addKey({
+  async #addKey({
     name,
     cipher,
     createdAt = new Date(),
@@ -474,10 +466,7 @@ export class Client {
     this.#mitt.emit('keychainUpdated', null)
     this.#sync.setState(this.#state)
     return {
-      name,
-      get label() {
-        return name.slice(NAME_PREFIX_LENGTH_CHARS)
-      },
+      label: name.slice(NAME_PREFIX_LENGTH_CHARS),
       nameFingerprint,
       payloadFingerprint,
       algorithm: cipher.algorithm,
@@ -1035,7 +1024,7 @@ export class Client {
         ) {
           throw new Error('Invalid shared key payload fingerprint')
         }
-        await this.addKey(item)
+        await this.#addKey(item)
         this.#mitt.emit('keyReceived', getKeychainItemMetadata(item))
       } catch (error) {
         console.error(error)
@@ -1383,11 +1372,8 @@ function getKeychainItemMetadata(item: KeychainItem): KeychainItemMetadata {
     algorithm: item.cipher.algorithm,
     createdAt: item.createdAt,
     expiresAt: item.expiresAt,
-    name: item.name,
-    get label() {
-      // Remove the 32 bytes base64-encoded plus separator `:`
-      return item.name.slice(NAME_PREFIX_LENGTH_CHARS)
-    },
+    // Remove the 32 bytes base64-encoded plus separator `:`
+    label: item.name.slice(NAME_PREFIX_LENGTH_CHARS),
     nameFingerprint: item.nameFingerprint,
     payloadFingerprint: item.payloadFingerprint,
     sharedBy: item.sharedBy,

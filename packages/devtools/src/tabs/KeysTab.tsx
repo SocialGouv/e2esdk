@@ -424,10 +424,6 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
       >
         <Text fontWeight="semibold">Algorithm</Text>
         <AlgorithmBadge algorithm={currentKey.algorithm} />
-        <Text fontWeight="semibold">Name</Text>
-        <Text fontFamily="mono" color="gray.500">
-          {currentKey.name}
-        </Text>
         <Text fontWeight="semibold">Fingerprint</Text>
         <Text fontFamily="mono" color="gray.500">
           {currentKey.payloadFingerprint}
