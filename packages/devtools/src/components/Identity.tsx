@@ -11,7 +11,7 @@ export const Identity: React.FC<IdentityProps> = ({ identity, ...props }) => {
   return (
     <Stack
       fontFamily="mono"
-      fontSize={{ base: 'xs', md: 'sm' }}
+      fontSize="xs"
       borderWidth="1px"
       px={4}
       py={3}
@@ -25,6 +25,7 @@ export const Identity: React.FC<IdentityProps> = ({ identity, ...props }) => {
         background: 'gray.1000',
         borderColor: 'gray.700',
       }}
+      w="sm"
       {...props}
     >
       <Text>

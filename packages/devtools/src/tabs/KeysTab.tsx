@@ -122,7 +122,7 @@ export const KeysTab: React.FC = () => {
         ) : selectedKeys ? (
           <KeyDetailsPanel keys={selectedKeys} />
         ) : (
-          <Center h="100%" color="gray.500" fontSize="sm">
+          <Center h="100%" color="gray.500" fontSize="xs">
             Select a key to show its properties
           </Center>
         )}
@@ -226,7 +226,7 @@ const KeySelectorPanel: React.FC<KeySelectorPanelProps> = ({
         ))}
         {Object.keys(allKeys).length === 0 && (
           <Center h="100%" as={Stack} py={4} spacing={4}>
-            <Text fontSize="sm" color="gray.500">
+            <Text fontSize="xs" color="gray.500">
               Your keychain is empty
             </Text>
           </Center>
@@ -375,7 +375,7 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
 
   if (!currentKey) {
     return (
-      <Center h="100%" color="gray.500" fontSize="sm">
+      <Center h="100%" color="gray.500" fontSize="xs">
         Key set is empty
       </Center>
     )
@@ -418,8 +418,8 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
       <Grid
         templateColumns="8rem 1fr"
         px={4}
-        rowGap={2}
-        fontSize="sm"
+        rowGap={1}
+        fontSize="xs"
         alignItems="center"
       >
         <Text fontWeight="semibold">Algorithm</Text>
@@ -455,7 +455,7 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
           <Spinner size="sm" />
         )}
       </Grid>
-      <SectionHeader mt={8} icon={FiUsers}>
+      <SectionHeader mt={4} icon={FiUsers}>
         Participants
         <ShareKeyPopup
           ml="auto"
@@ -464,11 +464,11 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
         />
       </SectionHeader>
       {!participants ? (
-        <Center h={12}>
+        <Center h={8} mb={-4}>
           <Spinner />
         </Center>
       ) : otherParticipants.length === 0 ? (
-        <Center h={12} color="gray.500" fontSize="sm">
+        <Center h={8} color="gray.500" fontSize="xs" mb={-4}>
           No one else has access to this key
         </Center>
       ) : (
