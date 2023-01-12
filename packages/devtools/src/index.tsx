@@ -35,7 +35,11 @@ export class E2ESDKDevtoolsElement extends HTMLElement {
     if (!this.shadowRoot) {
       return
     }
-    this.shadowRoot.removeChild(this.shadowRoot.getRootNode())
+    const shadowMountPoint = this.shadowRoot.getElementById('e2esdk-devtools')
+    if (!shadowMountPoint) {
+      return
+    }
+    this.shadowRoot.removeChild(shadowMountPoint)
   }
 
   set client(client: Client) {
