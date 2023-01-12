@@ -11,7 +11,6 @@ import {
   StackProps,
 } from '@chakra-ui/react'
 import { PublicUserIdentity } from '@socialgouv/e2esdk-client'
-import { generateSealedBoxCipher } from '@socialgouv/e2esdk-crypto'
 import { useE2ESDKClient } from '@socialgouv/e2esdk-react'
 import { CopiableReadOnlyInput } from 'components/CopiableReadOnlyInput'
 import { LoadingButton } from 'components/LoadingButton'
@@ -40,11 +39,10 @@ const NewContactFormPage: NextPage = () => {
 
   const onSubmit = React.useCallback(async () => {
     await client.sodium.ready
-    const cipher = generateSealedBoxCipher(client.sodium)
-    const { nameFingerprint, publicKey } = await client.addKey({
-      name: keyName,
-      cipher,
-    })
+    const { nameFingerprint, publicKey } = await client.createKey(
+      keyName,
+      'sealedBox'
+    )
     setMeta({
       submissionBucketId: nameFingerprint,
       publicKey: publicKey!,
