@@ -80,7 +80,7 @@ const NAME_PREFIX_LENGTH_CHARS =
   NAME_PREFIX_SEPARATOR.length + Math.round((NAME_PREFIX_LENGTH_BYTES * 4) / 3)
 
 const nameSchema = z.string().regex(/^[\w-]{43}:/)
-const serializedCipherSchema = z.string().startsWith('{').endsWith('}')
+const serializedCipherSchema = z.string()
 
 // --
 
