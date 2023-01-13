@@ -496,6 +496,25 @@ export class Client {
     return out
   }
 
+  public findKeyByNameFingerprint(nameFingerprint: string) {
+    if (this.#state.state !== 'loaded') {
+      return undefined
+    }
+    const keys = this.#state.keychain.get(nameFingerprint)
+    return keys ? getKeychainItemMetadata(keys[0]) : undefined
+  }
+
+  public findKeyByLabel(label: string) {
+    if (this.#state.state !== 'loaded') {
+      return undefined
+    }
+
+    const keys = Array.from(this.#state.keychain.values()).find(
+      keys => keys[0].name.slice(NAME_PREFIX_LENGTH_CHARS) === label
+    )
+    return keys ? getKeychainItemMetadata(keys[0]) : undefined
+  }
+
   public async deleteKey(nameFingerprint: string, payloadFingerprint: string) {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked')
