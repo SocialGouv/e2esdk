@@ -7,6 +7,7 @@ import { ColorModeSwitch } from 'components/colorModeSwitch'
 import { PageLayout } from 'components/pageLayout'
 import type { AppProps } from 'next/app'
 import dynamic from 'next/dynamic'
+import Head from 'next/head'
 
 const e2esdkClient = new Client({
   serverURL: 'http://localhost:4003',
@@ -27,6 +28,14 @@ function MyApp({ Component, pageProps }: AppProps) {
       <E2ESDKClientProvider client={e2esdkClient}>
         <ChakraProvider>
           <PageLayout>
+            <Head>
+              <title>e2esdk | Contact Forms</title>
+              <meta name="description" content="Fullstack demo of e2esdk" />
+              <link
+                rel="icon"
+                href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0 100 100%22><text y=%22.90em%22 font-size=%2290%22>🔐</text></svg>"
+              />
+            </Head>
             <Component {...pageProps} />
           </PageLayout>
           <HStack position="fixed" zIndex="overlay" bottom={3} left={16}>

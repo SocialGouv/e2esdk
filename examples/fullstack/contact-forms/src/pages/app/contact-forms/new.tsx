@@ -27,9 +27,9 @@ type ContactFormMetadata = {
 
 const NewContactFormPage: NextPage = () => {
   const client = useE2ESDKClient()
-  const [name, setName] = React.useState('')
+  const [label, setLabel] = React.useState('')
   const [meta, setMeta] = React.useState<ContactFormMetadata | null>(null)
-  const keyName = `contact-form:${name}`
+
   const publicURL = meta
     ? `http://localhost:4000/contact-form/${meta.submissionBucketId}#${meta.publicKey}`
     : null
@@ -40,22 +40,26 @@ const NewContactFormPage: NextPage = () => {
   const onSubmit = React.useCallback(async () => {
     await client.sodium.ready
     const { nameFingerprint, publicKey } = await client.createKey(
-      keyName,
+      `contact-form:answers:${label}`,
       'sealedBox'
+    )
+    await client.createKey(
+      `contact-form:comments:${nameFingerprint}`,
+      'secretBox'
     )
     setMeta({
       submissionBucketId: nameFingerprint,
       publicKey: publicKey!,
     })
-  }, [client, keyName])
+  }, [client, label])
 
   return (
     <>
       <Heading as="h1">New contact form</Heading>
       <Collapse in={!publicURL}>
         <FormControl my={8}>
-          <FormLabel>Name</FormLabel>
-          <Input value={name} onChange={e => setName(e.target.value)} />
+          <FormLabel>Label</FormLabel>
+          <Input value={label} onChange={e => setLabel(e.target.value)} />
         </FormControl>
         <LoadingButton onClick={onSubmit}>Create new form</LoadingButton>
       </Collapse>
@@ -113,6 +117,7 @@ export const ShareAccess: React.FC<ShareAccessProps> = ({
       <LoadingButton
         onClick={() => shareKey(keyNameFingerprint, to)}
         leftIcon={<FiShare2 />}
+        isDisabled
       >
         Share access
       </LoadingButton>
