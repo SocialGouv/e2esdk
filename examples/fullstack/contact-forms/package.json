@@ -13,6 +13,7 @@
     "@chakra-ui/react": "^2.4.7",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
+    "@socialgouv/e2esdk-api": "workspace:*",
     "@socialgouv/e2esdk-client": "workspace:*",
     "@socialgouv/e2esdk-crypto": "workspace:*",
     "@socialgouv/e2esdk-devtools": "workspace:*",

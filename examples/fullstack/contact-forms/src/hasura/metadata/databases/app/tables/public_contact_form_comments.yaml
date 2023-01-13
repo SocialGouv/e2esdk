@@ -1,0 +1,35 @@
+table:
+  schema: public
+  name: contact_form_comments
+configuration:
+  custom_root_fields: {}
+  custom_name: contactFormComments
+  custom_column_names:
+    submission_bucket_id: submissionBucketId
+    submission_id: submissionId
+    created_at: createdAt
+insert_permissions:
+  - role: public
+    permission:
+      check: {}
+      columns:
+        - id
+        - created_at
+        - submission_bucket_id
+        - submission_id
+        - author
+        - message
+        - signature
+      backend_only: false
+select_permissions:
+  - role: public
+    permission:
+      columns:
+        - id
+        - created_at
+        - submission_bucket_id
+        - submission_id
+        - author
+        - message
+        - signature
+      filter: {}

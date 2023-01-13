@@ -58,6 +58,7 @@ importers:
       '@chakra-ui/react': ^2.4.7
       '@emotion/react': ^11.10.5
       '@emotion/styled': ^11.10.5
+      '@socialgouv/e2esdk-api': workspace:*
       '@socialgouv/e2esdk-client': workspace:*
       '@socialgouv/e2esdk-crypto': workspace:*
       '@socialgouv/e2esdk-devtools': workspace:*
@@ -86,6 +87,7 @@ importers:
       '@chakra-ui/react': 2.4.7_6z66u6efdgokrdxyuxkwijcyzq
       '@emotion/react': 11.10.5_jp5qgyg6plq757v5hojp7ls2oe
       '@emotion/styled': 11.10.5_jp5djshq6aqfasno3mth3hguci
+      '@socialgouv/e2esdk-api': link:../../../packages/api
       '@socialgouv/e2esdk-client': link:../../../packages/client
       '@socialgouv/e2esdk-crypto': link:../../../packages/crypto
       '@socialgouv/e2esdk-devtools': link:../../../packages/devtools

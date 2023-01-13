@@ -114,6 +114,8 @@ export const ContactForm: React.FC<ContactFormProps> = ({
         formData.set('proofOfIdentity', encryptedFile)
         // @ts-ignore
         values.proofOfIdentity = metadata
+      } else {
+        delete values.proofOfIdentity
       }
       if (values.identityPhoto?.length === 1) {
         const file = values.identityPhoto[0]
@@ -124,6 +126,8 @@ export const ContactForm: React.FC<ContactFormProps> = ({
         formData.set('identityPhoto', encryptedFile)
         // @ts-ignore
         values.identityPhoto = metadata
+      } else {
+        delete values.identityPhoto
       }
       await uploadFiles(formData)
 
