@@ -936,6 +936,16 @@ export class Client {
         console.warn('Invalid payload fingerprint', lockedItem)
         continue
       }
+      if (item.cipher.algorithm === 'sealedBox') {
+        // Check we have a matching key pair
+        const derivedPublicKey = this.sodium.crypto_scalarmult_base(
+          item.cipher.privateKey
+        )
+        if (!this.sodium.memcmp(derivedPublicKey, item.cipher.publicKey)) {
+          console.warn('Mismatching public/private key', lockedItem)
+          continue
+        }
+      }
       addToKeychain(keychain, item)
     }
     // Clear previous keychain
