@@ -74,7 +74,13 @@ type Config = Required<ClientConfig<Uint8Array>> & {
 
 // --
 
-const stringSchema = z.string()
+const NAME_PREFIX_LENGTH_BYTES = 32
+const NAME_PREFIX_SEPARATOR = ':'
+const NAME_PREFIX_LENGTH_CHARS =
+  NAME_PREFIX_SEPARATOR.length + Math.round((NAME_PREFIX_LENGTH_BYTES * 4) / 3)
+
+const nameSchema = z.string().regex(/^[\w-]{43}:/)
+const serializedCipherSchema = z.string().startsWith('{').endsWith('}')
 
 // --
 
@@ -193,12 +199,6 @@ type Events = {
 // --
 
 type HTTPMethod = 'GET' | 'POST' | 'DELETE'
-
-// --
-
-const NAME_PREFIX_LENGTH_BYTES = 32
-const NAME_PREFIX_LENGTH_CHARS =
-  1 + Math.round((NAME_PREFIX_LENGTH_BYTES * 4) / 3)
 
 // --
 
@@ -353,7 +353,7 @@ export class Client {
       NAME_PREFIX_LENGTH_BYTES,
       'base64'
     )
-    const name = `${prefix}:${label}`
+    const name = `${prefix}${NAME_PREFIX_SEPARATOR}${label}`
     return this.#addKey({
       name,
       cipher,
@@ -897,7 +897,7 @@ export class Client {
 
       // todo: Decryption error handling
       const item: KeychainItem = {
-        name: stringSchema.parse(
+        name: nameSchema.parse(
           decrypt(
             this.sodium,
             lockedItem.name,
@@ -909,7 +909,7 @@ export class Client {
         payloadFingerprint: lockedItem.payloadFingerprint,
         cipher: cipherParser.parse(
           JSON.parse(
-            stringSchema
+            serializedCipherSchema
               .parse(
                 decrypt(
                   this.sodium,
@@ -1015,7 +1015,7 @@ export class Client {
           publicKey: this.decode(sharedKey.fromSharingPublicKey),
         }
         const item: KeychainItem = {
-          name: stringSchema.parse(
+          name: nameSchema.parse(
             decrypt(
               this.sodium,
               sharedKey.name,
@@ -1027,7 +1027,7 @@ export class Client {
           payloadFingerprint: sharedKey.payloadFingerprint,
           cipher: cipherParser.parse(
             JSON.parse(
-              stringSchema
+              serializedCipherSchema
                 .parse(
                   decrypt(
                     this.sodium,
