@@ -31,7 +31,9 @@ docker compose up -d --build
 
 This will boot all containers and run migrations on the E2ESDK database.
 
-If you wish to seed the database with test users, run the following command:
+If you wish to seed the database with
+[test users](../../../packages/server/src/database/seeds/identities.ts),
+run the following command:
 
 ```shell
 docker compose run e2esdk-db-ops pnpm db seed
