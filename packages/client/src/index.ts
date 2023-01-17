@@ -829,6 +829,38 @@ export class Client {
     throw new Error('Failed to decrypt: exhausted all available keys')
   }
 
+  // Signature --
+
+  public sign(...items: string[]) {
+    if (this.#state.state !== 'loaded') {
+      throw new Error('Account is locked: cannot sign')
+    }
+    const signature = multipartSignature(
+      this.sodium,
+      this.#state.identity.signature.privateKey,
+      ...items.map(str => this.sodium.from_string(str))
+    )
+    return this.encode(signature)
+  }
+
+  public verifySignature(
+    signature: string,
+    publicKey: string | Uint8Array,
+    ...items: string[]
+  ) {
+    if (this.#state.state !== 'loaded') {
+      throw new Error('Account is locked: cannot verify signature')
+    }
+    const pk =
+      typeof publicKey === 'string' ? this.decode(publicKey) : publicKey
+    return verifyMultipartSignature(
+      this.sodium,
+      pk,
+      this.decode(signature),
+      ...items.map(str => this.sodium.from_string(str))
+    )
+  }
+
   // Helpers --
   // We're not using the sodium conversions because those need it
   // to be ready, and we want to be able to encode/decode at any time.

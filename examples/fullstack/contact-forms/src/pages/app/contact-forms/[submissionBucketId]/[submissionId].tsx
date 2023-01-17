@@ -1,5 +1,6 @@
 import {
   Box,
+  BoxProps,
   Button,
   Center,
   CenterProps,
@@ -8,7 +9,6 @@ import {
   FlexProps,
   Heading,
   Link,
-  SimpleGrid,
   Spinner,
   Stack,
   StackProps,
@@ -17,7 +17,12 @@ import {
 } from '@chakra-ui/react'
 import { useE2ESDKClient } from '@socialgouv/e2esdk-react'
 import { EncryptedAvatar } from 'components/EncryptedAvatar'
-import { useSubmissionCommentsKey } from 'lib/comments'
+import {
+  DecryptedComment,
+  useCreateCommentMutation,
+  useSubmissionCommentsKey,
+  useSubmissionCommentsQuery,
+} from 'lib/comments'
 import { downloadAndDecryptFile, saveFile } from 'lib/files'
 import {
   formWithMetadata,
@@ -27,7 +32,10 @@ import {
   useSubmissionsKey,
 } from 'lib/submissions'
 import type { NextPage } from 'next'
+import NextLink from 'next/link'
+import React from 'react'
 import {
+  FiArrowLeft,
   FiDownloadCloud,
   FiPaperclip,
   FiPhone,
@@ -43,26 +51,38 @@ const SubmissionPage: NextPage = () => {
   const commentsKey = useSubmissionCommentsKey(submissionBucketId)
   const submission = useContactFormSubmission(submissionsKey, submissionId)
   return (
-    <>
-      <SimpleGrid columns={2} minH="xl" borderTopWidth="1px" my={-8} mx={-4}>
+    <Flex flexDirection="column" mx={-4} mt="-5.5rem" mb={-8} h="100vh" pt={14}>
+      <Box as="header" px={4} mb={4}>
+        <Link as={NextLink} href={`/app/contact-forms/${submissionBucketId}`}>
+          <Box
+            as={FiArrowLeft}
+            display="inline-block"
+            transform="translateY(2px)"
+            mr={2}
+          />
+          Back to submissions
+        </Link>
+      </Box>
+      <Flex></Flex>
+      <Flex borderTopWidth="1px" flex={1} overflow="auto">
         {submissionsKey ? (
           submission.data ? (
-            <SubmissionOverviewPanel data={submission.data} />
+            <SubmissionOverviewPanel data={submission.data} flex={1} />
           ) : (
-            <Center>
+            <Center flex={1}>
               <Spinner />
             </Center>
           )
         ) : (
-          <NoAccess subject="submissions" />
+          <NoAccess subject="submissions" flex={1} />
         )}
         {commentsKey ? (
-          <CommentSection borderLeftWidth="1px" />
+          <CommentSection borderLeftWidth="1px" flex={1} />
         ) : (
-          <NoAccess subject="comments" borderLeftWidth="1px" />
+          <NoAccess subject="comments" borderLeftWidth="1px" flex={1} />
         )}
-      </SimpleGrid>
-    </>
+      </Flex>
+    </Flex>
   )
 }
 
@@ -157,20 +177,97 @@ const SubmissionOverviewPanel: React.FC<SubmissionOverviewPanelProps> = ({
 type CommentSectionProps = FlexProps & {}
 
 const CommentSection: React.FC<CommentSectionProps> = ({ ...props }) => {
+  const submissionBucketId = useSubmissionBucketIdUrlParam()
+  const submissionId = useSubmissionIdUrlParam()
+  const comments = useSubmissionCommentsQuery(submissionBucketId, submissionId)
+  const submit = useCreateCommentMutation(submissionBucketId, submissionId)
+  const textAreaRef = React.useRef<HTMLTextAreaElement>(null)
+
+  const onSubmit = React.useCallback(async () => {
+    const message = textAreaRef.current?.value.trim()
+    if (!message) {
+      return
+    }
+    await submit.mutateAsync(message)
+    textAreaRef.current!.value = ''
+  }, [submit])
+
   return (
-    <Flex {...props}>
-      <Box mt="auto" w="100%" padding={2} borderTopWidth="1px">
-        <Textarea placeholder="Your comment" />
+    <Flex
+      flexDirection="column"
+      bg="gray.50"
+      _dark={{ bg: 'gray.900' }}
+      {...props}
+    >
+      {comments.isLoading && (
+        <Center h="xs">
+          <Spinner />
+        </Center>
+      )}
+      {comments.data?.decrypted.length === 0 ? (
+        <Center h="xs">
+          <Text fontSize="sm" color="gray.500">
+            No comments on this submission yet
+          </Text>
+        </Center>
+      ) : (
+        <Stack spacing={2} padding={4} overflow="auto">
+          {comments.data?.decrypted.map(comment => (
+            <Comment key={comment.id} data={comment} />
+          ))}
+        </Stack>
+      )}
+      <Box
+        mt="auto"
+        padding={2}
+        borderTopWidth="1px"
+        bg="white"
+        _dark={{
+          bg: 'gray.800',
+        }}
+      >
+        <Textarea placeholder="Your comment" ref={textAreaRef} />
         <Flex mt={2}>
-          <Button size="sm" leftIcon={<FiPaperclip />} isDisabled>
+          <Button
+            size="sm"
+            leftIcon={<FiPaperclip />}
+            isDisabled
+            title="File sharing is not yet implemented"
+          >
             Attach file
           </Button>
-          <Button size="sm" leftIcon={<FiSend />} ml="auto">
+          <Button
+            size="sm"
+            leftIcon={<FiSend />}
+            ml="auto"
+            onClick={onSubmit}
+            isLoading={submit.isLoading}
+          >
             Send
           </Button>
         </Flex>
       </Box>
     </Flex>
+  )
+}
+
+// --
+
+type CommentProps = BoxProps & {
+  data: DecryptedComment
+}
+
+const Comment: React.FC<CommentProps> = ({ data, ...props }) => {
+  return (
+    <Box {...props}>
+      <Flex gap={4} alignItems="baseline">
+        <Text fontWeight="semibold">{data.author}</Text>
+        <Text fontSize="xs" color="gray.500">
+          {data.createdAt.toLocaleString(['se-SE'])}
+        </Text>
+      </Flex>
+      <Text>{data.message}</Text>
+    </Box>
   )
 }
 
