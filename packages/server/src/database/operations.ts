@@ -188,7 +188,6 @@ async function listMigrations() {
     pendingMigrations,
     upstreamMigrations,
     conflictingMigrations,
-    mismatchingMigrations,
   } = await _listMigrations(sql)
 
   const longestNameLength = Math.max(

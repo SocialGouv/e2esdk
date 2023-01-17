@@ -127,7 +127,6 @@ type TableRowProps = {
 const TableRow: React.FC<TableRowProps> = ({ data, ...props }) => {
   const router = useRouter()
   const submissionBucketId = useSubmissionBucketIdUrlParam()
-  const client = useE2ESDKClient()
   return (
     <Tr
       _hover={{
