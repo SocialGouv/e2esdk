@@ -1,24 +1,24 @@
 import {
-  useDisclosure,
-  Popover,
-  PopoverTrigger,
   Button,
-  PopoverContent,
-  PopoverArrow,
-  PopoverCloseButton,
-  PopoverHeader,
-  Icon,
-  PopoverBody,
-  Checkbox,
   ButtonProps,
+  Checkbox,
+  Icon,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverCloseButton,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
+  useDisclosure,
 } from '@chakra-ui/react'
 import { PublicUserIdentity } from '@socialgouv/e2esdk-client'
 import { useE2ESDKClient } from '@socialgouv/e2esdk-react'
+import { useSubmissionCommentsKey } from 'lib/comments'
 import React from 'react'
+import FocusLock from 'react-focus-lock'
 import { FiShare2, FiShield } from 'react-icons/fi'
 import { UserIdentityInput } from './UserIdentityInput'
-import FocusLock from 'react-focus-lock'
-import { useSubmissionCommentsKey } from 'lib/comments'
 
 type ShareKeyPopupProps = ButtonProps & {
   nameFingerprint: string
@@ -83,7 +83,7 @@ export const ShareKeyPopup: React.FC<ShareKeyPopupProps> = ({
               isChecked={shareCommentsKey}
               onChange={event => setShareCommentsKey(event.target.checked)}
             >
-              also share access to comments
+              Also share access to comments
             </Checkbox>
             <Button
               width="100%"

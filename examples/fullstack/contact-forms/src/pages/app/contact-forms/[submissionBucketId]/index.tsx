@@ -18,10 +18,10 @@ import {
   Thead,
   Tr,
 } from '@chakra-ui/react'
-import { useE2ESDKClient, useE2ESDKClientKeys } from '@socialgouv/e2esdk-react'
+import { useE2ESDKClientKeys } from '@socialgouv/e2esdk-react'
 import { CopiableReadOnlyInput } from 'components/CopiableReadOnlyInput'
 import { NoSSR } from 'components/NoSSR'
-import { ShareKeyPopup } from 'components/ShareKey'
+import { ShareKeyPopup } from 'components/ShareKeyPopup'
 import {
   formWithMetadata,
   useContactFormSubmissions,
