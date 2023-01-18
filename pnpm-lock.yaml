@@ -79,6 +79,7 @@ importers:
       pretty-bytes: ^6.0.0
       react: ^18.2.0
       react-dom: ^18.2.0
+      react-focus-lock: ^2.9.2
       react-hook-form: ^7.41.5
       react-icons: ^4.7.1
       typescript: 4.9.3
@@ -102,6 +103,7 @@ importers:
       pretty-bytes: 6.0.0
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
+      react-focus-lock: 2.9.2_kzbn2opkn2327fwg5yzwzya5o4
       react-hook-form: 7.41.5_react@18.2.0
       react-icons: 4.7.1_react@18.2.0
       zod: 3.20.2
@@ -2941,7 +2943,7 @@ packages:
       '@motionone/easing': 10.15.1
       '@motionone/types': 10.15.1
       '@motionone/utils': 10.15.1
-      tslib: 2.4.0
+      tslib: 2.4.1
     dev: false
 
   /@motionone/dom/10.15.5:
@@ -2959,7 +2961,7 @@ packages:
     resolution: {integrity: sha512-6hIHBSV+ZVehf9dcKZLT7p5PEKHGhDwky2k8RKkmOvUoYP3S+dXsKupyZpqx5apjd9f+php4vXk4LuS+ADsrWw==}
     dependencies:
       '@motionone/utils': 10.15.1
-      tslib: 2.4.0
+      tslib: 2.4.1
     dev: false
 
   /@motionone/generators/10.15.1:
@@ -2967,7 +2969,7 @@ packages:
     dependencies:
       '@motionone/types': 10.15.1
       '@motionone/utils': 10.15.1
-      tslib: 2.4.0
+      tslib: 2.4.1
     dev: false
 
   /@motionone/types/10.15.1:
@@ -2979,7 +2981,7 @@ packages:
     dependencies:
       '@motionone/types': 10.15.1
       hey-listen: 1.0.8
-      tslib: 2.4.0
+      tslib: 2.4.1
     dev: false
 
   /@next/env/13.0.5:
