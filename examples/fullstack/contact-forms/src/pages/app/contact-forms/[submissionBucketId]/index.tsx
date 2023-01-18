@@ -1,6 +1,7 @@
 import {
   Box,
   Center,
+  Flex,
   FormControl,
   FormHelperText,
   FormLabel,
@@ -20,6 +21,7 @@ import {
 import { useE2ESDKClient, useE2ESDKClientKeys } from '@socialgouv/e2esdk-react'
 import { CopiableReadOnlyInput } from 'components/CopiableReadOnlyInput'
 import { NoSSR } from 'components/NoSSR'
+import { ShareKeyPopup } from 'components/ShareKey'
 import {
   formWithMetadata,
   useContactFormSubmissions,
@@ -52,16 +54,23 @@ const ContactFormResultsPage: NextPage = () => {
       <Text fontSize="sm" color="gray.500">
         Contact form submissions
       </Text>
-      <FormControl mt={8}>
-        <FormLabel>Public URL</FormLabel>
-        <CopiableReadOnlyInput
-          value={`http://localhost:4000/contact-form/${submissionBucketId}#${currentKey.publicKey}`}
-          size="sm"
-        />
-        <FormHelperText>
-          Anyone with this URL will be able to contact you
-        </FormHelperText>
-      </FormControl>
+      <Flex gap={8} alignItems="center">
+        <FormControl mt={8}>
+          <FormLabel>Public URL</FormLabel>
+          <CopiableReadOnlyInput
+            value={`http://localhost:4000/contact-form/${submissionBucketId}#${currentKey.publicKey}`}
+            size="sm"
+          />
+          <FormHelperText>
+            Anyone with this URL will be able to contact you
+          </FormHelperText>
+        </FormControl>
+        <ShareKeyPopup
+          mt={8}
+          ml="auto"
+          nameFingerprint={submissionBucketId}
+        ></ShareKeyPopup>
+      </Flex>
       <Box minH="xs" mt={8}>
         {(submissions.data?.decrypted.length ?? 0) === 0 ? (
           <Center>No data available yet.</Center>
