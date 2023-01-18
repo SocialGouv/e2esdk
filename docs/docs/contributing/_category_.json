@@ -1,0 +1,8 @@
+{
+  "label": "Contributing",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Documentation on the repository structure, and how to set up a development environment to contribute."
+  }
+}

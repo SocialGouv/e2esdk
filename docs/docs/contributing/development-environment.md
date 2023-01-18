@@ -27,7 +27,7 @@ pnpm build:server
 ```
 
 Setup the database by applying pending migrations, and optionally seed the database
-with [the usual suspects](../packages/server/src/database/seeds/identities.ts).
+with [the usual suspects](https://github.com/SocialGouv/e2esdk/blob/beta/packages/server/src/database/seeds/identities.ts).
 
 ```shell
 pnpm db migrations apply
@@ -45,11 +45,13 @@ The `dev` script will:
 - Build all packages in watch mode
 - Start the server with nodemon, watching its dependencies to
   allow auto-reloading the server when the sources change.
-  The server is listening on http://localhost:3001
-- Start a Vite host SPA for the devtools component, on http://localhost:3000
+  The server is listening on <http://localhost:3001>
+- Start a Vite host SPA for the devtools component, on <http://localhost:3000>
+- Start the Docusaurus documentation server on <http://localhost:3003/e2esdk>
 
 ## Port list
 
 - `3000` Vite SPA to host the devtools
 - `3001` Server
 - `3002` PostgreSQL database
+- `3003` Docusaurus documentation
