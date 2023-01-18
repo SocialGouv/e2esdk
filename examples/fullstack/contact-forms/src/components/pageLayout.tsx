@@ -57,7 +57,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
         >
           <Text fontWeight="semibold">
             <Icon as={MdOutlineLock} mr={1} transform="translateY(2px)" />
-            e2e SDK Demo
+            e2esdk Demo
           </Text>
           <ColorModeSwitch />
         </Flex>
@@ -88,7 +88,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
         <Link as={NextLink} href="/app/contact-forms" passHref>
           <Text fontWeight="semibold">
             <Icon as={MdOutlineLock} mr={1} transform="translateY(2px)" />
-            e2e SDK Demo
+            e2esdk Demo
           </Text>
         </Link>
         <Stack

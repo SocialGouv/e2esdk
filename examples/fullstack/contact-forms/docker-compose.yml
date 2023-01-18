@@ -32,7 +32,7 @@ services:
       app-db:
         condition: service_healthy
 
-  # E2ESDK --
+  # e2esdk --
 
   e2esdk-db:
     image: postgres:14.1

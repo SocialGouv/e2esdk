@@ -29,7 +29,7 @@ Start the docker compose stack:
 docker compose up -d --build
 ```
 
-This will boot all containers and run migrations on the E2ESDK database.
+This will boot all containers and run migrations on the e2esdk database.
 
 If you wish to seed the database with
 [test users](../../../packages/server/src/database/seeds/identities.ts),

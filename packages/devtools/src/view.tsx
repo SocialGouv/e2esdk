@@ -101,7 +101,7 @@ export const E2ESdkDevtoolsView: React.FC<BoxProps> = ({ ...props }) => {
               fontWeight="semibold"
               display={{ base: 'none', md: 'block' }}
             >
-              e2e SDK
+              e2esdk
             </Heading>
           </Tooltip>
           <TabList ml={{ base: 2, md: 8 }} mb="-1px">
