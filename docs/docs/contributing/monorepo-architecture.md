@@ -6,7 +6,6 @@ We use the following tools throughout the monorepo:
 
 - [PNPM](http://pnpm.io) for dependency management
 - [Turborepo](https://turbo.build/repo) for task management & caching
-- [Changesets](https://github.com/changesets/changesets) for updating version numbers & maintaining changelogs
 - [`tsup`](https://github.com/egoist/tsup) for bundling TypeScript code into ESM/CJS/.d.ts outputs for NPM
 - [SWC](https://swc.rs/) for transpiling the TypeScript server code into ESM, and to transpile sources on-the-fly for Jest _(faster than Babel)_
 - [Jest](https://jestjs.io/) for unit testing
@@ -16,6 +15,7 @@ We use the following tools throughout the monorepo:
 - Docker for packaging the server code into a deployable image
 - Docker Compose for declaring local development & example stacks
 - GitHub Actions for CI/CD
+- [multi-semantic-release](https://github.com/dhoulb/multi-semantic-release) to automate the publication of NPM packages & Docker images
 
 ## Configuration
 

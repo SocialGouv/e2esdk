@@ -11,7 +11,7 @@
   },
   "repository": "https://github.com/SocialGouv/e2esdk",
   "scripts": {
-    "dev": "FORCE_COLOR=3 turbo run dev --filter=./packages/*",
+    "dev": "FORCE_COLOR=3 turbo run dev --filter=./packages/* --filter=./docs",
     "dev:examples": "FORCE_COLOR=3 turbo run dev --filter=./examples/*",
     "dev:all": "FORCE_COLOR=3 turbo run dev",
     "build:npm": "turbo run build:npm",
@@ -27,7 +27,7 @@
     "@socialgouv/e2esdk-semantic-release": "workspace:*",
     "@types/jest": "^29.2.5",
     "multi-semantic-release": "^3.0.1",
-    "prettier": "^2.8.2",
+    "prettier": "^2.8.3",
     "turbo": "^1.7.0"
   },
   "prettier": {

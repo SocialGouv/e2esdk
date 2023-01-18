@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@chakra-ui/react": "^2.4.7",
+    "@chakra-ui/react": "^2.4.9",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@socialgouv/e2esdk-api": "workspace:*",
@@ -29,7 +29,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-focus-lock": "^2.9.2",
-    "react-hook-form": "^7.41.5",
+    "react-hook-form": "^7.42.1",
     "react-icons": "^4.7.1",
     "zod": "^3.20.2"
   },

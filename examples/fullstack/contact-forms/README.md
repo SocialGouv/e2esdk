@@ -5,8 +5,8 @@ This example project uses the following stack:
 - Next.js application front-end
 - PostgreSQL application database
 - Hasura GraphQL API layer
-- E2ESDK as a Docker image
-- PostgreSQL database for e2esdk
+- The e2esdk server as a Docker image
+- PostgreSQL database for the e2esdk server
 
 ## Getting started
 
