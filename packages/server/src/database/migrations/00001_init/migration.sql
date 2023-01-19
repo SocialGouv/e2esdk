@@ -76,9 +76,15 @@ CREATE TABLE e2esdk_permissions (
 
 -- Add triggers for updated_at
 
-CREATE EXTENSION IF NOT EXISTS moddatetime;
+CREATE OR REPLACE FUNCTION e2esdk_permissions_updated_at_trigger_proc()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
 
 CREATE TRIGGER e2esdk_permissions_updated_at_trigger
   BEFORE UPDATE ON e2esdk_permissions
   FOR EACH ROW
-  EXECUTE PROCEDURE moddatetime (updated_at);
+  EXECUTE PROCEDURE e2esdk_permissions_updated_at_trigger_proc();
