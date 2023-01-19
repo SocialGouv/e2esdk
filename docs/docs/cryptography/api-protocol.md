@@ -4,7 +4,7 @@
 
 1. [Mutual authentication](#mutual-authentication)
 2. [Message integrity](#message-integrity)
-3. [Limit the amount of secrecy](#minimal-secrecy) required to be held by either party
+3. [Limit the amount of secrecy](#minimised-secrecy) required to be held by either party
 4. [Non-replayability](#non-replayability) (at a later time) of SOME requests
 5. [Cacheability of responses](#cacheability)
 
