@@ -100,6 +100,7 @@ export default async function sharedKeysRoutes(app: App) {
         req.auditLog.warn({
           msg: 'postSharedKey:forbidden',
           reason,
+          details: 'disallowed by permissions',
           body: req.body,
         })
         throw app.httpErrors.forbidden(reason)
@@ -110,6 +111,7 @@ export default async function sharedKeysRoutes(app: App) {
         req.auditLog.warn({
           msg: 'postSharedKey:forbidden',
           reason,
+          details: 'disallowed by webhook',
           body: req.body,
         })
         throw app.httpErrors.forbidden(reason)
