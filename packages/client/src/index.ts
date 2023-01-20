@@ -717,11 +717,18 @@ export class Client {
       createdAt: createdAtISO,
       expiresAt: expiresAtISO,
       subkeyIndex,
-      name: encrypt(this.sodium, name, nameCipher, encodedCiphertextFormatV1),
+      name: encrypt(
+        this.sodium,
+        name,
+        nameCipher,
+        null,
+        encodedCiphertextFormatV1
+      ),
       payload: encrypt(
         this.sodium,
         randomPad(serializedCipher, CIPHER_MAX_PADDED_LENGTH),
         payloadCipher,
+        null,
         encodedCiphertextFormatV1
       ),
       nameFingerprint,
@@ -873,12 +880,14 @@ export class Client {
         this.sodium,
         keychainItem.name,
         sendTo,
+        null,
         encodedCiphertextFormatV1
       ),
       payload: encrypt(
         this.sodium,
         randomPad(serializedCipher, CIPHER_MAX_PADDED_LENGTH),
         sendTo,
+        null,
         encodedCiphertextFormatV1
       ),
       nameFingerprint,
@@ -1052,7 +1061,11 @@ export class Client {
 
   // Encryption / Decryption --
 
-  public encrypt<DataType>(input: DataType, nameFingerprint: string) {
+  public encrypt<DataType>(
+    input: DataType,
+    nameFingerprint: string,
+    additionalData?: string | Uint8Array
+  ) {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked: cannot encrypt')
     }
@@ -1069,11 +1082,20 @@ export class Client {
       this.sodium,
       input,
       currentKey.cipher,
-      'application/e2esdk.ciphertext.v1'
+      additionalData
+        ? typeof additionalData === 'string'
+          ? this.sodium.from_string(additionalData)
+          : additionalData
+        : null,
+      encodedCiphertextFormatV1
     )
   }
 
-  public decrypt(ciphertext: string, nameFingerpint: string) {
+  public decrypt(
+    ciphertext: string,
+    nameFingerpint: string,
+    additionalData?: string | Uint8Array
+  ) {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked: cannot decrypt')
     }
@@ -1087,7 +1109,11 @@ export class Client {
           this.sodium,
           ciphertext,
           key.cipher,
-          'application/e2esdk.ciphertext.v1'
+          additionalData
+            ? typeof additionalData === 'string'
+              ? this.sodium.from_string(additionalData)
+              : additionalData
+            : null
         )
       } catch {
         continue
@@ -1224,26 +1250,14 @@ export class Client {
       // todo: Decryption error handling
       const item: KeychainItem = {
         name: nameSchema.parse(
-          decrypt(
-            this.sodium,
-            lockedItem.name,
-            nameCipher,
-            encodedCiphertextFormatV1
-          )
+          decrypt(this.sodium, lockedItem.name, nameCipher)
         ),
         nameFingerprint: lockedItem.nameFingerprint,
         payloadFingerprint: lockedItem.payloadFingerprint,
         cipher: cipherParser.parse(
           JSON.parse(
             serializedCipherSchema
-              .parse(
-                decrypt(
-                  this.sodium,
-                  lockedItem.payload,
-                  payloadCipher,
-                  encodedCiphertextFormatV1
-                )
-              )
+              .parse(decrypt(this.sodium, lockedItem.payload, payloadCipher))
               .trim()
           )
         ),
@@ -1342,12 +1356,7 @@ export class Client {
         }
         const item: KeychainItem = {
           name: nameSchema.parse(
-            decrypt(
-              this.sodium,
-              sharedKey.name,
-              withSharedSecret,
-              encodedCiphertextFormatV1
-            )
+            decrypt(this.sodium, sharedKey.name, withSharedSecret)
           ),
           nameFingerprint: sharedKey.nameFingerprint,
           payloadFingerprint: sharedKey.payloadFingerprint,
@@ -1355,12 +1364,7 @@ export class Client {
             JSON.parse(
               serializedCipherSchema
                 .parse(
-                  decrypt(
-                    this.sodium,
-                    sharedKey.payload,
-                    withSharedSecret,
-                    encodedCiphertextFormatV1
-                  )
+                  decrypt(this.sodium, sharedKey.payload, withSharedSecret)
                 )
                 .trim()
             )

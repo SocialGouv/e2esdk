@@ -30,7 +30,8 @@ export function encrypt<DataType>(
   sodium: Sodium,
   input: DataType,
   cipher: CipherWithOptionalNonce,
-  outputFormat?: 'base64' | EncodedCiphertextFormat
+  additionalData?: null | Uint8Array,
+  outputFormat?: EncodedCiphertextFormat
 ): string
 
 /**
@@ -47,6 +48,7 @@ export function encrypt(
   sodium: Sodium,
   input: Uint8Array,
   cipher: CipherWithOptionalNonce,
+  additionalData?: null | Uint8Array,
   outputFormat?: Uint8ArrayOutputFormat
 ): Uint8Array
 
@@ -54,11 +56,15 @@ export function encrypt<DataType>(
   sodium: Sodium,
   input: DataType,
   cipher: CipherWithOptionalNonce,
+  additionalData?: null | Uint8Array,
   outputFormat:
     | Uint8ArrayOutputFormat
-    | 'base64'
     | EncodedCiphertextFormat = encodedCiphertextFormatV1
 ) {
+  if (additionalData && cipher.algorithm !== 'secretBox') {
+    throw new Error('Additional data is only supported with secretBox ciphers')
+  }
+
   const { payloadType, payload } = isUint8Array(input)
     ? {
         payloadType: PayloadType.buffer,
@@ -128,7 +134,15 @@ export function encrypt<DataType>(
   if (cipher.algorithm === 'secretBox') {
     const nonce =
       cipher.nonce ?? sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)
-    const ciphertext = sodium.crypto_secretbox_easy(payload, nonce, cipher.key)
+    const ciphertext = additionalData
+      ? sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
+          payload,
+          additionalData ?? null,
+          null, // nsec is not used in this particular construction
+          nonce,
+          cipher.key
+        )
+      : sodium.crypto_secretbox_easy(payload, nonce, cipher.key)
     if (outputFormat === encodedCiphertextFormatV1) {
       return [
         'v1',
@@ -150,44 +164,31 @@ export function encrypt<DataType>(
 export function decrypt(
   sodium: Sodium,
   input: Uint8Array,
-  cipher: Cipher
+  cipher: Cipher,
+  additionalData?: null | Uint8Array
 ): Uint8Array
 
 export function decrypt(
   sodium: Sodium,
   input: string,
   cipher: Cipher,
-  inputEncoding: 'base64'
-): Uint8Array
-
-export function decrypt(
-  sodium: Sodium,
-  input: string,
-  cipher: Cipher,
-  inputEncoding: EncodedCiphertextFormat
+  additionalData?: null | Uint8Array
 ): unknown
 
 export function decrypt(
   sodium: Sodium,
   input: string | Uint8Array,
   cipher: Cipher,
-  inputEncoding?: 'base64' | EncodedCiphertextFormat
+  additionalData?: null | Uint8Array
 ) {
-  if (typeof input === 'string' && !inputEncoding) {
-    throw new TypeError(
-      'Missing required inputEncoding argument for string-encoded ciphertext'
-    )
-  }
-  const payload = isUint8Array(input)
-    ? input
-    : inputEncoding === encodedCiphertextFormatV1
-    ? input.split('.')
-    : sodium.from_base64(input)
-
+  const payload = isUint8Array(input) ? input : input.split('.')
   if (payload[0] === 'v1' && payload[1] !== cipher.algorithm) {
     throw new Error(
       `Invalid algorithm: expected to decrypt ${cipher.algorithm}, but got ${payload[1]} instead.`
     )
+  }
+  if (additionalData && cipher.algorithm !== 'secretBox') {
+    throw new Error('Additional data is only supported with secretBox ciphers')
   }
 
   if (cipher.algorithm === 'box') {
@@ -219,11 +220,15 @@ export function decrypt(
     const [nonce, ciphertext] = isUint8Array(payload)
       ? split(payload, sodium.crypto_secretbox_NONCEBYTES)
       : [sodium.from_base64(payload[3]), sodium.from_base64(payload[4])]
-    const plaintext = sodium.crypto_secretbox_open_easy(
-      ciphertext,
-      nonce,
-      cipher.key
-    )
+    const plaintext = additionalData
+      ? sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
+          null,
+          ciphertext,
+          additionalData,
+          nonce,
+          cipher.key
+        )
+      : sodium.crypto_secretbox_open_easy(ciphertext, nonce, cipher.key)
     return decodePayload(sodium, payload, plaintext)
   }
 }

@@ -85,6 +85,14 @@ export function encryptFormData<FormData extends object>(
       state.sodium,
       cleartext,
       cipher,
+      // Note: we set the field name as additional data (AEAD)
+      // in order to defend against an attacker who would swap
+      // two field values.
+      // While such an attack does invalidate the signature,
+      // we cannot rely on a signature check when working with
+      // a subset of the encrypted fields (eg: a collaborator with
+      // reduced permissions may only have access to some fields).
+      state.sodium.from_string(field),
       'application/e2esdk.ciphertext.v1'
     )
     state.sodium.memzero(cipher.key)
@@ -95,6 +103,7 @@ export function encryptFormData<FormData extends object>(
     state.sodium,
     state.keyDerivationSecret,
     sealedBoxCipher,
+    null,
     'application/e2esdk.ciphertext.v1'
   )
   state.sodium.crypto_generichash_update(hashState, sealedSecret)
@@ -155,7 +164,7 @@ export function decryptFormData<FormData extends object>(
     sodium,
     sub.metadata.sealedSecret,
     cipher,
-    'application/e2esdk.ciphertext.v1'
+    null
   ) as Uint8Array
   if (
     !(keyDerivationSecret instanceof Uint8Array) ||
@@ -182,7 +191,8 @@ export function decryptFormData<FormData extends object>(
       sodium,
       encryptedField.ciphertext,
       cipher,
-      'application/e2esdk.ciphertext.v1'
+      // Field name is set as additional data, see the encryption note above.
+      sodium.from_string(field)
     )
     sodium.memzero(cipher.key)
   }
