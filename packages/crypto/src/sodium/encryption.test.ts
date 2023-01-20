@@ -156,7 +156,7 @@ describe('encryption', () => {
 
   describe('secretBox', () => {
     describe.each(BUFFER_SIZES)('buffer input (size %d)', cleartextLength => {
-      test('-> buffer', async () => {
+      test('-> buffer', () => {
         const input = sodium.randombytes_buf(cleartextLength)
         const cipher = _generateSecretBoxCipher(sodium)
         const ciphertext = encrypt(sodium, input, cipher, null, 'uint8array')
@@ -169,8 +169,8 @@ describe('encryption', () => {
         )
       })
 
-      test('-> encodedCiphertextFormatV1', async () => {
-        const input = sodium.randombytes_buf(32)
+      test('-> encodedCiphertextFormatV1', () => {
+        const input = sodium.randombytes_buf(cleartextLength)
         const cipher = _generateSecretBoxCipher(sodium)
         const ciphertext = encrypt(
           sodium,
@@ -187,7 +187,7 @@ describe('encryption', () => {
         )
       })
 
-      test('output format equivalence', async () => {
+      test('output format equivalence', () => {
         const input = sodium.randombytes_buf(cleartextLength)
         const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)
         const cipher = _generateSecretBoxCipher(sodium, nonce)
@@ -205,6 +205,21 @@ describe('encryption', () => {
             sodium.from_base64(v1.split('.')[4])
           )
         ).toEqual(buffer)
+      })
+
+      test('with additional data', () => {
+        const input = sodium.randombytes_buf(cleartextLength)
+        const cipher = _generateSecretBoxCipher(sodium)
+        const ad = sodium.randombytes_buf(16)
+        const ciphertext = encrypt(
+          sodium,
+          input,
+          cipher,
+          ad,
+          encodedCiphertextFormatV1
+        )
+        const cleartext = decrypt(sodium, ciphertext, cipher, ad)
+        expect(cleartext).toEqual(input)
       })
     })
 
@@ -224,6 +239,20 @@ describe('encryption', () => {
         expect(secretBoxCiphertextV1Schema('txt').parse(ciphertext)).toEqual(
           ciphertext
         )
+      })
+
+      test('with additional data', () => {
+        const cipher = _generateSecretBoxCipher(sodium)
+        const ad = sodium.randombytes_buf(16)
+        const ciphertext = encrypt(
+          sodium,
+          input,
+          cipher,
+          ad,
+          encodedCiphertextFormatV1
+        )
+        const cleartext = decrypt(sodium, ciphertext, cipher, ad)
+        expect(cleartext).toEqual(input)
       })
     })
 
@@ -245,6 +274,20 @@ describe('encryption', () => {
         )
         expect(ciphertext.length).toEqual(82)
       })
+
+      test('with additional data', () => {
+        const cipher = _generateSecretBoxCipher(sodium)
+        const ad = sodium.randombytes_buf(16)
+        const ciphertext = encrypt(
+          sodium,
+          input,
+          cipher,
+          ad,
+          encodedCiphertextFormatV1
+        )
+        const cleartext = decrypt(sodium, ciphertext, cipher, ad)
+        expect(cleartext).toEqual(input)
+      })
     })
 
     describe.each([true, false])('boolean input (%s)', input => {
@@ -264,6 +307,20 @@ describe('encryption', () => {
           ciphertext
         )
         expect(ciphertext.length).toEqual(115)
+      })
+
+      test('with additional data', () => {
+        const cipher = _generateSecretBoxCipher(sodium)
+        const ad = sodium.randombytes_buf(16)
+        const ciphertext = encrypt(
+          sodium,
+          input,
+          cipher,
+          ad,
+          encodedCiphertextFormatV1
+        )
+        const cleartext = decrypt(sodium, ciphertext, cipher, ad)
+        expect(cleartext).toEqual(input)
       })
     })
   })
