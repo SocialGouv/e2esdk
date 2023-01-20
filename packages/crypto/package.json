@@ -46,6 +46,7 @@
     "@socialgouv/e2esdk-api": "workspace:^",
     "@stablelib/hex": "^1.0.1",
     "libsodium-wrappers": "^0.7.10",
+    "secure-json-parse": "^2.7.0",
     "zod": "^3.20.2"
   },
   "devDependencies": {
