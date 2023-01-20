@@ -1,5 +1,6 @@
 import { PayloadType } from '@socialgouv/e2esdk-api'
 import type { Uint8ArrayOutputFormat } from 'libsodium-wrappers'
+import secureJSON from 'secure-json-parse'
 import {
   boolToBytes,
   bytesToBool,
@@ -255,7 +256,7 @@ function decodePayload(
     return bytesToBool(plaintext)
   }
   if (payloadType === PayloadType.json) {
-    return JSON.parse(sodium.to_string(plaintext).trim())
+    return secureJSON.parse(sodium.to_string(plaintext).trim())
   }
   throw new Error(`Unknown payload type ${payloadType}`)
 }

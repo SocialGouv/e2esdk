@@ -45,6 +45,7 @@
     "@socialgouv/e2esdk-crypto": "workspace:^",
     "local-state-sync": "1.0.0-beta.6",
     "mitt": "^3.0.0",
+    "secure-json-parse": "^2.7.0",
     "zod": "^3.20.2"
   },
   "devDependencies": {

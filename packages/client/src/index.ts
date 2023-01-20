@@ -76,6 +76,7 @@ import {
 } from '@socialgouv/e2esdk-crypto'
 import { LocalStateSync } from 'local-state-sync'
 import mitt, { Emitter } from 'mitt'
+import secureJSON from 'secure-json-parse'
 import { z } from 'zod'
 
 export type ClientConfig<KeyType = string> = {
@@ -126,7 +127,7 @@ const keychainItemSchema = z.object({
   payloadFingerprint: fingerprintSchema,
   cipher: z
     .string()
-    .transform(input => cipherParser.parse(JSON.parse(input.trim()))),
+    .transform(input => cipherParser.parse(secureJSON.parse(input.trim()))),
   createdAt: timestampSchema.transform(value => new Date(value)),
   expiresAt: timestampSchema.transform(value => new Date(value)).nullable(),
   sharedBy: apiIdentitySchema.shape.userId.nullable(),
@@ -1255,7 +1256,7 @@ export class Client {
         nameFingerprint: lockedItem.nameFingerprint,
         payloadFingerprint: lockedItem.payloadFingerprint,
         cipher: cipherParser.parse(
-          JSON.parse(
+          secureJSON.parse(
             serializedCipherSchema
               .parse(decrypt(this.sodium, lockedItem.payload, payloadCipher))
               .trim()
@@ -1361,7 +1362,7 @@ export class Client {
           nameFingerprint: sharedKey.nameFingerprint,
           payloadFingerprint: sharedKey.payloadFingerprint,
           cipher: cipherParser.parse(
-            JSON.parse(
+            secureJSON.parse(
               serializedCipherSchema
                 .parse(
                   decrypt(this.sodium, sharedKey.payload, withSharedSecret)
@@ -1612,7 +1613,7 @@ export class Client {
         'Invalid server response timestamp (too far off current time)'
       )
     }
-    return body ? JSON.parse(body) : undefined
+    return body ? secureJSON.parse(body) : undefined
   }
 
   // --
@@ -1719,7 +1720,7 @@ function stateSerializer(state: State) {
 }
 
 function stateParser(input: string): State {
-  const result = stateSchema.safeParse(JSON.parse(input))
+  const result = stateSchema.safeParse(secureJSON.parse(input))
   if (!result.success) {
     console.error(result.error)
     throw new Error(result.error.message)
