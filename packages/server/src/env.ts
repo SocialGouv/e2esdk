@@ -91,14 +91,17 @@ const envSchema = z.object({
   CORS_ALLOWED_ORIGINS: z
     .string()
     .default('*')
-    .transform(urls =>
-      urls.split(',').map(url => {
+    .transform(urls => {
+      if (urls.indexOf(',') === -1) {
+        return urls
+      }
+      return urls.split(',').map(url => {
         if (url.startsWith('/') && url.endsWith('$/')) {
           return new RegExp(url.slice(1, url.length - 1))
         }
         return url
       })
-    ),
+    }),
 
   /**
    * Allows computing database size usage in _health if using a metered DBaaS.
