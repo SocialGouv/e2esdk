@@ -9,6 +9,14 @@ const booleanSchema = z
   .string()
   .transform(value => ['true', 'yes', '1', 'on'].includes(value.toLowerCase()))
 
+const corsOriginSchema = z.union([
+  z.string().url(),
+  z
+    .string()
+    .regex(/^\/.+\$\/$/)
+    .transform(pattern => new RegExp(pattern.slice(1, pattern.length - 1))),
+])
+
 const envSchema = z.object({
   // Required env
   NODE_ENV: z.enum(['development', 'production', 'test'] as const),
@@ -93,14 +101,9 @@ const envSchema = z.object({
     .default('*')
     .transform(urls => {
       if (urls.indexOf(',') === -1) {
-        return urls
+        return z.union([z.literal('*'), corsOriginSchema]).parse(urls)
       }
-      return urls.split(',').map(url => {
-        if (url.startsWith('/') && url.endsWith('$/')) {
-          return new RegExp(url.slice(1, url.length - 1))
-        }
-        return url
-      })
+      return urls.split(',').map(url => corsOriginSchema.parse(url))
     }),
 
   /**
