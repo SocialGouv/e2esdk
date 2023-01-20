@@ -19,16 +19,7 @@ export function split(buffer: Uint8Array, splitPoint: number) {
 }
 
 export function isUint8Array(input: any): input is Uint8Array {
-  return typeof input?.byteLength === 'number'
-}
-
-export function isEncryptable(
-  value: any
-): value is Uint8Array | string | number | boolean {
-  return (
-    ['string', 'number', 'boolean'].includes(typeof value) ||
-    isUint8Array(value)
-  )
+  return input instanceof Uint8Array
 }
 
 /**

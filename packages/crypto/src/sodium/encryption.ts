@@ -7,7 +7,7 @@ import {
   ieee754BytesToNumber,
   numberToIEEE754Bytes,
 } from '../shared/codec'
-import { concat, isEncryptable, isUint8Array, split } from '../shared/utils'
+import { concat, isUint8Array, split } from '../shared/utils'
 import type { Cipher } from './ciphers'
 import type { Sodium } from './sodium'
 
@@ -259,54 +259,4 @@ function decodePayload(
     return secureJSON.parse(sodium.to_string(plaintext).trim())
   }
   throw new Error(`Unknown payload type ${payloadType}`)
-}
-
-// Higher-level interfaces --
-
-export function encryptObject<Object extends object>(
-  sodium: Sodium,
-  input: Object,
-  cipher: CipherWithOptionalNonce
-) {
-  return Object.fromEntries(
-    Object.entries(input).map(([key, value]) => {
-      if (!isEncryptable(value)) {
-        return [key, value]
-      }
-      try {
-        return [key, encrypt(sodium, value, cipher, encodedCiphertextFormatV1)]
-      } catch {
-        return [key, value]
-      }
-    })
-  )
-}
-
-export function decryptObject<Object extends object>(
-  sodium: Sodium,
-  input: Object,
-  cipher: Cipher
-) {
-  type ObjectDecryptionError = {
-    key: string
-    error: string
-  }
-  const errors: ObjectDecryptionError[] = []
-  const result = Object.fromEntries(
-    Object.entries(input).map(([key, value]) => {
-      try {
-        return [key, decrypt(sodium, value, cipher)]
-      } catch (error) {
-        errors.push({
-          key,
-          error: String(error),
-        })
-        return [key, value]
-      }
-    })
-  )
-  if (errors.length) {
-    console.error(errors)
-  }
-  return result
 }
