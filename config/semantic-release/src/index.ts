@@ -40,13 +40,16 @@ export async function success(_: any, context: any) {
   const repoRoot = path.resolve(ctx.data.cwd, '../..')
   const { gitTag, version } = ctx.data.nextRelease
   const name = gitTag.replace(`@${version}`, '')
-  const sceau = JSON.parse(
-    await fs.readFile(path.resolve(ctx.data.cwd, 'sceau.json'), {
+  const packageJson = JSON.parse(
+    await fs.readFile(path.resolve(ctx.data.cwd, 'package.json'), {
       encoding: 'utf8',
     })
   )
-  const packageJson = JSON.parse(
-    await fs.readFile(path.resolve(ctx.data.cwd, 'package.json'), {
+  if (packageJson.private) {
+    return
+  }
+  const sceau = JSON.parse(
+    await fs.readFile(path.resolve(ctx.data.cwd, 'sceau.json'), {
       encoding: 'utf8',
     })
   )
