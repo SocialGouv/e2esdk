@@ -11,11 +11,9 @@ import crypto from 'node:crypto'
 async function main() {
   await import('zx/globals')
 
-  const pkg = require(path.resolve(__dirname, '../package.json'))
-
   if (argv.help || !argv._[0]) {
     console.log(`
-  ${chalk.bold('Generate Sodium keys')} ${chalk.dim(`v${pkg.version}`)}
+  ${chalk.bold('Generate Sodium keys')}
 
   Usage:
     ${chalk.dim('$')} keygen ${chalk.green('[algorithm]')} ${chalk.dim(
