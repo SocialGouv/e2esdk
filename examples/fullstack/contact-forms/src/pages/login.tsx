@@ -36,9 +36,10 @@ const LoginPage: NextPage = () => {
         <FormControl>
           <FormLabel>Main Key</FormLabel>
           <Input
-            fontFamily="mono"
             value={mainKey}
             onChange={e => setMainKey(e.target.value)}
+            type="password"
+            pattern="[\w-]{43}"
           />
         </FormControl>
         <Button type="submit" onClick={login}>

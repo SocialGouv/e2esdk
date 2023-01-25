@@ -54,7 +54,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
         </FormControl>
         <FormControl>
           <FormLabel>Main Key</FormLabel>
-          <Input fontFamily="mono" {...register('mainKey')} />
+          <Input type="password" pattern="[\w-]{43}" {...register('mainKey')} />
         </FormControl>
         <Button type="submit" isLoading={isSubmitting} leftIcon={buttonIcon}>
           {buttonText}
