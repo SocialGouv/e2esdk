@@ -47,6 +47,7 @@ export const E2ESdkDevtoolsView: React.FC<BoxProps> = ({ ...props }) => {
         borderTopColor: 'black',
         boxShadow: 'rgba(0, 0, 0, 0.15) 0px -12px 12px 0px',
       }}
+      textAlign="start"
       {...props}
     >
       <Tabs
