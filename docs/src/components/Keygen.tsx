@@ -25,7 +25,7 @@ export const SignatureKeygenUI = () => {
 
   return (
     <>
-      <a href="#credentials" onClick={generate}>
+      <a href="javascript:;" onClick={generate}>
         generate a new one
       </a>{' '}
       below:

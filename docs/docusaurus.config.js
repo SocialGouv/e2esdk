@@ -62,7 +62,13 @@ const config = {
             resolve: {
               fallback: {
                 path: false,
+                crypto: false,
+                fs: false,
+                buffer: false,
               },
+            },
+            node: {
+              __dirname: true,
             },
           }
         },
@@ -102,7 +108,7 @@ const config = {
             items: [
               {
                 label: 'Tutorial',
-                to: '/docs/intro',
+                to: '/docs/overview',
               },
             ],
           },
