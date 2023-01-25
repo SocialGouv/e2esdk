@@ -9,6 +9,10 @@
       "dependsOn": ["^build:server"],
       "outputs": ["dist/**", "build/**"]
     },
+    "build:docs": {
+      "dependsOn": ["^build:npm"],
+      "outputs": ["build/**"]
+    },
     "typecheck": {
       "dependsOn": ["^build:npm"],
       "outputs": []
