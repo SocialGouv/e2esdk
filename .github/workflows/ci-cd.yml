@@ -62,7 +62,7 @@ jobs:
         run: pnpm build:npm
 
       - name: Build (Docker)
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: .
           file: packages/server/Dockerfile
@@ -215,7 +215,7 @@ jobs:
           password: ${{ github.token }}
 
       - name: Build & Publish (Docker)
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         id: docker-build-push
         with:
           context: .
