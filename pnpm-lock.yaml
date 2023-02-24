@@ -372,7 +372,7 @@ importers:
       chokidar: ^3.5.3
       dotenv: ^16.0.3
       fastify: ^4.11.0
-      fastify-micro: 4.0.0-beta.3
+      fastify-micro: 4.0.0-beta.4
       fastify-plugin: ^4.5.0
       mitt: ^3.0.0
       nodemon: ^2.0.20
@@ -393,7 +393,7 @@ importers:
       '@socialgouv/e2esdk-crypto': link:../crypto
       dotenv: 16.0.3
       fastify: 4.11.0
-      fastify-micro: 4.0.0-beta.3_fastify@4.11.0
+      fastify-micro: 4.0.0-beta.4_fastify@4.11.0
       fastify-plugin: 4.5.0
       mitt: 3.0.0
       postgres: 3.3.3
@@ -5322,22 +5322,22 @@ packages:
       - supports-color
     dev: true
 
-  /@sentry/core/7.31.1:
-    resolution: {integrity: sha512-quaNU6z8jabmatBTDi28Wpff2yzfWIp/IU4bbi2QOtEiCNT+TQJXqlRTRMu9xLrX7YzyKCL5X2gbit/85lyWUg==}
+  /@sentry/core/7.38.0:
+    resolution: {integrity: sha512-+hXh/SO3Ie6WC2b+wi01xLhyVREdkRXS5QBmCiv3z2ks2HvYXp7PoKSXJvNKiwCP+pBD+enOnM1YEzM2yEy5yw==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry/types': 7.31.1
-      '@sentry/utils': 7.31.1
+      '@sentry/types': 7.38.0
+      '@sentry/utils': 7.38.0
       tslib: 1.14.1
     dev: false
 
-  /@sentry/node/7.31.1:
-    resolution: {integrity: sha512-4VzfOU1YHeoGkBQmkVXlXoXITf+1NkZEREKhdzgpVAkVjb2Tk3sMoFov4wOKWnNTTj4ka50xyaw/ZmqApgQ4Pw==}
+  /@sentry/node/7.38.0:
+    resolution: {integrity: sha512-jNIN6NZvgzn/oms8RQzffjX8Z0LQDTN6N28nnhzqGCvnfmS1QtTt0FlU+pTuFXZNNSjfGy4XMXMYvLlbvhm2bg==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry/core': 7.31.1
-      '@sentry/types': 7.31.1
-      '@sentry/utils': 7.31.1
+      '@sentry/core': 7.38.0
+      '@sentry/types': 7.38.0
+      '@sentry/utils': 7.38.0
       cookie: 0.4.2
       https-proxy-agent: 5.0.1
       lru_map: 0.3.3
@@ -5346,16 +5346,16 @@ packages:
       - supports-color
     dev: false
 
-  /@sentry/types/7.31.1:
-    resolution: {integrity: sha512-1uzr2l0AxEnxUX/S0EdmXUQ15/kDsam8Nbdw4Gai8SU764XwQgA/TTjoewVP597CDI/AHKan67Y630/Ylmkx9w==}
+  /@sentry/types/7.38.0:
+    resolution: {integrity: sha512-NKOALR6pNUMzUrsk2m+dkPrO8uGNvNh1LD0BCPswKNjC2qHo1h1mDGCgBmF9+EWyii8ZoACTIsxvsda+MBf97Q==}
     engines: {node: '>=8'}
     dev: false
 
-  /@sentry/utils/7.31.1:
-    resolution: {integrity: sha512-ZsIPq29aNdP9q3R7qIzJhZ9WW+4DzE9g5SfGwx3UjTIxoRRBfdUJUbf7S+LKEdvCkKbyoDt6FLt5MiSJV43xBA==}
+  /@sentry/utils/7.38.0:
+    resolution: {integrity: sha512-MgbI3YmYuyyhUtvcXkgGBqjOW+nuLLNGUdWCK+C4kObf8VbLt3dSE/7SEMT6TSHLYQmxs2BxFgx5Agn97m68kQ==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry/types': 7.31.1
+      '@sentry/types': 7.38.0
       tslib: 1.14.1
     dev: false
 
@@ -9496,19 +9496,19 @@ packages:
     dependencies:
       punycode: 1.4.1
 
-  /fastify-micro/4.0.0-beta.3_fastify@4.11.0:
-    resolution: {integrity: sha512-12BBKb0eOk0TaXjE96rWpW6SoUX8XnRPSwYuo2AqrqfVPkVnm7blcE1QGOyCIuM9qSvIdSJSMpiInQ0x7m+Dpw==}
+  /fastify-micro/4.0.0-beta.4_fastify@4.11.0:
+    resolution: {integrity: sha512-EQkK9XbeHopX7/RIm58/FqVaOtxbGH4MPGuovwqSqejTd2Vbn4B90rYNy8Jm0d1kR3T1HtkJ37W36trJWms5vw==}
     peerDependencies:
       fastify: ^4
+      pino: ^7 || ^8
     dependencies:
       '@47ng/check-env': 3.0.0
       '@fastify/autoload': 5.7.1
       '@fastify/sensible': 5.2.0
       '@fastify/under-pressure': 8.2.0
-      '@sentry/node': 7.31.1
+      '@sentry/node': 7.38.0
       fastify: 4.11.0
       fastify-plugin: 4.5.0
-      get-port: 5.1.1
       pino-abstract-transport: 1.0.0
       redact-env: 1.0.0
       sonic-boom: 3.2.1
@@ -10067,11 +10067,6 @@ packages:
     resolution: {integrity: sha512-pjzuKtY64GYfWizNAJ0fr9VqttZkNiK2iS430LtIHzjBEr6bX8Am2zm4sW4Ro5wjWW5cAlRL1qAMTcXbjNAO2Q==}
     engines: {node: '>=8.0.0'}
     dev: true
-
-  /get-port/5.1.1:
-    resolution: {integrity: sha512-g/Q1aTSDOxFpchXC4i8ZWvxA1lnPqx/JHqcpIw0/LX9T8x/GBbi6YnlN5nhaKIFkT8oFsscUKgDJYxfwfS6QsQ==}
-    engines: {node: '>=8'}
-    dev: false
 
   /get-proxy/2.1.0:
     resolution: {integrity: sha512-zmZIaQTWnNQb4R4fJUEp/FC51eZsc6EkErspy3xtIYStaq8EB/hDIWipxsal+E8rz0qD7f2sL/NA9Xee4RInJw==}
