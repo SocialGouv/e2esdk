@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { deviceEnrolledResponse, deviceEnrollmentRecord } from './devices'
-import { deviceIdSchema } from './schemas/devices'
+import { deviceIdSchema, deviceLabelSchema } from './schemas/devices'
 import { secretBoxCiphertextV1Schema } from './schemas/encodings'
 import { identitySchema } from './schemas/identity'
 import {
@@ -41,7 +41,7 @@ export const loginFinal = opaqueLoginFinal
 export type LoginFinal = z.infer<typeof loginFinal>
 
 export const loginFinalResponse = z.object({
-  deviceLabel: secretBoxCiphertextV1Schema('txt').optional(),
+  deviceLabel: deviceLabelSchema.optional(),
   wrappedMainKey: secretBoxCiphertextV1Schema('bin'),
 })
 export type LoginFinalResponse = z.infer<typeof loginFinalResponse>

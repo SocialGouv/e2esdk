@@ -47,7 +47,7 @@ export type DeviceEnrollmentResponse = z.infer<typeof deviceEnrollmentResponse>
 // --
 
 export const deviceEnrollmentRecord = opaqueRegistrationRecord.extend({
-  deviceLabel: deviceLabelSchema,
+  deviceLabel: deviceLabelSchema.optional(),
   wrappedMainKey: secretBoxCiphertextV1Schema('bin'),
 })
 export type DeviceEnrollmentRecord = z.infer<typeof deviceEnrollmentRecord>
