@@ -27,10 +27,29 @@ SIGNATURE_PUBLIC_KEY=gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE
 // https://vitejs.dev/config/server-options.html#server-host
 dns.setDefaultResultOrder('verbatim')
 
-const https: ServerOptions = {
-  cert: fs.readFileSync(path.resolve(__dirname, '../../config/certs/tls.crt')),
-  key: fs.readFileSync(path.resolve(__dirname, '../../config/certs/tls.key')),
+function loadTlsCertificates(): ServerOptions | false {
+  try {
+    return {
+      cert: fs.readFileSync(
+        path.resolve(__dirname, '../../config/certs/tls.crt')
+      ),
+      key: fs.readFileSync(
+        path.resolve(__dirname, '../../config/certs/tls.key')
+      ),
+    }
+  } catch {
+    if (!process.env.CI) {
+      throw new Error(
+        `TLS configuration is required in a local development environment.
+
+  -> See docs/docs/contributing/development-environment.md to get started.
+`
+      )
+    }
+    return false
+  }
 }
+const https = loadTlsCertificates()
 
 // https://vitejs.dev/config/
 export default defineConfig({
