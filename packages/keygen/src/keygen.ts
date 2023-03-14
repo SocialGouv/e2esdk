@@ -1,6 +1,8 @@
 #!/usr/bin/env zx
 
+import { ServerSetup } from '@47ng/opaque-server'
 import {
+  base64UrlEncode,
   deriveClientIdentity,
   multipartSignature,
   sodium,
@@ -29,6 +31,9 @@ async function main() {
     ${chalk.green('•')} sign, signature  ${chalk.italic.dim('ed25519')}
     ${chalk.green('•')} identity         ${chalk.italic.dim(
       'Complete e2esdk Identity'
+    )}
+    ${chalk.green('•')} opaque           ${chalk.italic.dim(
+      'OPAQUE server setup'
     )}
 
   Options:
@@ -154,6 +159,13 @@ ${envName('PRIVATE_KEY')}=${privateKey}`)
         indentation
       )
     )
+  }
+  if (argv._[0] === 'opaque') {
+    const setup = new ServerSetup()
+    const env = base64UrlEncode(setup.serialize())
+    console.info(`Add the following environment variable to package/server/.env:
+OPAQUE_SERVER_SETUP=${env}
+`)
   }
 }
 

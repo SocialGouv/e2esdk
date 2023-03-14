@@ -46,20 +46,60 @@ export function ieee754BytesToNumber(bytes: Uint8Array) {
   return f64[0]
 }
 
-export function boolToByte(input: boolean) {
-  const byte = new Uint8Array(1)
-  crypto.getRandomValues(byte)
-  if (input) {
-    byte[0] |= 0x01 // set LSB
-  } else {
-    byte[0] &= 0xfe // clear LSB
+/**
+ * XOR all the bits of the buffer together, and convert the result to a boolean.
+ * @returns true if there is an odd number of bits set in the buffer.
+ */
+export function _xor(buffer: Uint8Array) {
+  let out = 0
+  for (const byte of buffer) {
+    for (let i = 0; i < 8; ++i) {
+      out ^= (byte >> i) & 0x01
+    }
   }
-  return byte
+  return out === 1
 }
 
-export function byteToBool(byte: Uint8Array) {
-  return Boolean(byte[0] & 0x01)
+/**
+ * Hide a boolean in a buffer of random bytes
+ *
+ * The premise of this encoding is that the output buffer must XOR to the
+ * desired boolean state.
+ * We do this by generating 32 bytes of randomness, and making sure it
+ * XORs to the right state by flipping a random bit if necessary.
+ *
+ * @returns 32 bytes of randomness, which XORs to the desired boolean
+ */
+export function boolToBytes(input: boolean) {
+  // We start with 1 + 32 bytes of randomness
+  const bytes = new Uint8Array(33)
+  crypto.getRandomValues(bytes)
+  // The first one is our 'address' byte
+  const address = bytes[0]
+  // We clear it in the buffer after use
+  bytes[0] = 0x00
+  // The next 32 bytes are what we're going to return
+  const data = bytes.slice(1)
+  // We're going to use our address byte as the index of the
+  // the bit to flip in the array of bytes.
+  // The last 3 bits of the address byte (0-7) give us
+  // the bit index within a particular byte:
+  const b = address & 0x03
+  // The other 5 bits (0-31) give us the index of the byte
+  // where to apply the flip:
+  const B = (address >> 3) & 0x1f
+  // First, we compute the XOR of all the bits in our output data
+  const x = _xor(data)
+  // If the XOR is equal to our desired state, nothing to do,
+  // otherwise, we set the bit mask based on our bit index `b`
+  const m = (input === x ? 0 : 1) << b
+  // Finally, we (possibly) flip the byte `B` with our mask
+  data[B] ^= m
+  return data
 }
+
+// Decoding is trivial: XOR all bits together to expose the boolean.
+export const bytesToBool = _xor
 
 export function numberToUint32LE(input: number) {
   const buffer = new ArrayBuffer(4)

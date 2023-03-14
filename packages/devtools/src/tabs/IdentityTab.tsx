@@ -17,8 +17,8 @@ import { UserIdentityInput } from '../components/UserIdentityInput'
 export const IdentityTab: React.FC = () => {
   return (
     <SectionContainer>
-      <FindUsersSection />
       <YourIdentitySection />
+      <FindUsersSection />
     </SectionContainer>
   )
 }

@@ -21,7 +21,7 @@ import { Client } from '@socialgouv/e2esdk-client'
 import { E2ESDKClientProvider } from '@socialgouv/e2esdk-react'
 
 const e2esdkClient = new Client({
-  serverURL: 'http://localhost:3001',
+  serverURL: 'https://localhost:3001',
   serverPublicKey: 'gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE',
 })
 

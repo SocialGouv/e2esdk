@@ -74,7 +74,7 @@ keep a stateful store of seen nonces (they could be ephemeral with a TTL of
 
 Authentication is stored in the following request headers:
 
-- `x-e2esdk-user-id`
+- `x-e2esdk-session-id`
 - `x-e2esdk-client-id`
 - `x-e2esdk-timestamp`
 - `x-e2esdk-signature`

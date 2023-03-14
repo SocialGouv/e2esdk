@@ -1,5 +1,5 @@
 import cors, { FastifyCorsOptions } from '@fastify/cors'
-import { publicKeyAuthHeaders } from '@socialgouv/e2esdk-api'
+import { requestHeaders, responseHeaders } from '@socialgouv/e2esdk-api'
 import type { FastifyPluginAsync } from 'fastify'
 import fp from 'fastify-plugin'
 import { env } from '../env.js'
@@ -12,11 +12,8 @@ const corsPlugin: FastifyPluginAsync = async (app: App) => {
         ? env.CORS_ALLOWED_ORIGINS
         : '*',
     methods: ['GET', 'POST', 'DELETE'],
-    allowedHeaders: ['content-type', ...publicKeyAuthHeaders.keyof().options],
-    exposedHeaders: [
-      ...publicKeyAuthHeaders.keyof().options,
-      'x-e2esdk-server-pubkey',
-    ],
+    allowedHeaders: ['content-type', ...requestHeaders.keyof().options],
+    exposedHeaders: responseHeaders.keyof().options,
     maxAge: 3600, // 1h
   }
 

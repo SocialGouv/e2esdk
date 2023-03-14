@@ -4,6 +4,7 @@
 **/.vite
 **/.turbo
 **/.env*
+**/certs
 examples/
 
 # https://github.com/vercel/turbo/issues/1997

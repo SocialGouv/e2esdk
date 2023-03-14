@@ -104,8 +104,9 @@ export class E2ESDKDevtoolsElement extends HTMLElement {
       this.#client = new Client({
         serverURL: serverURL,
         serverPublicKey: serverPublicKey,
-        // Let the main application client deal with notifications
+        // Let the main application client deal with notifications & session refresh
         handleNotifications: false,
+        handleSessionRefresh: false,
       })
       console.debug(`[🔐 devtools] Created new client for Web Component with
       ├ clientId:        ${this.#client.config.clientId}

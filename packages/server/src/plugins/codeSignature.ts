@@ -68,7 +68,7 @@ const codeSignaturePlugin: FastifyPluginAsync = async (app: App) => {
     build: result.buildURL,
   })
   const { outcome: _, ...decoration } = result
-  app.decorate('codeSignature', decoration)
+  app.decorate<Decoration>('codeSignature', decoration)
 }
 
 export default fp(codeSignaturePlugin, {

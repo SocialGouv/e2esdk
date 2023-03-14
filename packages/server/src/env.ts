@@ -1,3 +1,6 @@
+import { ServerSetup } from '@47ng/opaque-server'
+import { base64Bytes } from '@socialgouv/e2esdk-api'
+import { base64UrlDecode } from '@socialgouv/e2esdk-crypto'
 import dotenv from 'dotenv'
 import { z } from 'zod'
 
@@ -21,6 +24,30 @@ const envSchema = z.object({
   // Required env
   NODE_ENV: z.enum(['development', 'production', 'test'] as const),
   POSTGRESQL_URL: z.string().url(),
+  REDIS_URL: z.string().url(),
+
+  /**
+   * OPAQUE server secret setup
+   *
+   * Generate one with `pnpm keygen opaque`
+   */
+  OPAQUE_SERVER_SETUP: base64Bytes(128).transform(str => {
+    return ServerSetup.deserialize(base64UrlDecode(str))
+  }),
+
+  /**
+   * Session secrets
+   *
+   * Generate one with `pnpm keygen secretBox`.
+   *
+   * You may pass multiple comma-separated values for rotation.
+   * The first secret will be the one used for encrypting sessions,
+   * and others may be used to accept older sessions.
+   */
+  SESSION_SECRETS: z
+    .string()
+    .regex(/^([\w-]{43})(?:,([\w-]{43}))*$/)
+    .transform(env => env.split(',').map(base64UrlDecode)),
 
   /**
    * URL where this server can be reached.
@@ -115,23 +142,32 @@ const envSchema = z.object({
     .transform(value => parseInt(value)),
 })
 
+const secretEnvs: Array<keyof typeof envSchema.shape> = [
+  'OPAQUE_SERVER_SETUP',
+  'POSTGRESQL_URL',
+  'REDIS_URL',
+  'SESSION_SECRETS',
+  'SIGNATURE_PRIVATE_KEY',
+]
+
 const res = envSchema.safeParse(process.env)
 
 if (!res.success) {
   console.error(
     `Missing or invalid environment variable${
       res.error.errors.length > 1 ? 's' : ''
-    }:`
-  )
-  console.error(
-    res.error.errors
-      .map(error => `  ${error.path}: ${error.message}`)
-      .join('\n')
+    }:
+${res.error.errors.map(error => `  ${error.path}: ${error.message}`).join('\n')}
+`
   )
   process.exit(1)
 }
 
-export const env = res.data
+export const env = Object.freeze(res.data)
+
+for (const secretEnv of secretEnvs) {
+  delete process.env[secretEnv]
+}
 
 declare global {
   namespace NodeJS {

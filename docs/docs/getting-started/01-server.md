@@ -58,7 +58,7 @@ services:
       - '3001:3000'
     environment:
       # This is the URL where this server will be accessible:
-      - DEPLOYMENT_URL=http://localhost:3001
+      - DEPLOYMENT_URL=https://localhost:3001
 
       # URL to the database in the Docker stack network:
       - POSTGRESQL_URL=postgres://postgres:password@e2esdk-db:5432/e2esdk
@@ -68,7 +68,7 @@ services:
       - SIGNATURE_PRIVATE_KEY=___examples-server-signkey__NOT-FOR-PROD__yCwTsHrcRO00MjMDBcSndfUe_XZYIoYfqHtutXdT00oQ
 
       # CORS configuration assumes your app runs on localhost:3000
-      - CORS_ALLOWED_ORIGINS=http://localhost:3000
+      - CORS_ALLOWED_ORIGINS=https://localhost:3000
     links:
       - e2esdk-db
     depends_on:

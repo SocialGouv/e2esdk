@@ -32,13 +32,7 @@ export function useE2ESDKClient() {
 export function useE2ESDKClientIdentity() {
   const client = useE2ESDKClient()
   const [identity, setIdentity] = React.useState<PublicUserIdentity | null>(
-    () => {
-      try {
-        return client.publicIdentity
-      } catch {
-        return null
-      }
-    }
+    () => client.publicIdentity
   )
   React.useEffect(() => {
     return client.on('identityUpdated', identity => setIdentity(identity))

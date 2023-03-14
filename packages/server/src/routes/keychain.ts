@@ -3,8 +3,8 @@ import {
   getKeychainResponseBody,
   postKeychainItemRequestBody,
   PostKeychainItemRequestBody,
-  publicKeyAuthHeaders,
-  PublicKeyAuthHeaders,
+  requestHeaders,
+  RequestHeaders,
 } from '@socialgouv/e2esdk-api'
 import {
   numberToUint32LE,
@@ -28,16 +28,16 @@ import type { App } from '../types'
 
 export default async function keychainRoutes(app: App) {
   app.post<{
-    Headers: PublicKeyAuthHeaders
+    Headers: RequestHeaders
     Body: PostKeychainItemRequestBody
   }>(
     '/keychain',
     {
-      preHandler: app.usePublicKeyAuth(),
+      preHandler: app.useAuth(),
       schema: {
         tags: ['keychain'],
         summary: 'Add a key to my keychain',
-        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        headers: zodToJsonSchema(requestHeaders),
         body: zodToJsonSchema(postKeychainItemRequestBody, {
           $refStrategy: 'none',
         }),
@@ -202,16 +202,16 @@ export default async function keychainRoutes(app: App) {
   )
 
   app.get<{
-    Headers: PublicKeyAuthHeaders
+    Headers: RequestHeaders
     Reply: GetKeychainResponseBody
   }>(
     '/keychain',
     {
-      preHandler: app.usePublicKeyAuth(),
+      preHandler: app.useAuth(),
       schema: {
         tags: ['keychain'],
         summary: 'Get my own keys',
-        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        headers: zodToJsonSchema(requestHeaders),
         response: {
           200: zodToJsonSchema(getKeychainResponseBody, {
             $refStrategy: 'none',
@@ -232,17 +232,17 @@ export default async function keychainRoutes(app: App) {
   })
 
   app.delete<{
-    Headers: PublicKeyAuthHeaders
+    Headers: RequestHeaders
     Params: z.infer<typeof deleteKeychainEntryURLParams>
   }>(
     '/keychain/:nameFingerprint/:payloadFingerprint',
     {
-      preHandler: app.usePublicKeyAuth(),
+      preHandler: app.useAuth(),
       schema: {
         tags: ['keychain'],
         summary: 'Delete a keychain entry',
         params: zodToJsonSchema(deleteKeychainEntryURLParams),
-        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        headers: zodToJsonSchema(requestHeaders),
         response: {
           200: {
             type: 'null',

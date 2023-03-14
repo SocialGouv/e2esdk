@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@socialgouv/e2esdk-crypto": "workspace:^",
+    "@47ng/opaque-server": "^2.1.4",
     "zod": "^3.20.2",
     "zx": "^7.1.1"
   },

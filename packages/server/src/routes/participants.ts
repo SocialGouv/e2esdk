@@ -2,8 +2,8 @@ import {
   fingerprintSchema,
   getParticipantsResponseBody,
   GetParticipantsResponseBody,
-  publicKeyAuthHeaders,
-  PublicKeyAuthHeaders,
+  requestHeaders,
+  RequestHeaders,
 } from '@socialgouv/e2esdk-api'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
@@ -18,19 +18,19 @@ const getParticipantsUrlParams = z.object({
 export default async function participantsRoutes(app: App) {
   app.get<{
     Params: z.infer<typeof getParticipantsUrlParams>
-    Headers: PublicKeyAuthHeaders
+    Headers: RequestHeaders
     Reply: GetParticipantsResponseBody
   }>(
     '/participants/:nameFingerprint/:payloadFingerprint',
     {
-      preHandler: app.usePublicKeyAuth(),
+      preHandler: app.useAuth(),
       schema: {
         tags: ['identity', 'permissions'],
         summary: 'List who has access to a key',
         params: zodToJsonSchema(getParticipantsUrlParams, {
           $refStrategy: 'none',
         }),
-        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        headers: zodToJsonSchema(requestHeaders),
         response: {
           200: zodToJsonSchema(getParticipantsResponseBody, {
             $refStrategy: 'none',

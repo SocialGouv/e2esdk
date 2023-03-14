@@ -2,10 +2,13 @@ import react from '@vitejs/plugin-react'
 import dotenv from 'dotenv'
 import dns from 'node:dns'
 import fs from 'node:fs'
+import { ServerOptions } from 'node:https'
 import path from 'node:path'
 import { visualizer } from 'rollup-plugin-visualizer'
 import type { TemplateType } from 'rollup-plugin-visualizer/dist/plugin/template-types'
 import { defineConfig, PluginOption } from 'vite'
+import topLevelAwait from 'vite-plugin-top-level-await'
+import wasm from 'vite-plugin-wasm'
 
 // Read the server .env to extract DEPLOYMENT_URL and SIGNATURE_PUBLIC_KEY
 
@@ -15,7 +18,7 @@ const serverEnv = dotenv.parse(
   fs.existsSync(serverDotEnvFile)
     ? fs.readFileSync(serverDotEnvFile, 'utf-8')
     : `
-DEPLOYMENT_URL=http://localhost:3001
+DEPLOYMENT_URL=https://localhost:3001
 SIGNATURE_PUBLIC_KEY=gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE
 `
 )
@@ -23,6 +26,11 @@ SIGNATURE_PUBLIC_KEY=gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE
 // Show `localhost` rather than `127.0.0.1`
 // https://vitejs.dev/config/server-options.html#server-host
 dns.setDefaultResultOrder('verbatim')
+
+const https: ServerOptions = {
+  cert: fs.readFileSync(path.resolve(__dirname, '../../config/certs/tls.crt')),
+  key: fs.readFileSync(path.resolve(__dirname, '../../config/certs/tls.key')),
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -33,10 +41,22 @@ export default defineConfig({
     __DEPLOYMENT_URL__: JSON.stringify(serverEnv.DEPLOYMENT_URL),
     __SIGNATURE_PUBLIC_KEY__: JSON.stringify(serverEnv.SIGNATURE_PUBLIC_KEY),
   },
-  plugins: [react(), ...analyzeBundle(['sunburst', 'treemap', 'network'])],
+  plugins: [
+    react(),
+    wasm(),
+    topLevelAwait(),
+    ...analyzeBundle(['sunburst', 'treemap', 'network']),
+  ],
+  preview: {
+    https,
+  },
+  server: {
+    https,
+  },
   build: {
     outDir: path.resolve(__dirname, 'dist'),
     emptyOutDir: false,
+    target: 'esnext',
     lib: {
       entry: path.resolve(__dirname, 'src/index.tsx'),
       formats: ['es', 'cjs'],

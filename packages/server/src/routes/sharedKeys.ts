@@ -5,8 +5,8 @@ import {
   identitySchema,
   postSharedKeyBody,
   PostSharedKeyBody,
-  PublicKeyAuthHeaders,
-  publicKeyAuthHeaders,
+  RequestHeaders,
+  requestHeaders,
 } from '@socialgouv/e2esdk-api'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
@@ -23,16 +23,16 @@ import type { App } from '../types'
 
 export default async function sharedKeysRoutes(app: App) {
   app.post<{
-    Headers: PublicKeyAuthHeaders
+    Headers: RequestHeaders
     Body: PostSharedKeyBody
   }>(
     '/shared-keys',
     {
-      preHandler: app.usePublicKeyAuth(),
+      preHandler: app.useAuth(),
       schema: {
         tags: ['sharedKeys'],
         summary: 'Share a key with someone',
-        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        headers: zodToJsonSchema(requestHeaders),
         body: zodToJsonSchema(postSharedKeyBody, { $refStrategy: 'none' }),
         response: {
           201: {
@@ -124,16 +124,16 @@ export default async function sharedKeysRoutes(app: App) {
   )
 
   app.get<{
-    Headers: PublicKeyAuthHeaders
+    Headers: RequestHeaders
     Reply: GetSharedKeysResponseBody
   }>(
     '/shared-keys/incoming',
     {
-      preHandler: app.usePublicKeyAuth(),
+      preHandler: app.useAuth(),
       schema: {
         tags: ['sharedKeys'],
         summary: 'List incoming keys shared with me',
-        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        headers: zodToJsonSchema(requestHeaders),
         response: {
           200: zodToJsonSchema(getSharedKeysResponseBody, {
             $refStrategy: 'none',
@@ -149,16 +149,16 @@ export default async function sharedKeysRoutes(app: App) {
   )
 
   app.get<{
-    Headers: PublicKeyAuthHeaders
+    Headers: RequestHeaders
     Reply: GetSharedKeysResponseBody
   }>(
     '/shared-keys/outgoing',
     {
-      preHandler: app.usePublicKeyAuth(),
+      preHandler: app.useAuth(),
       schema: {
         tags: ['sharedKeys'],
         summary: 'List keys I have shared with others',
-        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        headers: zodToJsonSchema(requestHeaders),
         response: {
           200: zodToJsonSchema(getSharedKeysResponseBody, {
             $refStrategy: 'none',
@@ -180,16 +180,16 @@ export default async function sharedKeysRoutes(app: App) {
 
   app.delete<{
     Params: z.infer<typeof deleteSharedKeyUrlParams>
-    Headers: PublicKeyAuthHeaders
+    Headers: RequestHeaders
   }>(
     '/shared-keys/:userId/:payloadFingerprint',
     {
-      preHandler: app.usePublicKeyAuth(),
+      preHandler: app.useAuth(),
       schema: {
         tags: ['sharedKeys'],
         summary: 'Remove a shared key',
         params: zodToJsonSchema(deleteSharedKeyUrlParams),
-        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        headers: zodToJsonSchema(requestHeaders),
         response: {
           200: {
             type: 'null',

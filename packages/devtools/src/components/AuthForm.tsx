@@ -52,10 +52,10 @@ const AuthForm: React.FC<AuthFormProps> = ({
           <FormLabel>User ID</FormLabel>
           <Input fontFamily="mono" {...register('userId')} />
         </FormControl>
-        <FormControl>
+        {/* <FormControl>
           <FormLabel>Main Key</FormLabel>
           <Input type="password" pattern="[\w-]{43}" {...register('mainKey')} />
-        </FormControl>
+        </FormControl> */}
         <Button type="submit" isLoading={isSubmitting} leftIcon={buttonIcon}>
           {buttonText}
         </Button>
@@ -70,9 +70,7 @@ export const LoginForm: React.FC<Omit<StackProps, 'onSubmit'>> = props => {
   const client = useE2ESDKClient()
   const login = React.useCallback(
     async (values: FormValues) => {
-      const mainKey = client.decode(values.mainKey)
-      await client.login(values.userId, mainKey)
-      client.sodium.memzero(mainKey)
+      await client.login(values.userId)
     },
     [client]
   )
@@ -92,9 +90,7 @@ export const SignupForm: React.FC<Omit<StackProps, 'onSubmit'>> = props => {
   const client = useE2ESDKClient()
   const signup = React.useCallback(
     async (values: FormValues) => {
-      const mainKey = client.decode(values.mainKey)
-      await client.signup(values.userId, mainKey)
-      client.sodium.memzero(mainKey)
+      await client.signup(values.userId)
     },
     [client]
   )
