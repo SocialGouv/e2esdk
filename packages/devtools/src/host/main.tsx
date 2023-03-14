@@ -47,7 +47,7 @@ const Main = () => {
             theme="light"
           />
         </div>
-        <div style={{ flex: 1 }}>
+        {/* <div style={{ flex: 1 }}>
           <e2esdk-devtools
             // This devtools will embed its own client
             serverURL={__DEPLOYMENT_URL__}
@@ -55,7 +55,7 @@ const Main = () => {
             theme="dark"
             reactQueryDevtools
           />
-        </div>
+        </div> */}
       </div>
     </React.StrictMode>
   )

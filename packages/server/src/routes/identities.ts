@@ -3,8 +3,8 @@ import {
   GetMultipleIdentitiesResponseBody,
   getSingleIdentityResponseBody,
   GetSingleIdentityResponseBody,
-  publicKeyAuthHeaders,
-  PublicKeyAuthHeaders,
+  requestHeaders,
+  RequestHeaders,
 } from '@socialgouv/e2esdk-api'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
@@ -24,17 +24,17 @@ const userIdsParams = z.object({
 export default async function identitiesRoutes(app: App) {
   app.get<{
     Params: z.infer<typeof userIdParams>
-    Headers: PublicKeyAuthHeaders
+    Headers: RequestHeaders
     Reply: GetSingleIdentityResponseBody
   }>(
     '/identity/:userId',
     {
-      preHandler: app.usePublicKeyAuth(),
+      preHandler: app.useAuth(),
       schema: {
         tags: ['identity'],
         summary: 'Get a single user identity',
         params: zodToJsonSchema(userIdParams),
-        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        headers: zodToJsonSchema(requestHeaders),
         response: {
           200: zodToJsonSchema(getSingleIdentityResponseBody, {
             $refStrategy: 'none',
@@ -64,12 +64,12 @@ export default async function identitiesRoutes(app: App) {
   }>(
     '/identities/:userIds',
     {
-      preHandler: app.usePublicKeyAuth(),
+      preHandler: app.useAuth(),
       schema: {
         tags: ['identity'],
         summary: 'Get multiple user identities',
         params: zodToJsonSchema(userIdsParams),
-        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        headers: zodToJsonSchema(requestHeaders),
         response: {
           200: zodToJsonSchema(getMultipleIdentitiesResponseBody, {
             $refStrategy: 'none',

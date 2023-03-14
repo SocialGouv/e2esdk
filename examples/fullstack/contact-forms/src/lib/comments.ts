@@ -121,7 +121,7 @@ export function useCreateCommentMutation(
         throw new Error('No available key to encrypt comment')
       }
       const createdAt = new Date().toISOString()
-      const author = client.publicIdentity.userId
+      const author = client.publicIdentity!.userId
       const message = client.encrypt(comment, key.nameFingerprint)
       const signature = client.sign(
         submissionBucketId,

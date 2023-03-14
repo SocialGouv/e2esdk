@@ -4,8 +4,8 @@ import {
   PermissionFlags,
   postPermissionRequestBody,
   PostPermissionRequestBody,
-  PublicKeyAuthHeaders,
-  publicKeyAuthHeaders,
+  RequestHeaders,
+  requestHeaders,
 } from '@socialgouv/e2esdk-api'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
@@ -23,17 +23,17 @@ export default async function permissionsRoutes(app: App) {
 
   app.get<{
     Params: GetPermissionsUrlParams
-    Headers: PublicKeyAuthHeaders
+    Headers: RequestHeaders
     Reply: PermissionFlags
   }>(
     '/permissions/:nameFingerprint',
     {
-      preHandler: app.usePublicKeyAuth(),
+      preHandler: app.useAuth(),
       schema: {
         tags: ['permissions'],
         summary: 'Get permissions for a namespace',
         params: zodToJsonSchema(getPermissionsUrlParams),
-        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        headers: zodToJsonSchema(requestHeaders),
         response: {
           200: zodToJsonSchema(permissionFlags),
         },
@@ -55,16 +55,16 @@ export default async function permissionsRoutes(app: App) {
   )
 
   app.post<{
-    Headers: PublicKeyAuthHeaders
+    Headers: RequestHeaders
     Body: PostPermissionRequestBody
   }>(
     '/permissions',
     {
-      preHandler: app.usePublicKeyAuth(),
+      preHandler: app.useAuth(),
       schema: {
         tags: ['permissions'],
         summary: 'Update permissions for a user & namespace',
-        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        headers: zodToJsonSchema(requestHeaders),
         body: zodToJsonSchema(postPermissionRequestBody),
         response: {
           204: {

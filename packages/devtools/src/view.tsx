@@ -18,12 +18,13 @@ import {
   useE2ESDKClientIdentity,
 } from '@socialgouv/e2esdk-react'
 import React from 'react'
-import { FiKey, FiUser } from 'react-icons/fi'
+import { FiKey, FiTablet, FiUser } from 'react-icons/fi'
 import { MdOutlineLock } from 'react-icons/md'
 import { usePortalRef } from './components/PortalProvider'
 import { SodiumState } from './components/SodiumState'
 import { useLocalState } from './hooks/useLocalState'
 import { AuthTab } from './tabs/AuthTab'
+import { DevicesTab } from './tabs/DevicesTab'
 import { IdentityTab } from './tabs/IdentityTab'
 import { KeysTab } from './tabs/KeysTab'
 
@@ -113,6 +114,10 @@ export const E2ESdkDevtoolsView: React.FC<BoxProps> = ({ ...props }) => {
                   Identity
                 </Tab>
                 <Tab>
+                  <Icon as={FiTablet} mr={2} />
+                  Devices
+                </Tab>
+                <Tab>
                   <Icon as={FiKey} mr={2} />
                   Keys
                 </Tab>
@@ -133,6 +138,9 @@ export const E2ESdkDevtoolsView: React.FC<BoxProps> = ({ ...props }) => {
             <TabPanels>
               <TabPanel>
                 <IdentityTab />
+              </TabPanel>
+              <TabPanel>
+                <DevicesTab />
               </TabPanel>
               <TabPanel>
                 <KeysTab />

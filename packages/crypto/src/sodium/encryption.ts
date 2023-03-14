@@ -1,8 +1,8 @@
 import { PayloadType } from '@socialgouv/e2esdk-api'
 import type { Uint8ArrayOutputFormat } from 'libsodium-wrappers'
 import {
-  boolToByte,
-  byteToBool,
+  boolToBytes,
+  bytesToBool,
   ieee754BytesToNumber,
   numberToIEEE754Bytes,
 } from '../shared/codec'
@@ -77,7 +77,7 @@ export function encrypt<DataType>(
     : typeof input === 'boolean'
     ? {
         payloadType: PayloadType.boolean,
-        payload: boolToByte(input),
+        payload: boolToBytes(input),
       }
     : {
         payloadType: PayloadType.json,
@@ -247,7 +247,7 @@ function decodePayload(
     return ieee754BytesToNumber(plaintext)
   }
   if (payloadType === PayloadType.boolean) {
-    return byteToBool(plaintext)
+    return bytesToBool(plaintext)
   }
   if (payloadType === PayloadType.json) {
     return JSON.parse(sodium.to_string(plaintext).trim())

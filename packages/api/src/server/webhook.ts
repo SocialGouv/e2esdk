@@ -1,18 +1,7 @@
 import { z } from 'zod'
-import { publicKeyAuthHeaders } from '../headers'
 import { postKeychainItemRequestBody } from '../keychain'
 import { identitySchema } from '../schemas/identity'
 import { postSharedKeyBody } from '../sharedKey'
-
-export const webhookHeaders = publicKeyAuthHeaders.extend({
-  'x-e2esdk-server-pubkey': identitySchema.shape.signaturePublicKey,
-  'x-e2esdk-request-id': z.string(),
-  origin: z.string().url(),
-})
-
-export type WebhookHeaders = z.infer<typeof webhookHeaders>
-
-// --
 
 export const webhookRoutes = {
   // Authorizations
@@ -42,6 +31,6 @@ export const webhookRoutes = {
 
 export type WebhookRoutes = {
   [Path in keyof typeof webhookRoutes]: {
-    body: z.infer<typeof webhookRoutes[Path]['body']>
+    body: z.infer<(typeof webhookRoutes)[Path]['body']>
   }
 }

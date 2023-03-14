@@ -1,5 +1,5 @@
 import {
-  publicKeyAuthHeaders,
+  requestHeaders,
   WebSocketNotificationTypes,
 } from '@socialgouv/e2esdk-api'
 import mitt from 'mitt'
@@ -9,7 +9,7 @@ import { keychainUpdatedNotificationChannel } from '../database/models/keychain.
 import { sharedKeyInsertsNotificationChannel } from '../database/models/sharedKey.js'
 import type { App } from '../types'
 
-const querystringSchema = publicKeyAuthHeaders.extend({
+const querystringSchema = requestHeaders.extend({
   context: z.string(),
 })
 
@@ -33,7 +33,7 @@ export default async function notificationsRoutes(app: App) {
     '/notifications',
     {
       websocket: true,
-      preHandler: app.usePublicKeyAuth({
+      preHandler: app.useAuth({
         mode: 'websocket',
       }),
       schema: {

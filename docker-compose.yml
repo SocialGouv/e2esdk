@@ -17,3 +17,15 @@ services:
       interval: 1s
       start_period: 3s
       retries: 50
+  redis:
+    image: redis:7
+    command: redis-server --appendonly yes
+    ports:
+      - '3003:6379'
+    volumes:
+      - .volumes/docker/$COMPOSE_PROJECT_NAME/redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -h 127.0.0.1 ping | grep 'PONG' || exit 1"]
+      interval: 1s
+      start_period: 3s
+      retries: 10

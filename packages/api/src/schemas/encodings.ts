@@ -1,7 +1,11 @@
 import { z } from 'zod'
 
-export const thirtyTwoBytesBase64Schema = z.string().regex(/^[\w-]{43}$/)
-export const sixtyFourBytesBase64Schema = z.string().regex(/^[\w-]{86}$/)
+export const base64Bytes = (bytes: number) =>
+  z.string().regex(new RegExp(`^[\\w-]{${Math.ceil((bytes * 4) / 3)}}$`))
+
+export const thirtyTwoBytesBase64Schema = base64Bytes(32)
+export const sixtyFourBytesBase64Schema = base64Bytes(64)
+export const thirtyTwoBytesHexSchema = z.string().regex(/^[0-9a-f]{64}$/i)
 
 export const fingerprintSchema = thirtyTwoBytesBase64Schema
 export const signatureSchema = sixtyFourBytesBase64Schema

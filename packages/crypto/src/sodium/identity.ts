@@ -59,6 +59,9 @@ export function deriveClientIdentity(
   userId: string,
   mainKey: Uint8Array
 ): ClientIdentity {
+  if (mainKey.byteLength !== 32) {
+    throw new Error('Invalid main key length (must be 32 bytes)')
+  }
   const userIdHash = sodium.crypto_generichash(
     sodium.crypto_generichash_KEYBYTES,
     userId,

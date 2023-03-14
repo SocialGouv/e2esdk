@@ -175,7 +175,7 @@ describe('encryption', () => {
         expect(boxCiphertextV1Schema('bool').parse(ciphertext)).toEqual(
           ciphertext
         )
-        expect(ciphertext.length).toEqual(68)
+        expect(ciphertext.length).toEqual(109)
       })
     })
   })
@@ -319,7 +319,7 @@ describe('encryption', () => {
         expect(secretBoxCiphertextV1Schema('bool').parse(ciphertext)).toEqual(
           ciphertext
         )
-        expect(ciphertext.length).toEqual(74)
+        expect(ciphertext.length).toEqual(115)
       })
     })
   })
@@ -436,7 +436,7 @@ describe('encryption', () => {
         expect(sealedBoxCiphertextV1Schema('bool').parse(ciphertext)).toEqual(
           ciphertext
         )
-        expect(ciphertext.length).toEqual(84)
+        expect(ciphertext.length).toEqual(125)
       })
     })
   })

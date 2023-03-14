@@ -22,7 +22,8 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "keygen": "pnpm --filter @socialgouv/e2esdk-keygen run keygen",
-    "db": "pnpm --filter @socialgouv/e2esdk-server run db"
+    "db": "pnpm --filter @socialgouv/e2esdk-server run db",
+    "mkcert": "mkcert -cert-file ./config/certs/tls.crt -key-file ./config/certs/tls.key localhost 127.0.0.1 ::1"
   },
   "devDependencies": {
     "@socialgouv/e2esdk-semantic-release": "workspace:*",

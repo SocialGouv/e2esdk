@@ -2,6 +2,13 @@
 
 To configure the monorepo in a development environment:
 
+Install [`mkcert`](https://github.com/FiloSottile/mkcert) on your machine
+and generate local TLS certificates with:
+
+```shell
+pnpm mkcert
+```
+
 Install dependencies:
 
 ```shell
@@ -13,6 +20,9 @@ Setup environment files:
 ```shell
 cp ./packages/server/.env.example ./packages/server/.env
 ```
+
+> **Note**: Look into the .env file for instructions on how to change the
+> required secrets (OPAQUE setup, signature key pair, session keys etc).
 
 Start the Docker compose stack:
 
@@ -45,13 +55,14 @@ The `dev` script will:
 - Build all packages in watch mode
 - Start the server with nodemon, watching its dependencies to
   allow auto-reloading the server when the sources change.
-  The server is listening on <http://localhost:3001>
-- Start a Vite host SPA for the devtools component, on <http://localhost:3000>
-- Start the Docusaurus documentation server on <http://localhost:3003/e2esdk>
+  The server is listening on <https://localhost:3001>
+- Start a Vite host SPA for the devtools component, on <https://localhost:3000>
+- Start the Docusaurus documentation server on <http://localhost:3004/e2esdk>
 
 ## Port list
 
 - `3000` Vite SPA to host the devtools
 - `3001` Server
 - `3002` PostgreSQL database
-- `3003` Docusaurus documentation
+- `3003` Redis key/value store & cache
+- `3004` Docusaurus documentation

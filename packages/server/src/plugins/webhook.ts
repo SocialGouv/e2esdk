@@ -52,7 +52,7 @@ type WebhookAPICallArgs<Path extends WebhookPaths> = {
 const webhookPlugin: FastifyPluginAsync = async (app: App) => {
   const baseURL = env.WEBHOOK_URL
   if (!baseURL) {
-    const decoration: Decoration = {
+    app.decorate<Decoration>('webhook', {
       authorizeSignup() {
         return Promise.resolve(true)
       },
@@ -62,8 +62,7 @@ const webhookPlugin: FastifyPluginAsync = async (app: App) => {
       notifySignup() {},
       notifyKeyAdded() {},
       notifyKeyShared() {},
-    }
-    app.decorate('webhook', decoration)
+    })
     return
   }
   app.log.info({ msg: 'Setting up webhook', url: baseURL })
@@ -88,6 +87,8 @@ const webhookPlugin: FastifyPluginAsync = async (app: App) => {
         app.sodium,
         app.sodium.from_base64(env.SIGNATURE_PRIVATE_KEY),
         {
+          deviceId: req.deviceId,
+          sessionId: req.sessionId,
           clientId: req.clientId,
           method,
           userId,
@@ -121,6 +122,8 @@ const webhookPlugin: FastifyPluginAsync = async (app: App) => {
           'x-e2esdk-user-id': userId,
           'x-e2esdk-request-id': req.id,
           'x-e2esdk-client-id': req.clientId,
+          'x-e2esdk-device-id': req.deviceId,
+          'x-e2esdk-session-id': req.sessionId,
           'x-e2esdk-timestamp': timestamp,
           'x-e2esdk-signature': signature,
           'x-e2esdk-server-pubkey': env.SIGNATURE_PUBLIC_KEY,
@@ -140,7 +143,7 @@ const webhookPlugin: FastifyPluginAsync = async (app: App) => {
     }
   }
 
-  const decoration: Decoration = {
+  app.decorate<Decoration>('webhook', {
     async authorizeSignup(req) {
       const userId = encodeURIComponent(req.identity.userId)
       const response = await webhookApiCall({
@@ -186,8 +189,7 @@ const webhookPlugin: FastifyPluginAsync = async (app: App) => {
         body: item,
       })
     },
-  }
-  app.decorate('webhook', decoration)
+  })
 }
 
 export default fp(webhookPlugin, {

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import { env } from './env.js'
+import { getTLSConfig } from './lib/tls.js'
 import type { App } from './types'
 
 export { startServer } from 'fastify-micro'
@@ -18,6 +19,17 @@ const healthCheckReply = z.object({
       sizeMax: z.number(),
       sizeRatio: z.number(),
     }),
+    redis: z.object({
+      status: z.enum([
+        'wait',
+        'reconnecting',
+        'connecting',
+        'connect',
+        'ready',
+        'close',
+        'end',
+      ]),
+    }),
   }),
   metrics: z.object({
     eventLoopDelay: z.number(),
@@ -31,9 +43,10 @@ type HealthCheckReply = z.infer<typeof healthCheckReply>
 
 export function createServer() {
   const __PROD__ = env.NODE_ENV === 'production'
+  const https = getTLSConfig()
   const app = createFastifyServer({
     name: ['e2esdk', env.DEPLOYMENT_TAG].join(':'),
-    redactEnv: __PROD__ ? ['POSTGRESQL_URL', 'SIGNATURE_PRIVATE_KEY'] : [],
+    https,
     redactLogPaths: env.DEBUG
       ? []
       : [
@@ -69,6 +82,9 @@ export function createServer() {
           tags: {
             sharingPublicKey: req?.identity?.sharingPublicKey ?? 'N.A.',
             signaturePublicKey: req?.identity?.signaturePublicKey ?? 'N.A.',
+            clientId: req?.clientId ?? 'N.A.',
+            deviceId: req?.deviceId ?? 'N.A.',
+            sessionId: req?.sessionId ?? 'N.A.',
           },
         })
       },
@@ -86,10 +102,10 @@ export function createServer() {
         app: App
       ): Promise<HealthCheckReply | false> {
         try {
-          let result = await app.db<
+          let sizeUsedQuery = await app.db<
             { sizeUsed: string }[]
           >`SELECT pg_database_size(current_database()::name) AS size_used`
-          const sizeUsed = parseInt(result[0].sizeUsed)
+          const sizeUsed = parseInt(sizeUsedQuery[0].sizeUsed)
           const sizeMax = env.DATABASE_MAX_SIZE_BYTES
           const sizeRatio = sizeMax > 0 ? sizeUsed / sizeMax : 0
           return {
@@ -99,6 +115,9 @@ export function createServer() {
                 sizeMax,
                 sizeUsed,
                 sizeRatio,
+              },
+              redis: {
+                status: app.redis.client.status,
               },
             },
             metrics: app.memoryUsage(),
@@ -112,8 +131,9 @@ export function createServer() {
     },
     cleanupOnExit: async app => {
       app.log.info('Closing connections to backing services')
+      const timeout = 5_000 // 5 seconds
       try {
-        await app.db.end({ timeout: 5_000 })
+        await Promise.all([app.db.end({ timeout }), app.redis.close(timeout)])
       } catch (error) {
         app.log.error(error)
         app.sentry.report(error)
@@ -124,29 +144,25 @@ export function createServer() {
   })
 
   app.ready(() => {
-    if (env.DEBUG) {
-      app.log.info(
-        'Plugins loaded:\n' +
-          app
-            .printPlugins()
-            .split('\n')
-            .filter(
-              line =>
-                !line.includes(' bound _after ') && !line.includes(' _default ')
-            )
-            .map(line =>
-              line.replace(
-                path.resolve(__dirname, '../../node_modules') + '/',
-                ''
-              )
-            )
-            .join('\n')
-      )
-      app.log.info(
-        'Routes loaded:\n' +
-          app.printRoutes({ commonPrefix: false, includeHooks: true })
-      )
-    }
+    app.log.debug({
+      msg: 'Plugins loaded',
+      plugins: app
+        .printPlugins()
+        .split('\n')
+        .filter(
+          line =>
+            !line.includes(' bound _after ') && !line.includes(' _default ')
+        )
+        .map(line =>
+          line.replace(path.resolve(__dirname, '../../node_modules') + '/', '')
+        )
+        .join('\n'),
+    })
+    app.log.debug({
+      msg: 'Routes loaded',
+      routes: app.printRoutes({ commonPrefix: false, includeHooks: true }),
+    })
+    app.log.debug({ usingTLS: Boolean(https) })
   })
 
   return app

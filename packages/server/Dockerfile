@@ -65,7 +65,11 @@ USER e2esdk
 
 COPY --from=builder --chown=e2esdk:nodejs /app/ .
 
+# Verify code signature
 RUN packages/server/node_modules/.bin/sceau verify --packageDir packages/server $SCEAU_VERIFICATION_MODE
+
+# Mount point for TLS certificates
+VOLUME ["/app/packages/server/certs"]
 
 EXPOSE 3000
 
@@ -74,6 +78,6 @@ HEALTHCHECK \
   --timeout=30s \
   --start-period=1s \
   --retries=5 \
-  CMD curl -f http://localhost:3000/_health || exit 1
+  CMD curl --fail https://localhost:3000/_health || exit 1
 
 CMD ["node", "--trace-warnings", "packages/server/build/main.js"]

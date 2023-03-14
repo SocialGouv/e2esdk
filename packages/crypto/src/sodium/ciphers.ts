@@ -1,4 +1,5 @@
-import { decode as hexDecode, encode as hexEncode } from '@stablelib/hex'
+import { thirtyTwoBytesHexSchema } from '@socialgouv/e2esdk-api'
+import { decode as decodeHex, encode as hexEncode } from '@stablelib/hex'
 import { z } from 'zod'
 import { Sodium } from './sodium'
 
@@ -92,24 +93,21 @@ export function serializeCipher(cipher: Cipher) {
 
 // Parsers --
 
-const thirtyTwoBytesInHexParser = z
-  .string()
-  .regex(/^[0-9a-f]{64}$/i)
-  .transform(hexDecode)
+const thirtyTwoBytesInHexParser = thirtyTwoBytesHexSchema.transform(decodeHex)
 
-const boxCipherParser = z.object({
+export const boxCipherParser = z.object({
   algorithm: z.literal('box'),
   publicKey: thirtyTwoBytesInHexParser,
   privateKey: thirtyTwoBytesInHexParser,
 })
 
-const sealedBoxCipherParser = z.object({
+export const sealedBoxCipherParser = z.object({
   algorithm: z.literal('sealedBox'),
   publicKey: thirtyTwoBytesInHexParser,
   privateKey: thirtyTwoBytesInHexParser,
 })
 
-const secretBoxCipherParser = z.object({
+export const secretBoxCipherParser = z.object({
   algorithm: z.literal('secretBox'),
   key: thirtyTwoBytesInHexParser,
 })

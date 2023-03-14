@@ -2,8 +2,11 @@ import { ready, sodium } from '../sodium/sodium'
 import {
   base64UrlDecode,
   base64UrlEncode,
+  boolToBytes,
+  bytesToBool,
   ieee754BytesToNumber,
   numberToIEEE754Bytes,
+  _xor,
 } from './codec'
 
 beforeAll(() => ready)
@@ -71,5 +74,21 @@ describe('codec', () => {
         1234567890
       )
     })
+  })
+
+  test('xor', () => {
+    expect(_xor(Buffer.from([0x00]))).toBe(false)
+    expect(_xor(Buffer.from([0x01]))).toBe(true)
+    expect(_xor(Buffer.from([0x03]))).toBe(false)
+    expect(_xor(Buffer.from([0x01, 0x01]))).toBe(false)
+    expect(_xor(Buffer.from([0x01, 0x03]))).toBe(true)
+  })
+
+  test('bool <-> bytes', () => {
+    for (let i = 0; i < 10000; ++i) {
+      const expected = Math.random() > 0.5
+      const received = bytesToBool(boolToBytes(expected))
+      expect(received).toEqual(expected)
+    }
   })
 })

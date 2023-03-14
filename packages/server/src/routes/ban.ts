@@ -1,8 +1,8 @@
 import {
   postBanRequestBody,
   PostBanRequestBody,
-  PublicKeyAuthHeaders,
-  publicKeyAuthHeaders,
+  requestHeaders,
+  RequestHeaders,
 } from '@socialgouv/e2esdk-api'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import { deleteKeychainItems } from '../database/models/keychain.js'
@@ -15,18 +15,18 @@ import type { App } from '../types'
 
 export default async function banRoutes(app: App) {
   app.post<{
-    Headers: PublicKeyAuthHeaders
+    Headers: RequestHeaders
     Body: PostBanRequestBody
   }>(
     '/ban',
     {
-      preHandler: app.usePublicKeyAuth(),
+      preHandler: app.useAuth(),
       schema: {
         tags: ['permissions', 'sharedKeys', 'keychain'],
         summary: 'Remove access to a namespace',
         description:
           'This will remove any pending shared keys, owned keychain items and associated permissions.',
-        headers: zodToJsonSchema(publicKeyAuthHeaders),
+        headers: zodToJsonSchema(requestHeaders),
         body: zodToJsonSchema(postBanRequestBody),
         response: {
           204: {

@@ -1,16 +1,16 @@
-export type Require<
-  Object extends object,
-  Keys extends keyof Object
-> = NonNullable<Required<Pick<Object, Keys>>> & Omit<Object, Keys>
+export type Require<Obj extends object, Keys extends keyof Obj> = NonNullable<
+  Required<Pick<Obj, Keys>>
+> &
+  Omit<Obj, Keys>
 
-export type Optional<
-  Object extends object,
-  Keys extends keyof Object
-> = Partial<Pick<Object, Keys>> & Omit<Object, Keys>
+export type Optional<Obj extends object, Keys extends keyof Obj> = Partial<
+  Pick<Obj, Keys>
+> &
+  Omit<Obj, Keys>
 
-export type Nullable<Object extends object, Keys extends keyof Object> = Omit<
-  Object,
+export type Nullable<Obj extends object, Keys extends keyof Obj> = Omit<
+  Obj,
   Keys
 > & {
-  [K in Keys]: Object[K] | null
+  [K in Keys]: Obj[K] | null
 }

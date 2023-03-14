@@ -1,4 +1,12 @@
+import initOpaqueClient, { Login, Registration } from '@47ng/opaque-client'
+import { wasmBase64 as opaqueWasm } from '@47ng/opaque-client/inline-wasm'
 import {
+  base64Bytes,
+  deviceEnrolledResponse,
+  DeviceEnrollmentRecord,
+  deviceEnrollmentResponse,
+  deviceIdSchema,
+  deviceSchema,
   fingerprintSchema,
   getKeychainResponseBody,
   GetKeychainResponseBody,
@@ -12,6 +20,11 @@ import {
   GetSingleIdentityResponseBody,
   identitySchema as apiIdentitySchema,
   isFarFromCurrentTime,
+  listDevicesResponseBody,
+  LoginFinal,
+  loginFinalResponse,
+  LoginRequest,
+  loginResponse as loginResponseSchema,
   Optional,
   permissionFlags,
   PermissionFlags,
@@ -19,10 +32,11 @@ import {
   PostKeychainItemRequestBody,
   PostPermissionRequestBody,
   PostSharedKeyBody,
-  publicKeyAuthHeaders,
+  responseHeaders,
   signatureSchema,
-  signupBody,
-  SignupBody,
+  signupCompleteResponse,
+  SignupRecord,
+  signupResponse,
   sixtyFourBytesBase64Schema,
   thirtyTwoBytesBase64Schema,
   timestampSchema,
@@ -45,6 +59,8 @@ import {
   fingerprint,
   generateSealedBoxCipher,
   generateSecretBoxCipher,
+  getDeviceLabelCipher,
+  getOpaqueExportCipher,
   memzeroCipher,
   multipartSignature,
   numberToUint32LE,
@@ -66,9 +82,12 @@ export type ClientConfig<KeyType = string> = {
   serverURL: string
   serverPublicKey: KeyType // todo: Make this an array to allow server key rotation
   handleNotifications?: boolean
+  handleSessionRefresh?: boolean
 }
 
-type Config = Required<ClientConfig<Uint8Array>> & {
+type Config = Required<
+  Omit<ClientConfig<Uint8Array>, 'handleSessionRefresh'>
+> & {
   clientId: string
 }
 
@@ -154,8 +173,6 @@ const identitySchema = z.object({
   proof: signatureSchema,
 })
 
-type Identity = z.infer<typeof identitySchema>
-
 export type PublicUserIdentity = {
   userId: string
   signaturePublicKey: string
@@ -179,6 +196,9 @@ const loadedStateSchema = z.object({
   state: z.literal('loaded'),
   identity: identitySchema,
   keychain: keychainSchema,
+  deviceId: deviceIdSchema,
+  sessionId: fingerprintSchema,
+  exportKey: base64Bytes(64).transform(base64UrlDecode),
 })
 
 const stateSchema = z.discriminatedUnion('state', [
@@ -187,6 +207,10 @@ const stateSchema = z.discriminatedUnion('state', [
 ])
 
 type State = z.infer<typeof stateSchema>
+
+// --
+
+const deviceSecretSchema = base64Bytes(32)
 
 // --
 
@@ -210,8 +234,13 @@ export class Client {
   #sync: LocalStateSync<State>
   #socket?: WebSocket
   #socketExponentialBackoffTimeout?: number
+  #handleSessionRefresh: boolean
 
   constructor(config: ClientConfig) {
+    const tick = performance.now()
+    initOpaqueClient(base64UrlDecode(opaqueWasm)).then(() =>
+      console.log(`OPAQUE initialized in ${performance.now() - tick} ms`)
+    )
     this.sodium = sodium
     this.config = Object.freeze({
       serverURL: config.serverURL,
@@ -222,12 +251,13 @@ export class Client {
           ? crypto.randomUUID()
           : 'not-available-in-ssr',
     })
+    this.#handleSessionRefresh = config.handleSessionRefresh ?? true
     this.#state = {
       state: 'idle',
     }
     this.#mitt = mitt()
     this.#sync = new LocalStateSync({
-      encryptionKey: 'E2ESDKClientLocalStateSyncEncryptionKey1234',
+      encryptionKey: 'e2esdk-client-localStateSync-encryptionKey8',
       namespace: [config.serverURL, config.serverPublicKey].join(':'),
       onStateUpdated: incomingState => {
         if (incomingState.state === 'idle') {
@@ -272,56 +302,148 @@ export class Client {
 
   // Auth --
 
-  public async signup(userId: string, mainKey: Uint8Array) {
+  public async signup(userId: string) {
     await this.sodium.ready
     if (this.#state.state !== 'idle') {
       throw new Error(
         'Please log out of your current account before signing up for another one'
       )
     }
-    const identity = deriveClientIdentity(this.sodium, userId, mainKey)
-    const body: SignupBody = {
-      userId,
-      signaturePublicKey: this.encode(identity.signature.publicKey),
-      sharingPublicKey: this.encode(identity.sharing.publicKey),
-      proof: identity.proof,
-    }
-    this.#state = {
-      state: 'loaded',
-      identity,
-      keychain: new Map(),
-    }
     try {
-      const response = signupBody.parse(
-        await this.#apiCall('POST', '/v1/signup', body)
+      const mainKey = this.sodium.randombytes_buf(32)
+      const identity = deriveClientIdentity(this.sodium, userId, mainKey)
+      const deviceSecret = this.sodium.randombytes_buf(32, 'base64')
+      const opaqueRegistration = new Registration()
+      const registrationRequest = base64UrlEncode(
+        opaqueRegistration.start(deviceSecret)
       )
-      if (
-        response.userId !== body.userId ||
-        response.signaturePublicKey !== body.signaturePublicKey ||
-        response.sharingPublicKey !== body.sharingPublicKey ||
-        response.proof !== body.proof
-      ) {
-        throw new Error('Signup failed: could not authenticate server')
+      const res1 = await fetch(
+        `${this.config.serverURL}/v1/auth/signup/request`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-e2esdk-client-id': this.config.clientId,
+          },
+          body: JSON.stringify({
+            userId,
+            registrationRequest,
+          }),
+        }
+      )
+      const { nonce, registrationResponse } = signupResponse.parse(
+        await res1.json()
+      )
+      const registrationRecord = base64UrlEncode(
+        opaqueRegistration.finish(
+          deviceSecret,
+          this.decode(registrationResponse)
+        )
+      )
+      const mainKeyWrappingCipher = getOpaqueExportCipher(
+        this.sodium,
+        opaqueRegistration.getExportKey()
+      )
+      const signupRecordBody: SignupRecord = {
+        nonce,
+        registrationRecord,
+        wrappedMainKey: encrypt(this.sodium, mainKey, mainKeyWrappingCipher),
+        signaturePublicKey: base64UrlEncode(identity.signature.publicKey),
+        sharingPublicKey: base64UrlEncode(identity.sharing.publicKey),
+        proof: identity.proof,
       }
-      this.#startWebSocket('signup')
-      this.#mitt.emit('identityUpdated', this.publicIdentity)
-      this.#sync.setState(this.#state)
-      return this.publicIdentity
+      this.sodium.memzero(mainKey)
+      this.sodium.memzero(mainKeyWrappingCipher.key)
+      const res2 = await fetch(
+        `${this.config.serverURL}/v1/auth/signup/record`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-e2esdk-client-id': this.config.clientId,
+          },
+          body: JSON.stringify(signupRecordBody),
+        }
+      )
+      const { deviceId } = signupCompleteResponse.parse(await res2.json())
+      this.registerEnrolledDevice(
+        this.#encodeDeviceRegistrationQR(userId, deviceId, deviceSecret)
+      )
     } catch (error) {
       this.#clearState() // Cleanup on failure
       throw error
     }
   }
 
-  public async login(userId: string, mainKey: Uint8Array) {
+  public async login(userId: string) {
     await this.sodium.ready
-    this.#clearState()
+    // this.#clearState()
+    const deviceId = localStorage.getItem(`e2esdk:${userId}:device:id`)
+    const deviceSecret = localStorage.getItem(`e2esdk:${userId}:device:secret`)
+    if (!deviceId || !deviceSecret) {
+      throw new Error('Device is not enrolled for this user')
+    }
+    const opaqueLogin = new Login()
+    const loginRequestBody: LoginRequest = {
+      userId,
+      deviceId,
+      loginRequest: base64UrlEncode(opaqueLogin.start(deviceSecret)),
+    }
+    const res1 = await fetch(`${this.config.serverURL}/v1/auth/login/request`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-e2esdk-client-id': this.config.clientId,
+        'x-e2esdk-device-id': deviceId,
+      },
+      body: JSON.stringify(loginRequestBody),
+    })
+    const { nonce, loginResponse } = loginResponseSchema.parse(
+      await res1.json()
+    )
+    const loginFinalBody: LoginFinal = {
+      nonce,
+      loginFinal: base64UrlEncode(
+        opaqueLogin.finish(deviceSecret, this.decode(loginResponse))
+      ),
+    }
+    const res2 = await fetch(`${this.config.serverURL}/v1/auth/login/final`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-e2esdk-client-id': this.config.clientId,
+        'x-e2esdk-device-id': deviceId,
+      },
+      body: JSON.stringify(loginFinalBody),
+    })
+    const sessionKey = opaqueLogin.getSessionKey()
+    const sessionId = fingerprint(this.sodium, sessionKey)
+    this.sodium.memzero(sessionKey)
+    const { wrappedMainKey } = loginFinalResponse.parse(await res2.json())
+    const exportKey = opaqueLogin.getExportKey()
+    const mainKeyWrappingCipher = getOpaqueExportCipher(this.sodium, exportKey)
+    const mainKey = z
+      .instanceof(Uint8Array)
+      .parse(
+        decrypt(
+          this.sodium,
+          wrappedMainKey,
+          mainKeyWrappingCipher,
+          'application/e2esdk.ciphertext.v1'
+        )
+      )
     const identity = deriveClientIdentity(this.sodium, userId, mainKey)
+    this.sodium.memzero(mainKey)
+    this.sodium.memzero(mainKeyWrappingCipher.key)
     this.#state = {
       state: 'loaded',
       identity,
       keychain: new Map(),
+      deviceId,
+      sessionId,
+      exportKey: opaqueLogin.getExportKey(),
     }
+
     // Load keychain & incoming shared keys in the background
     this.#loadKeychain()
       .then(() => this.#processIncomingSharedKeys())
@@ -333,8 +455,174 @@ export class Client {
   }
 
   public logout() {
+    // todo: Do an API call to revoke the sessionId
     this.#clearState()
     this.#sync.setState(this.#state)
+  }
+
+  // Devices --
+
+  public async enrollNewDevice(label?: string) {
+    await this.sodium.ready
+    if (this.#state.state !== 'loaded') {
+      throw new Error('Account locked: cannot enroll new device')
+    }
+    // First, fetch and unwrap the main key as the current device
+    const mainKeyUnwrappingCipher = getOpaqueExportCipher(
+      this.sodium,
+      this.#state.exportKey
+    )
+    const device = deviceSchema.parse(
+      await this.#apiCall('GET', `/v1/auth/devices/${this.#state.deviceId}`)
+    )
+    const mainKey = z
+      .instanceof(Uint8Array)
+      .parse(
+        decrypt(
+          this.sodium,
+          device.wrappedMainKey,
+          mainKeyUnwrappingCipher,
+          'application/e2esdk.ciphertext.v1'
+        )
+      )
+    this.sodium.memzero(mainKeyUnwrappingCipher.key)
+
+    // Verify that the identity derived from the unwrapped main key
+    // matches the one we're currently using
+    const identity = deriveClientIdentity(
+      this.sodium,
+      this.#state.identity.userId,
+      mainKey
+    )
+    const identityMatch =
+      this.sodium.memcmp(
+        identity.signature.privateKey,
+        this.#state.identity.signature.privateKey
+      ) &&
+      this.sodium.memcmp(
+        identity.sharing.privateKey,
+        this.#state.identity.sharing.privateKey
+      ) &&
+      this.sodium.memcmp(
+        identity.keychainBaseKey,
+        this.#state.identity.keychainBaseKey
+      ) &&
+      identity.proof === this.#state.identity.proof
+
+    if (!identityMatch) {
+      throw new Error('Identity mismatch')
+    }
+
+    // Next, prepare enrollment (OPAQUE registration + main key wrapping)
+    const deviceSecret = this.sodium.randombytes_buf(32, 'base64')
+    const enroll = new Registration()
+    const deviceEnrollmentRequest = base64UrlEncode(enroll.start(deviceSecret))
+    const { registrationResponse, nonce } = deviceEnrollmentResponse.parse(
+      await this.#apiCall('POST', '/v1/auth/devices/enrollment/request', {
+        registrationRequest: deviceEnrollmentRequest,
+      })
+    )
+    const registrationRecord = base64UrlEncode(
+      enroll.finish(deviceSecret, base64UrlDecode(registrationResponse))
+    )
+    const mainKeyRewrappingCipher = getOpaqueExportCipher(
+      this.sodium,
+      enroll.getExportKey()
+    )
+    enroll.free()
+    const wrappedMainKey = encrypt(
+      this.sodium,
+      mainKey,
+      mainKeyRewrappingCipher,
+      'application/e2esdk.ciphertext.v1'
+    )
+    this.sodium.memzero(mainKey)
+    this.sodium.memzero(mainKeyRewrappingCipher.key)
+    const labelCipher = getDeviceLabelCipher(
+      this.sodium,
+      this.#state.identity.userId,
+      this.#state.identity.keychainBaseKey
+    )
+    const deviceLabel = label
+      ? encrypt(
+          this.sodium,
+          label,
+          labelCipher,
+          'application/e2esdk.ciphertext.v1'
+        )
+      : undefined
+    this.sodium.memzero(labelCipher.key)
+    const deviceEnrollmentRecord: DeviceEnrollmentRecord = {
+      nonce,
+      deviceLabel,
+      registrationRecord,
+      wrappedMainKey,
+    }
+    const { deviceId } = deviceEnrolledResponse.parse(
+      await this.#apiCall(
+        'POST',
+        '/v1/auth/devices/enrollment/record',
+        deviceEnrollmentRecord
+      )
+    )
+    // Return this to the caller so they may transmit it securely
+    // (ideally offline via a QR code) to the newly enrolled device
+    return this.#encodeDeviceRegistrationQR(
+      this.#state.identity.userId,
+      deviceId,
+      deviceSecret
+    )
+  }
+
+  public registerEnrolledDevice(qr: string) {
+    const { userId, deviceId, deviceSecret } =
+      this.#decodeDeviceRegistrationQR(qr)
+    localStorage.setItem(`e2esdk:${userId}:device:id`, deviceId)
+    localStorage.setItem(`e2esdk:${userId}:device:secret`, deviceSecret)
+  }
+
+  public get currentDeviceId() {
+    if (this.#state.state !== 'loaded') {
+      return null
+    }
+    return this.#state.deviceId
+  }
+
+  public async getEnrolledDevices() {
+    return listDevicesResponseBody.parse(
+      await this.#apiCall('GET', '/v1/auth/devices')
+    )
+  }
+
+  #encodeDeviceRegistrationQR(
+    userId: string,
+    deviceId: string,
+    deviceSecret: string
+  ) {
+    const qr = new URL('e2esdk://register-device')
+    qr.searchParams.set('userId', userId)
+    qr.searchParams.set('deviceId', deviceId)
+    qr.searchParams.set('deviceSecret', deviceSecret)
+    return qr.toString()
+  }
+
+  #decodeDeviceRegistrationQR(qr: string) {
+    const url = new URL(qr)
+    if (url.protocol !== 'e2esdk:' || url.pathname !== '//register-device') {
+      throw new Error('Invalid device registration data')
+    }
+    const userId = identitySchema.shape.userId.parse(
+      url.searchParams.get('userId')
+    )
+    const deviceId = deviceIdSchema.parse(url.searchParams.get('deviceId'))
+    const deviceSecret = deviceSecretSchema.parse(
+      url.searchParams.get('deviceSecret')
+    )
+    return {
+      userId,
+      deviceId,
+      deviceSecret,
+    }
   }
 
   // Key Ops --
@@ -438,7 +726,7 @@ export class Client {
       ),
       nameFingerprint,
       payloadFingerprint,
-      signature: this.encode(
+      signature: base64UrlEncode(
         multipartSignature(
           this.sodium,
           this.#state.identity.signature.privateKey,
@@ -472,7 +760,7 @@ export class Client {
       algorithm: cipher.algorithm,
       publicKey:
         cipher.algorithm !== 'secretBox'
-          ? this.encode(cipher.publicKey)
+          ? base64UrlEncode(cipher.publicKey)
           : undefined,
       createdAt,
       expiresAt,
@@ -571,8 +859,10 @@ export class Client {
       expiresAt?.toISOString() ?? keychainItem.expiresAt?.toISOString() ?? null
     const body: PostSharedKeyBody = {
       fromUserId: this.#state.identity.userId,
-      fromSharingPublicKey: this.encode(this.#state.identity.sharing.publicKey),
-      fromSignaturePublicKey: this.encode(
+      fromSharingPublicKey: base64UrlEncode(
+        this.#state.identity.sharing.publicKey
+      ),
+      fromSignaturePublicKey: base64UrlEncode(
         this.#state.identity.signature.publicKey
       ),
       fromProof: this.#state.identity.proof,
@@ -593,7 +883,7 @@ export class Client {
       ),
       nameFingerprint,
       payloadFingerprint,
-      signature: this.encode(
+      signature: base64UrlEncode(
         multipartSignature(
           this.sodium,
           this.#state.identity.signature.privateKey,
@@ -641,14 +931,16 @@ export class Client {
 
   // User Ops --
 
-  public get publicIdentity(): PublicUserIdentity {
+  public get publicIdentity(): PublicUserIdentity | null {
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account is locked')
+      return null
     }
     return {
       userId: this.#state.identity.userId,
-      sharingPublicKey: this.encode(this.#state.identity.sharing.publicKey),
-      signaturePublicKey: this.encode(this.#state.identity.signature.publicKey),
+      sharingPublicKey: base64UrlEncode(this.#state.identity.sharing.publicKey),
+      signaturePublicKey: base64UrlEncode(
+        this.#state.identity.signature.publicKey
+      ),
       proof: this.#state.identity.proof,
     }
   }
@@ -840,7 +1132,7 @@ export class Client {
       this.#state.identity.signature.privateKey,
       ...items.map(str => this.sodium.from_string(str))
     )
-    return this.encode(signature)
+    return base64UrlEncode(signature)
   }
 
   public verifySignature(
@@ -881,8 +1173,10 @@ export class Client {
     }
     const verified = verifyClientIdentity(this.sodium, {
       userId: this.#state.identity.userId,
-      sharingPublicKey: this.encode(this.#state.identity.sharing.publicKey),
-      signaturePublicKey: this.encode(this.#state.identity.signature.publicKey),
+      sharingPublicKey: base64UrlEncode(this.#state.identity.sharing.publicKey),
+      signaturePublicKey: base64UrlEncode(
+        this.#state.identity.signature.publicKey
+      ),
       proof: this.#state.identity.proof,
     })
     if (verified) {
@@ -1116,11 +1410,13 @@ export class Client {
     // See packages/server/src/routes/notifications.ts
     const timestamp = new Date().toISOString()
     const url = new URL('/v1/notifications', this.config.serverURL)
+    url.protocol = url.protocol.replace('http', 'ws')
     url.searchParams.set('context', context)
     url.searchParams.set('x-e2esdk-user-id', this.#state.identity.userId)
     url.searchParams.set('x-e2esdk-client-id', this.config.clientId)
+    url.searchParams.set('x-e2esdk-device-id', this.#state.deviceId)
+    url.searchParams.set('x-e2esdk-session-id', this.#state.sessionId)
     url.searchParams.set('x-e2esdk-timestamp', timestamp)
-    url.protocol = url.protocol.replace('http', 'ws')
     const signature = signClientRequest(
       this.sodium,
       this.#state.identity.signature.privateKey,
@@ -1130,10 +1426,13 @@ export class Client {
         // Note that we sign the URL before applying the signature
         // into the querystring (otherwise we'd be running in circles),
         // so the server will do the same thing for verification.
+        // See packages/server/src/plugins/auth.ts
         url: url.toString(),
         recipientPublicKey: this.config.serverPublicKey,
         userId: this.#state.identity.userId,
         clientId: this.config.clientId,
+        deviceId: this.#state.deviceId,
+        sessionId: this.#state.sessionId,
       }
     )
     url.searchParams.set('x-e2esdk-signature', signature)
@@ -1212,18 +1511,21 @@ export class Client {
     const url = `${this.config.serverURL}${path}`
     const json = body ? JSON.stringify(body) : undefined
     const timestamp = new Date().toISOString()
+    const signatureItems = {
+      timestamp,
+      method,
+      url,
+      body: json,
+      recipientPublicKey: this.config.serverPublicKey,
+      userId: this.#state.identity.userId,
+      clientId: this.config.clientId,
+      deviceId: this.#state.deviceId,
+      sessionId: this.#state.sessionId,
+    }
     const signature = signClientRequest(
       this.sodium,
       this.#state.identity.signature.privateKey,
-      {
-        timestamp,
-        method,
-        url,
-        body: json,
-        recipientPublicKey: this.config.serverPublicKey,
-        userId: this.#state.identity.userId,
-        clientId: this.config.clientId,
-      }
+      signatureItems
     )
     const res = await fetch(url, {
       method,
@@ -1235,54 +1537,71 @@ export class Client {
         'content-type': 'application/json',
         'x-e2esdk-user-id': this.#state.identity.userId,
         'x-e2esdk-client-id': this.config.clientId,
+        'x-e2esdk-device-id': this.#state.deviceId,
+        'x-e2esdk-session-id': this.#state.sessionId,
         'x-e2esdk-timestamp': timestamp,
         'x-e2esdk-signature': signature,
       },
       body: json,
     })
     if (!res.ok) {
+      if (this.#handleSessionRefresh && res.status === 401) {
+        try {
+          console.dir({
+            signatureItems,
+            res: await res.json(),
+          })
+          throw new Error('Aborting infinite login recursion')
+          // First, prevent endless recursion
+          this.#handleSessionRefresh = false
+          // Refresh session
+          // await this.login(this.#state.identity.userId)
+          // Then try again
+          // @ts-ignore (overload confusion)
+          return this.#apiCall(method, path, body)
+        } finally {
+          this.#handleSessionRefresh = true
+        }
+      }
       const { error: statusText, statusCode, message } = await res.json()
       throw new APIError(statusCode, statusText, message)
     }
-    return this.#verifyServerResponse(method, res, this.#state.identity)
+    return this.#verifyServerResponse(method, res)
   }
 
   async #verifyServerResponse(
     method: HTTPMethod,
-    res: Response,
-    identity: Identity
+    res: Response
   ): Promise<unknown> {
+    if (this.#state.state !== 'loaded') {
+      throw new Error('Account must be loaded')
+    }
+    // todo: Refactor this to allow caching (drop timestamp signing)
     const now = Date.now()
-    const {
-      'x-e2esdk-signature': signature,
-      'x-e2esdk-client-id': clientId,
-      'x-e2esdk-timestamp': timestamp,
-      'x-e2esdk-user-id': userId,
-    } = publicKeyAuthHeaders.parse(Object.fromEntries(res.headers))
+    const { 'x-e2esdk-signature': signature, 'x-e2esdk-timestamp': timestamp } =
+      responseHeaders.parse(Object.fromEntries(res.headers))
     // res.text() will return "" on empty bodies
     const body = (await res.text()) || undefined
+    const signatureArgs = {
+      timestamp,
+      method,
+      url: res.url,
+      body,
+      recipientPublicKey: this.#state.identity.signature.publicKey,
+      userId: this.#state.identity.userId,
+      clientId: this.config.clientId,
+      deviceId: this.#state.deviceId,
+      sessionId: this.#state.sessionId,
+    }
     const verified = verifyServerSignature(
       this.sodium,
       this.config.serverPublicKey,
       signature,
-      {
-        timestamp,
-        method,
-        url: res.url,
-        body,
-        recipientPublicKey: identity.signature.publicKey,
-        userId,
-        clientId: this.config.clientId,
-      }
+      signatureArgs
     )
     if (!verified) {
+      console.dir(signatureArgs)
       throw new Error('Invalid server response signature')
-    }
-    if (userId !== identity.userId) {
-      throw new Error('Mismatching user ID')
-    }
-    if (clientId !== this.config.clientId) {
-      throw new Error('Mismatching client ID')
     }
     if (isFarFromCurrentTime(timestamp, now)) {
       throw new Error(
@@ -1365,7 +1684,7 @@ function stateSerializer(state: State) {
   if (state.state === 'idle') {
     return JSON.stringify(state)
   }
-  const payload = {
+  const payload: z.input<typeof stateSchema> = {
     state: state.state,
     identity: {
       userId: state.identity.userId,
@@ -1380,10 +1699,15 @@ function stateSerializer(state: State) {
       },
       proof: state.identity.proof,
     },
+    deviceId: state.deviceId,
+    sessionId: state.sessionId,
+    exportKey: base64UrlEncode(state.exportKey),
     keychain: Array.from(state.keychain.values())
       .flat()
       .map(item => ({
         ...item,
+        createdAt: item.createdAt.toISOString(),
+        expiresAt: item.expiresAt?.toISOString() ?? null,
         cipher: serializeCipher(item.cipher),
       })),
   }
