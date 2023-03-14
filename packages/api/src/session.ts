@@ -5,7 +5,7 @@ import { thirtyTwoBytesBase64Schema } from './schemas/encodings'
 export const activeSessionSchema = z.object({
   ip: z.string(),
   deviceId: deviceIdSchema,
-  deviceLabel: deviceLabelSchema,
+  deviceLabel: deviceLabelSchema.optional(),
   sessionId: thirtyTwoBytesBase64Schema,
 })
 export type ActiveSession = z.infer<typeof activeSessionSchema>
