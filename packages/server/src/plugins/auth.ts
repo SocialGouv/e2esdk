@@ -74,6 +74,10 @@ const authPlugin: FastifyPluginAsync = async (app: App) => {
       return fingerprint(app.sodium, opaqueSessionKey)
     },
     saveSession(sessionId, sessionData) {
+      const redisKey = getRedisSessionKey(
+        sessionData.identity.userId,
+        sessionId
+      )
       const cipher = deriveSessionCipher(
         env.SESSION_SECRETS[0],
         app.sodium.from_base64(sessionId)
@@ -82,6 +86,9 @@ const authPlugin: FastifyPluginAsync = async (app: App) => {
         app.sodium,
         sessionData,
         cipher,
+        // Use the Redis key as authenticated data
+        // to ensure a strong key/value bond:
+        app.sodium.from_string(redisKey),
         'application/e2esdk.ciphertext.v1'
       )
       app.sodium.memzero(cipher.key)
@@ -242,7 +249,9 @@ export async function decryptSession(
           req.server.sodium,
           redisData,
           sessionCipher,
-          'application/e2esdk.ciphertext.v1'
+          // Use the Redis key as authenticated data
+          // to ensure a strong key/value bond:
+          req.server.sodium.from_string(redisKey)
         )
       )
       req.server.sodium.memzero(sessionCipher.key)

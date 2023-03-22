@@ -425,14 +425,7 @@ export class Client {
     const mainKeyWrappingCipher = getOpaqueExportCipher(this.sodium, exportKey)
     const mainKey = z
       .instanceof(Uint8Array)
-      .parse(
-        decrypt(
-          this.sodium,
-          wrappedMainKey,
-          mainKeyWrappingCipher,
-          'application/e2esdk.ciphertext.v1'
-        )
-      )
+      .parse(decrypt(this.sodium, wrappedMainKey, mainKeyWrappingCipher))
     const identity = deriveClientIdentity(this.sodium, userId, mainKey)
     this.sodium.memzero(mainKey)
     this.sodium.memzero(mainKeyWrappingCipher.key)
@@ -479,12 +472,7 @@ export class Client {
     const mainKey = z
       .instanceof(Uint8Array)
       .parse(
-        decrypt(
-          this.sodium,
-          device.wrappedMainKey,
-          mainKeyUnwrappingCipher,
-          'application/e2esdk.ciphertext.v1'
-        )
+        decrypt(this.sodium, device.wrappedMainKey, mainKeyUnwrappingCipher)
       )
     this.sodium.memzero(mainKeyUnwrappingCipher.key)
 
@@ -535,6 +523,7 @@ export class Client {
       this.sodium,
       mainKey,
       mainKeyRewrappingCipher,
+      null,
       'application/e2esdk.ciphertext.v1'
     )
     this.sodium.memzero(mainKey)
@@ -549,6 +538,7 @@ export class Client {
           this.sodium,
           label,
           labelCipher,
+          null,
           'application/e2esdk.ciphertext.v1'
         )
       : undefined
