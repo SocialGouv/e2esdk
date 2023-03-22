@@ -40,15 +40,15 @@
     "prepack": "sceau sign"
   },
   "dependencies": {
-    "@socialgouv/e2esdk-crypto": "workspace:^",
     "@47ng/opaque-server": "^2.1.4",
-    "zod": "^3.20.2",
-    "zx": "^7.1.1"
+    "@socialgouv/e2esdk-crypto": "workspace:^",
+    "zod": "^3.21.4",
+    "zx": "^7.2.1"
   },
   "devDependencies": {
     "@socialgouv/e2esdk-config-typescript": "workspace:*",
     "sceau": "^1.3.0",
-    "tsup": "^6.5.0",
-    "typescript": "^4.9.4"
+    "tsup": "^6.7.0",
+    "typescript": "^4.9.5"
   }
 }

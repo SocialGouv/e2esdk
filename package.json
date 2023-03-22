@@ -27,10 +27,10 @@
   },
   "devDependencies": {
     "@socialgouv/e2esdk-semantic-release": "workspace:*",
-    "@types/jest": "^29.2.5",
-    "multi-semantic-release": "^3.0.1",
-    "prettier": "^2.8.3",
-    "turbo": "^1.7.0"
+    "@types/jest": "^29.5.0",
+    "multi-semantic-release": "^3.0.2",
+    "prettier": "^2.8.6",
+    "turbo": "^1.8.5"
   },
   "prettier": {
     "arrowParens": "avoid",
