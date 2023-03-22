@@ -16,8 +16,8 @@
   },
   "dependencies": {
     "@algolia/client-search": "^4.14.3",
-    "@docusaurus/core": "2.2.0",
-    "@docusaurus/preset-classic": "2.2.0",
+    "@docusaurus/core": "2.3.1",
+    "@docusaurus/preset-classic": "2.3.1",
     "@mdx-js/react": "^2.0.0",
     "@socialgouv/e2esdk-crypto": "workspace:*",
     "clsx": "^1.2.1",
@@ -26,7 +26,7 @@
     "react-dom": "^18.0.0"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "2.2.0",
+    "@docusaurus/module-type-aliases": "2.3.1",
     "@docusaurus/theme-classic": "^2.2.0",
     "@docusaurus/types": "^2.2.0",
     "@tsconfig/docusaurus": "^1.0.6",
