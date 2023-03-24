@@ -68,6 +68,9 @@ jobs:
           file: packages/server/Dockerfile
           push: false
 
+      - name: Build docs
+        run: pnpm build:docs
+
   # ----------------------------------------------------------------------------
 
   cd-npm:
