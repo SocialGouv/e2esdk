@@ -35,7 +35,7 @@
     "sign": "sceau sign"
   },
   "dependencies": {
-    "@47ng/opaque-server": "^2.1.4",
+    "@47ng/opaque-server": "^2.1.5",
     "@fastify/cors": "^8.2.1",
     "@fastify/swagger": "^8.3.1",
     "@fastify/swagger-ui": "^1.5.0",
