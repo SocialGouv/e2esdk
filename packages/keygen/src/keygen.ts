@@ -1,9 +1,17 @@
 #!/usr/bin/env zx
 
-import { ServerSetup } from '@47ng/opaque-server'
+import {
+  HandleRegistration,
+  Registration,
+  ServerSetup,
+  set_panic_hook,
+} from '@47ng/opaque-server'
+import { encodeDeviceRegistrationURI } from '@socialgouv/e2esdk-api'
 import {
   base64UrlEncode,
   deriveClientIdentity,
+  encrypt,
+  getOpaqueExportCipher,
   multipartSignature,
   sodium,
   verifyMultipartSignature,
@@ -22,30 +30,39 @@ async function main() {
       '(OPTIONS)'
     )}
 
-  Algorithms:
+  Algorithms and options
     ${chalk.green('•')} box              ${chalk.italic.dim('x25519')}
+
     ${chalk.green('•')} sealedBox        ${chalk.italic.dim('x25519')}
+
     ${chalk.green('•')} secretBox        ${chalk.italic.dim(
       'XChaCha20-Poly1305'
     )}
+
     ${chalk.green('•')} sign, signature  ${chalk.italic.dim('ed25519')}
+        --seed         [seed]         Create a seeded signature key pair ${chalk.dim.italic(
+          "(don't use in production!)"
+        )}
+
     ${chalk.green('•')} identity         ${chalk.italic.dim(
       'Complete e2esdk Identity'
     )}
+        --userId       [userId]       Set the user ID in the returned Identity
+        --mainKey      [mainKey]      Set the main key to derive the Identity from
+        --deviceId     [deviceId]     Set the main device ID
+        --deviceSecret [deviceSecret] Set the main device secret for OPAQUE auth
+        --opaqueSetup  [opaqueSetup]  Set the server's OPAQUE serialised setup ${chalk.dim.italic(
+          '(see below)'
+        )}
+
     ${chalk.green('•')} opaque           ${chalk.italic.dim(
       'OPAQUE server setup'
     )}
 
-  Options:
+  Common options:
     --help             Show this message
     --compact          Single-line JSON output
     --env [name]       Output in .env format, using [name] as prefix
-    --seed [seed]      Create a seeded signature key pair       ${chalk.italic.dim(
-      "(only for `signature` and don't use for production!)"
-    )}
-    --userId [userId]  Set the user ID in the returned Identity ${chalk.italic.dim(
-      '(only for `identity`)'
-    )}
   `)
     process.exit(0)
   }
@@ -138,21 +155,67 @@ ${envName('PRIVATE_KEY')}=${privateKey}`)
   }
 
   if (argv._[0] === 'identity') {
+    set_panic_hook()
+
     const mainKey = argv.mainKey
       ? sodium.from_base64(argv.mainKey)
       : sodium.randombytes_buf(32)
     const userId = argv.userId ?? crypto.randomUUID()
     const identity = deriveClientIdentity(sodium, userId, mainKey)
+    const deviceId = argv.deviceId ?? crypto.randomUUID()
+    const deviceSecret =
+      argv.deviceSecret ?? sodium.randombytes_buf(32, 'base64')
+    const serverSetup = ServerSetup.deserialize(
+      sodium.from_base64(
+        argv.opaqueServerSetup ??
+          // by default, use the server .env.example value
+          'y9nWjEF_GxEaTZIX8LXR8ssOuC5RJcTc5XN73WGnzN1DdksCf4VhhH7mkqC48UFBeQtCBY_77akTivYOoGTyoLLMm_1GTMPLaYSt_tvbHuGQI_xhCFjA9bBJ0fONA8QINH6rxlX0oG9lApZ65AIC5l7Q1A9YdoFh-stB81Uk7Q0'
+      )
+    )
+    const clientRegistration = new Registration()
+    const serverRegistration = new HandleRegistration(serverSetup)
+    const registrationRequest = clientRegistration.start(deviceSecret)
+    const registrationResponse = serverRegistration.start(
+      sodium.from_string(userId),
+      registrationRequest
+    )
+    const registrationRecord = clientRegistration.finish(
+      deviceSecret,
+      registrationResponse
+    )
+    const opaqueCredentials = sodium.to_base64(
+      serverRegistration.finish(registrationRecord)
+    )
+    const wrappedMainKey = encrypt(
+      sodium,
+      mainKey,
+      getOpaqueExportCipher(sodium, clientRegistration.getExportKey()),
+      sodium.from_string(userId),
+      'application/e2esdk.ciphertext.v1'
+    )
     console.log(
       JSON.stringify(
         {
           mainKey: sodium.to_base64(mainKey),
           keychainBaseKey: sodium.to_base64(identity.keychainBaseKey),
+          deviceRegistrationURI: encodeDeviceRegistrationURI(
+            userId,
+            deviceId,
+            deviceSecret
+          ),
           identity: {
             userId,
             sharingPublicKey: sodium.to_base64(identity.sharing.publicKey),
             signaturePublicKey: sodium.to_base64(identity.signature.publicKey),
             proof: identity.proof,
+          },
+          device: {
+            id: deviceId,
+            ownerId: userId,
+            enrolledFrom: null,
+            label: null,
+            wrappedMainKey,
+            opaqueCredentials,
           },
         },
         null,

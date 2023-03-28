@@ -40,7 +40,8 @@
     "prepack": "sceau sign"
   },
   "dependencies": {
-    "@47ng/opaque-server": "^2.1.4",
+    "@47ng/opaque-server": "^2.1.5",
+    "@socialgouv/e2esdk-api": "workspace:^",
     "@socialgouv/e2esdk-crypto": "workspace:^",
     "zod": "^3.21.4",
     "zx": "^7.2.1"

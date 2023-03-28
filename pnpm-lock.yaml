@@ -329,7 +329,8 @@ importers:
 
   packages/keygen:
     specifiers:
-      '@47ng/opaque-server': ^2.1.4
+      '@47ng/opaque-server': ^2.1.5
+      '@socialgouv/e2esdk-api': workspace:^
       '@socialgouv/e2esdk-config-typescript': workspace:*
       '@socialgouv/e2esdk-crypto': workspace:^
       sceau: ^1.3.0
@@ -338,7 +339,8 @@ importers:
       zod: ^3.21.4
       zx: ^7.2.1
     dependencies:
-      '@47ng/opaque-server': 2.1.4
+      '@47ng/opaque-server': 2.1.5
+      '@socialgouv/e2esdk-api': link:../api
       '@socialgouv/e2esdk-crypto': link:../crypto
       zod: 3.21.4
       zx: 7.2.1
@@ -447,6 +449,10 @@ packages:
 
   /@47ng/opaque-server/2.1.4:
     resolution: {integrity: sha512-ATzXS6rxOLUxnhsgbFPZFM5KgZvFKbxEUN1cT6vL2Oh8yl+3TBNyHncUBSWp7d623RFvAwoDW1ittq9XZ+o5qg==}
+    dev: false
+
+  /@47ng/opaque-server/2.1.5:
+    resolution: {integrity: sha512-5zWFt4bedJTaYwNT+F3kinZrAy1dpcK7wWg2co6fVHGnjR5Y9bAjKkramNwUwbMjKkaCLVJGbX5oqxZWiieWuQ==}
     dev: false
 
   /@algolia/autocomplete-core/1.7.4:

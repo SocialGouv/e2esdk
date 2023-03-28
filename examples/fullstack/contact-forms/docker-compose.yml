@@ -99,7 +99,7 @@ services:
       - CORS_ALLOWED_ORIGINS=http://localhost:4000
       - DISABLE_CODE_SIGNATURE_CHECK=true
       - SESSION_SECRETS=___example-session-key_____NOT-FOR-PROD___8
-      - OPAQUE_SERVER_SETUP=OjzUBTWpZlvlfrsB8NA8M8WQxGhd3k1x02vj8otxS_z7lM7fvS5RAMvVVNXrK4s-oAL9ynDsU1oJuSs2RF3LIeb132v91Uqg1EYbhPASaaRTO6ICWzIiOqVl6WpJFCMDTxsy2ZdHvvavHSx5z7xn5_0SwIdeN5WlcCupR5ydpQ0
+      - OPAQUE_SERVER_SETUP=y9nWjEF_GxEaTZIX8LXR8ssOuC5RJcTc5XN73WGnzN1DdksCf4VhhH7mkqC48UFBeQtCBY_77akTivYOoGTyoLLMm_1GTMPLaYSt_tvbHuGQI_xhCFjA9bBJ0fONA8QINH6rxlX0oG9lApZ65AIC5l7Q1A9YdoFh-stB81Uk7Q0
     links:
       - e2esdk-db
       - e2esdk-redis

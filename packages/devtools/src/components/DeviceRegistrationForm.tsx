@@ -15,7 +15,7 @@ import { FiSave } from 'react-icons/fi'
 import { z } from 'zod'
 
 const formSchema = z.object({
-  qr: z.string(),
+  uri: z.string(),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -27,10 +27,18 @@ export const DeviceRegistrationForm: React.FC<
 > = props => {
   const client = useE2ESDKClient()
   const { register, handleSubmit, reset } = useForm<FormValues>()
+  const [isLoading, setIsLoading] = React.useState(false)
   const onSubmit = React.useCallback(
-    (values: FormValues) => {
-      client.registerEnrolledDevice(values.qr)
-      reset()
+    async (values: FormValues) => {
+      setIsLoading(true)
+      try {
+        const identity = await client.registerEnrolledDevice(values.uri)
+        if (identity) {
+          reset()
+        }
+      } finally {
+        setIsLoading(false)
+      }
     },
     [client, reset]
   )
@@ -39,10 +47,10 @@ export const DeviceRegistrationForm: React.FC<
       <Stack spacing={4} {...props}>
         <FormControl>
           <FormLabel>Device registration URI</FormLabel>
-          <Input fontFamily="mono" {...register('qr')} />
+          <Input fontFamily="mono" {...register('uri')} />
           <FormHelperText>// todo: Add QR code scanner</FormHelperText>
         </FormControl>
-        <Button type="submit" leftIcon={<FiSave />}>
+        <Button type="submit" leftIcon={<FiSave />} isLoading={isLoading}>
           Register device
         </Button>
       </Stack>

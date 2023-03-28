@@ -2,11 +2,13 @@ import initOpaqueClient, { Login, Registration } from '@47ng/opaque-client'
 import { wasmBase64 as opaqueWasm } from '@47ng/opaque-client/inline-wasm'
 import {
   base64Bytes,
+  decodeDeviceRegistrationURI,
   deviceEnrolledResponse,
   DeviceEnrollmentRecord,
   deviceEnrollmentResponse,
   deviceIdSchema,
   deviceSchema,
+  encodeDeviceRegistrationURI,
   fingerprintSchema,
   getKeychainResponseBody,
   GetKeychainResponseBody,
@@ -86,13 +88,13 @@ export type ClientConfig<KeyType = string> = {
   handleSessionRefresh?: boolean
 }
 
-type Config = Required<
-  Omit<ClientConfig<Uint8Array>, 'handleSessionRefresh'>
-> & {
+type Config = Required<ClientConfig<Uint8Array>> & {
   clientId: string
 }
 
 // --
+
+const SESSION_REFRESH_RETRY_COUNT = 3
 
 const NAME_PREFIX_LENGTH_BYTES = 32
 const NAME_PREFIX_SEPARATOR = ':'
@@ -235,7 +237,7 @@ export class Client {
   #sync: LocalStateSync<State>
   #socket?: WebSocket
   #socketExponentialBackoffTimeout?: number
-  #handleSessionRefresh: boolean
+  #sessionRefreshRetryCount: number
 
   constructor(config: ClientConfig) {
     const tick = performance.now()
@@ -247,12 +249,15 @@ export class Client {
       serverURL: config.serverURL,
       serverPublicKey: this.decode(config.serverPublicKey),
       handleNotifications: config.handleNotifications ?? true,
+      handleSessionRefresh: config.handleSessionRefresh ?? true,
       clientId:
         typeof crypto === 'object'
           ? crypto.randomUUID()
           : 'not-available-in-ssr',
     })
-    this.#handleSessionRefresh = config.handleSessionRefresh ?? true
+    this.#sessionRefreshRetryCount = this.config.handleSessionRefresh
+      ? SESSION_REFRESH_RETRY_COUNT
+      : 0
     this.#state = {
       state: 'idle',
     }
@@ -348,7 +353,14 @@ export class Client {
       const signupRecordBody: SignupRecord = {
         nonce,
         registrationRecord,
-        wrappedMainKey: encrypt(this.sodium, mainKey, mainKeyWrappingCipher),
+        wrappedMainKey: encrypt(
+          this.sodium,
+          mainKey,
+          mainKeyWrappingCipher,
+          // Bind the ciphertext to the userId as authenticated additional data
+          sodium.from_string(userId),
+          'application/e2esdk.ciphertext.v1'
+        ),
         signaturePublicKey: base64UrlEncode(identity.signature.publicKey),
         sharingPublicKey: base64UrlEncode(identity.sharing.publicKey),
         proof: identity.proof,
@@ -368,7 +380,7 @@ export class Client {
       )
       const { deviceId } = signupCompleteResponse.parse(await res2.json())
       this.registerEnrolledDevice(
-        this.#encodeDeviceRegistrationQR(userId, deviceId, deviceSecret)
+        encodeDeviceRegistrationURI(userId, deviceId, deviceSecret)
       )
     } catch (error) {
       this.#clearState() // Cleanup on failure
@@ -425,7 +437,14 @@ export class Client {
     const mainKeyWrappingCipher = getOpaqueExportCipher(this.sodium, exportKey)
     const mainKey = z
       .instanceof(Uint8Array)
-      .parse(decrypt(this.sodium, wrappedMainKey, mainKeyWrappingCipher))
+      .parse(
+        decrypt(
+          this.sodium,
+          wrappedMainKey,
+          mainKeyWrappingCipher,
+          this.sodium.from_string(userId)
+        )
+      )
     const identity = deriveClientIdentity(this.sodium, userId, mainKey)
     this.sodium.memzero(mainKey)
     this.sodium.memzero(mainKeyWrappingCipher.key)
@@ -556,20 +575,31 @@ export class Client {
         deviceEnrollmentRecord
       )
     )
-    // Return this to the caller so they may transmit it securely
+    // Return this URI to the caller so they may transmit it securely
     // (ideally offline via a QR code) to the newly enrolled device
-    return this.#encodeDeviceRegistrationQR(
+    return encodeDeviceRegistrationURI(
       this.#state.identity.userId,
       deviceId,
       deviceSecret
     )
   }
 
-  public registerEnrolledDevice(qr: string) {
-    const { userId, deviceId, deviceSecret } =
-      this.#decodeDeviceRegistrationQR(qr)
+  /**
+   * Register this device and login
+   * @param uri device registration URI
+   */
+  public async registerEnrolledDevice(uri: string) {
+    const { userId, deviceId, deviceSecret } = decodeDeviceRegistrationURI(uri)
     localStorage.setItem(`e2esdk:${userId}:device:id`, deviceId)
     localStorage.setItem(`e2esdk:${userId}:device:secret`, deviceSecret)
+    try {
+      return await this.login(userId)
+    } catch (error) {
+      // Cleanup on error
+      localStorage.removeItem(`e2esdk:${userId}:device:id`)
+      localStorage.removeItem(`e2esdk:${userId}:device:secret`)
+      throw error
+    }
   }
 
   public get currentDeviceId() {
@@ -583,37 +613,6 @@ export class Client {
     return listDevicesResponseBody.parse(
       await this.#apiCall('GET', '/v1/auth/devices')
     )
-  }
-
-  #encodeDeviceRegistrationQR(
-    userId: string,
-    deviceId: string,
-    deviceSecret: string
-  ) {
-    const qr = new URL('e2esdk://register-device')
-    qr.searchParams.set('userId', userId)
-    qr.searchParams.set('deviceId', deviceId)
-    qr.searchParams.set('deviceSecret', deviceSecret)
-    return qr.toString()
-  }
-
-  #decodeDeviceRegistrationQR(qr: string) {
-    const url = new URL(qr)
-    if (url.protocol !== 'e2esdk:' || url.pathname !== '//register-device') {
-      throw new Error('Invalid device registration data')
-    }
-    const userId = identitySchema.shape.userId.parse(
-      url.searchParams.get('userId')
-    )
-    const deviceId = deviceIdSchema.parse(url.searchParams.get('deviceId'))
-    const deviceSecret = deviceSecretSchema.parse(
-      url.searchParams.get('deviceSecret')
-    )
-    return {
-      userId,
-      deviceId,
-      deviceSecret,
-    }
   }
 
   // Key Ops --
@@ -1540,27 +1539,26 @@ export class Client {
       body: json,
     })
     if (!res.ok) {
-      if (this.#handleSessionRefresh && res.status === 401) {
-        try {
-          console.dir({
-            signatureItems,
-            res: await res.json(),
-          })
-          throw new Error('Aborting infinite login recursion')
-          // First, prevent endless recursion
-          this.#handleSessionRefresh = false
-          // Refresh session
-          // await this.login(this.#state.identity.userId)
-          // Then try again
-          // @ts-ignore (overload confusion)
-          return this.#apiCall(method, path, body)
-        } finally {
-          this.#handleSessionRefresh = true
+      // Handle "Unauthorized" session refresh retries
+      if (res.status === 401) {
+        if (this.#sessionRefreshRetryCount === 0) {
+          const { error: statusText, statusCode, message } = await res.json()
+          throw new APIError(statusCode, statusText, message)
         }
+        this.#sessionRefreshRetryCount--
+        // Refresh session
+        await this.login(this.#state.identity.userId)
+        // Then try again
+        // @ts-ignore (overload confusion)
+        return this.#apiCall(method, path, body)
+      } else {
+        const { error: statusText, statusCode, message } = await res.json()
+        throw new APIError(statusCode, statusText, message)
       }
-      const { error: statusText, statusCode, message } = await res.json()
-      throw new APIError(statusCode, statusText, message)
     }
+    this.#sessionRefreshRetryCount = this.config.handleSessionRefresh
+      ? SESSION_REFRESH_RETRY_COUNT
+      : 0
     return this.#verifyServerResponse(method, res)
   }
 
