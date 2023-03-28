@@ -84,6 +84,14 @@ const envSchema = z.object({
    */
   DEPLOYMENT_TAG: z.string().optional().default('local'),
 
+  /** Allow the server to listen on an insecure HTTP connection.
+   *
+   * By default, a TLS configuration (certificate & private key) is required
+   * to enable end-to-end transport security, but it may be bypassed for
+   * local development and tests.
+   */
+  DISABLE_TLS: booleanSchema.optional().default('false'),
+
   /** Allow the server to skip code signature check in test environments.
    *
    * Local examples run the server from a Docker compose stack, which uses
