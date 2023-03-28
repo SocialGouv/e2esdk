@@ -1,10 +1,12 @@
 import {
   Button,
+  Divider,
   FormControl,
   FormLabel,
   Heading,
   Input,
   Stack,
+  Text,
 } from '@chakra-ui/react'
 import { useE2ESDKClient } from '@socialgouv/e2esdk-react'
 import type { NextPage } from 'next'
@@ -13,13 +15,22 @@ import React from 'react'
 
 const LoginPage: NextPage = () => {
   const [userId, setUserId] = React.useState('')
-  const [mainKey, setMainKey] = React.useState('')
+  const [deviceRegistrationURI, setDeviceRegistrationURI] = React.useState('')
   const router = useRouter()
   const client = useE2ESDKClient()
   const login = React.useCallback(async () => {
-    await client.login(userId, client.decode(mainKey))
+    if (deviceRegistrationURI) {
+      const identity = await client.registerEnrolledDevice(
+        deviceRegistrationURI
+      )
+      if (!identity) {
+        throw new Error('Failed to login')
+      }
+    } else {
+      await client.login(userId)
+    }
     await router.push('/app/contact-forms')
-  }, [userId, mainKey, client, router])
+  }, [userId, deviceRegistrationURI, client, router])
 
   return (
     <>
@@ -33,15 +44,16 @@ const LoginPage: NextPage = () => {
             onChange={e => setUserId(e.target.value)}
           />
         </FormControl>
+        <Text>---- OR ----</Text>
         <FormControl>
-          <FormLabel>Main Key</FormLabel>
+          <FormLabel>Device registration URI</FormLabel>
           <Input
-            value={mainKey}
-            onChange={e => setMainKey(e.target.value)}
-            type="password"
-            pattern="[\w-]{43}"
+            fontFamily="mono"
+            value={deviceRegistrationURI}
+            onChange={e => setDeviceRegistrationURI(e.target.value)}
           />
         </FormControl>
+        <Divider />
         <Button type="submit" onClick={login}>
           Log in
         </Button>

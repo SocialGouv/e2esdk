@@ -152,6 +152,14 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
                       </Text>
                     </MenuItem>
                     <MenuItem
+                      as={NextLink}
+                      display="block"
+                      href="/enroll-new-device"
+                      passHref
+                    >
+                      Enroll new device
+                    </MenuItem>
+                    <MenuItem
                       icon={<FiLogOut />}
                       color="red.500"
                       onClick={() => {
