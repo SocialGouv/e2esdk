@@ -615,9 +615,30 @@ export class Client {
   }
 
   public async getEnrolledDevices() {
-    return listDevicesResponseBody.parse(
+    await this.sodium.ready
+    if (this.#state.state !== 'loaded') {
+      throw new Error('Account locked: cannot list enrolled devices')
+    }
+    const devices = listDevicesResponseBody.parse(
       await this.#apiCall('GET', '/v1/auth/devices')
     )
+    const deviceLabelCipher = getDeviceLabelCipher(
+      this.sodium,
+      this.#state.identity.userId,
+      this.#state.identity.keychainBaseKey
+    )
+    try {
+      return devices.map(device => ({
+        ...device,
+        label: device.label
+          ? z
+              .string()
+              .parse(decrypt(this.sodium, device.label, deviceLabelCipher))
+          : undefined,
+      }))
+    } finally {
+      this.sodium.memzero(deviceLabelCipher.key)
+    }
   }
 
   // Key Ops --

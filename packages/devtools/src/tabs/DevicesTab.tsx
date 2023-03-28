@@ -1,4 +1,12 @@
-import { Badge, BoxProps, Button, Flex, Stack, Text } from '@chakra-ui/react'
+import {
+  Badge,
+  Box,
+  BoxProps,
+  Button,
+  Flex,
+  Stack,
+  Text,
+} from '@chakra-ui/react'
 import {
   useE2ESDKClient,
   useE2ESDKClientIdentity,
@@ -40,16 +48,27 @@ const YourDevicesSection = (props: BoxProps) => {
       <Stack spacing={4} px={4}>
         {devices.map(device => (
           <Flex key={device.id} alignItems="baseline">
-            <Text fontFamily="mono" fontSize="xs">
-              {device.id}
-            </Text>
-            {client.currentDeviceId === device.id && (
-              <Badge fontSize="2xs" colorScheme="green" ml={2}>
-                Current
-              </Badge>
-            )}
+            <Box>
+              <Text fontWeight="medium" fontSize="xs">
+                {device.label ?? 'Unnamed device'}
+              </Text>
+              <Text fontFamily="mono" fontSize="xs" color="gray.500">
+                {device.id}
+                {client.currentDeviceId === device.id && (
+                  <Badge
+                    fontSize="2xs"
+                    colorScheme="green"
+                    ml={2}
+                    fontFamily="body"
+                  >
+                    Current
+                  </Badge>
+                )}
+              </Text>
+            </Box>
             <Text ml="auto" fontSize="xs" color="gray.500">
-              {device.sessions.length} session(s)
+              {device.sessions.length || 'no'} session
+              {device.sessions.length > 1 ? 's' : ''}
             </Text>
           </Flex>
         ))}

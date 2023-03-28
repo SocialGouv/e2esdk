@@ -57,7 +57,7 @@ The only external requirement is a PostgreSQL database.
 
 ## Documentation
 
-- [Cryptography](./docs/cryptography)
+- [Cryptography](./docs/docs/cryptography)
 
 ## Contributing
 
