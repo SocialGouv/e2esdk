@@ -155,7 +155,7 @@ export default async function loginRoutes(app: App) {
       await app.auth.saveSession(sessionId, {
         identity: userRecord,
         deviceId: deviceRecord.id,
-        ip: req.ip,
+        ip: req.ip, // todo: Check with GDPR
       })
       await app.redis.client.del(redisKey(req.body.nonce))
       req.auditLog.info({

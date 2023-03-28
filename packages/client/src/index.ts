@@ -491,7 +491,12 @@ export class Client {
     const mainKey = z
       .instanceof(Uint8Array)
       .parse(
-        decrypt(this.sodium, device.wrappedMainKey, mainKeyUnwrappingCipher)
+        decrypt(
+          this.sodium,
+          device.wrappedMainKey,
+          mainKeyUnwrappingCipher,
+          this.sodium.from_string(this.#state.identity.userId)
+        )
       )
     this.sodium.memzero(mainKeyUnwrappingCipher.key)
 
@@ -542,7 +547,7 @@ export class Client {
       this.sodium,
       mainKey,
       mainKeyRewrappingCipher,
-      null,
+      this.sodium.from_string(this.#state.identity.userId),
       'application/e2esdk.ciphertext.v1'
     )
     this.sodium.memzero(mainKey)
