@@ -24,26 +24,3 @@ export const e2esdkClient = new Client({
   serverPublicKey: 'gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE',
 })
 ```
-
-In the case of Next.js, it's best located at the top-level of a file imported
-by `_app.tsx` _(or in `_app.tsx` itself)_:
-
-```tsx title="_app.tsx"
-import { Client } from '@socialgouv/e2esdk-client'
-import { E2ESDKClientProvider } from '@socialgouv/e2esdk-react'
-
-const e2esdkClient = new Client({
-  serverURL: 'https://localhost:3001',
-  serverPublicKey: 'gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE',
-})
-
-function MyNextJsApp({ Component, pageProps }: AppProps) {
-  return (
-    <E2ESDKClientProvider client={e2esdkClient}>
-      <Component {...pageProps} />
-    </E2ESDKClientProvider>
-  )
-}
-
-export default MyNextJsApp
-```
