@@ -26,6 +26,7 @@ const FeatureList: FeatureItem[] = [
     description: (
       <>
         Users can securely share decryption keys with other authenticated peers
+        or devices
       </>
     ),
   },
@@ -73,8 +74,8 @@ export default function HomepageFeatures(): JSX.Element {
             End-to-end encryption (E2EE) is a method of secure communication
             that prevents third parties from accessing data while it's
             transferred from one end system or device to another. With e2esdk,
-            the data is encrypted right in the user browser and only specific
-            recipients can decrypt it.
+            the data is <strong>encrypted right in the user browser</strong> and
+            only specific recipients can decrypt it.
             <br />
             <br />
             [schema]
@@ -88,9 +89,10 @@ export default function HomepageFeatures(): JSX.Element {
             <h2 className="">How does e2esdk work ?</h2>
             <p>
               e2esdk is composed of a server, responsible of securely storing
-              users encrypted keys and their relations, and a TypeScript SDK to
-              interact with the server REST API and encrypt/decrypt any data or
-              file, right from the user browser.
+              users encrypted keys and their relations, and a{' '}
+              <strong>TypeScript SDK</strong> to interact with the server REST
+              API and encrypt/decrypt any data or file, right from the user
+              browser.
               <br />
               <br />
               Once encrypted, the frontend can send the data to your web
@@ -102,18 +104,35 @@ export default function HomepageFeatures(): JSX.Element {
             </p>
           </div>
         </div>
-         <div className="row">
+        <div className="row">
           <div
             className={clsx('col col--10 col--offset-1')}
             style={{ marginTop: 20 }}
           >
             <h2 className="">Use cases</h2>
             <h3 className="">Forms with sensitive data</h3>
+            {/* schemas editable here: https://excalidraw.com/#json=qNSAopgexTpw9Bnkm84yF,boKQkcG6wJuEGrgl1ZVBbw */}
             <p>
-              Encrypt your users data before it is sent to the server, using standard HTML forms and builtin WebCrypto API.
+              Encrypt your users data before it is sent to the server, using
+              standard HTML forms and builtin WebCrypto API.
               <br />
               <br />
-              <img src={require('@site/static/img/schema-forms.png').default}/>
+              <img
+                src={
+                  require('@site/static/img/schema-forms-encrypt.png').default
+                }
+              />
+            </p>
+            <p>
+              Decrypt your data from your browser application only and export it
+              at your will.
+              <br />
+              <br />
+              <img
+                src={
+                  require('@site/static/img/schema-forms-decrypt.png').default
+                }
+              />
             </p>
           </div>
         </div>
