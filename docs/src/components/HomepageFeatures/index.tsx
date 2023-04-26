@@ -99,9 +99,21 @@ export default function HomepageFeatures(): JSX.Element {
               <br />
               <br />
               Read more in <a href="/e2esdk/docs/overview">Overview</a>
+            </p>
+          </div>
+        </div>
+         <div className="row">
+          <div
+            className={clsx('col col--10 col--offset-1')}
+            style={{ marginTop: 20 }}
+          >
+            <h2 className="">Use cases</h2>
+            <h3 className="">Forms with sensitive data</h3>
+            <p>
+              Encrypt your users data before it is sent to the server, using standard HTML forms and builtin WebCrypto API.
               <br />
               <br />
-              [schema]
+              <img src={require('@site/static/img/schema-forms.png').default}/>
             </p>
           </div>
         </div>
