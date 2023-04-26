@@ -28,15 +28,28 @@ function retrievePublicKeyFromURLHash() {
   return keyDerivationSecretSchema.parse(window.location.hash.replace(/^#/, ''))
 }
 
-export async function generateEncryptedFormLocalState(): Promise<EncryptedFormLocalState> {
-  const formPublicKey = retrievePublicKeyFromURLHash()
+/**
+ * Generate form local state
+ * @param formPublicKey The public key of the form to seal for
+ * @returns A Promise to`EncryptedFormLocalState` to encrypt form datas
+ */
+export async function generateEncryptedFormLocalState(
+  formPublicKey: Uint8Array = retrievePublicKeyFromURLHash()
+): Promise<EncryptedFormLocalState> {
   await sodium.ready
   const mainSecret = sodium.crypto_kdf_keygen()
   return deriveState(sodium, mainSecret, formPublicKey)
 }
 
+/**
+ * Initalize a form local state
+ * @param namespace The form namespace
+ * @param [formPublicKey] The public key of the form to seal for
+ * @returns A Promise to `EncryptedFormLocalState` to encrypt form datas
+ */
 export async function initializeEncryptedFormLocalState(
-  namespace: string
+  namespace: string,
+  formPublicKey: Uint8Array = retrievePublicKeyFromURLHash()
 ): Promise<EncryptedFormLocalState> {
   checkEnvironmentIsBrowser()
   try {
@@ -48,7 +61,6 @@ export async function initializeEncryptedFormLocalState(
       throw new Error('No main secret to load, generating a new state')
     }
     const mainSecret = base64UrlDecode(serializedMainSecret)
-    const formPublicKey = retrievePublicKeyFromURLHash()
     return deriveState(sodium, mainSecret, formPublicKey)
   } catch {
     return generateEncryptedFormLocalState()
