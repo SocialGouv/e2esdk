@@ -97,30 +97,32 @@ export class E2ESDKDevtoolsElement extends HTMLElement {
     }
     if (!this.#client) {
       const serverURL = this.getAttribute('serverURL')
-      const serverPublicKey = this.getAttribute('serverPublicKey')
-      if (!serverURL || !serverPublicKey) {
+      const serverSignaturePublicKey = this.getAttribute(
+        'serverSignaturePublicKey'
+      )
+      if (!serverURL || !serverSignaturePublicKey) {
         return
       }
       this.#client = new Client({
         serverURL: serverURL,
-        serverPublicKey: serverPublicKey,
-        // Let the main application client deal with notifications & session refresh
+        serverSignaturePublicKey: serverSignaturePublicKey,
+        // Let the main application client deal with notifications
         handleNotifications: false,
         handleSessionRefresh: false,
       })
       console.debug(`[🔐 devtools] Created new client for Web Component with
       ├ clientId:        ${this.#client.config.clientId}
       ├ serverURL:       ${this.#client.config.serverURL}
-      └ serverPublicKey: ${this.#client.encode(
-        this.#client.config.serverPublicKey
+      └ serverSignaturePublicKey: ${this.#client.encode(
+        this.#client.config.serverSignaturePublicKey
       )}
       `)
     } else {
       console.debug(`[🔐 devtools] Reusing existing client for Web Component with
       ├ clientId:        ${this.#client.config.clientId}
       ├ serverURL:       ${this.#client.config.serverURL}
-      └ serverPublicKey: ${this.#client.encode(
-        this.#client.config.serverPublicKey
+      └ serverSignaturePublicKey: ${this.#client.encode(
+        this.#client.config.serverSignaturePublicKey
       )}
       `)
     }
@@ -164,7 +166,7 @@ customElements.define('e2esdk-devtools', E2ESDKDevtoolsElement)
 
 interface E2ESDKDevtoolsElementAttributes
   extends React.HTMLAttributes<HTMLElement>,
-    Partial<Pick<ClientConfig, 'serverURL' | 'serverPublicKey'>> {
+    Partial<Pick<ClientConfig, 'serverURL' | 'serverSignaturePublicKey'>> {
   theme?: 'dark' | 'light'
   reactQueryDevtools?: true
 }

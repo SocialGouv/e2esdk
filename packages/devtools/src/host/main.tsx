@@ -7,7 +7,7 @@ import App from './App'
 
 const client = new Client({
   serverURL: __DEPLOYMENT_URL__,
-  serverPublicKey: __SIGNATURE_PUBLIC_KEY__,
+  serverSignaturePublicKey: __SIGNATURE_PUBLIC_KEY__,
 })
 
 declare global {
@@ -51,7 +51,7 @@ const Main = () => {
           <e2esdk-devtools
             // This devtools will embed its own client
             serverURL={__DEPLOYMENT_URL__}
-            serverPublicKey={__SIGNATURE_PUBLIC_KEY__}
+            serverSignaturePublicKey={__SIGNATURE_PUBLIC_KEY__}
             theme="dark"
             reactQueryDevtools
           />

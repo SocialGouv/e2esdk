@@ -89,7 +89,7 @@ export const E2ESdkDevtoolsView: React.FC<BoxProps> = ({ ...props }) => {
                 <Text fontFamily="mono">{client.config.serverURL}</Text>
                 <Text>Server Public key</Text>
                 <Text fontFamily="mono">
-                  {client.encode(client.config.serverPublicKey)}
+                  {client.encode(client.config.serverSignaturePublicKey)}
                 </Text>
               </Grid>
             }

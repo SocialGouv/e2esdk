@@ -83,7 +83,7 @@ import { z } from 'zod'
 
 export type ClientConfig<KeyType = string> = {
   serverURL: string
-  serverPublicKey: KeyType // todo: Make this an array to allow server key rotation
+  serverSignaturePublicKey: KeyType // todo: Make this an array to allow server key rotation
   handleNotifications?: boolean
   handleSessionRefresh?: boolean
 }
@@ -247,7 +247,7 @@ export class Client {
     this.sodium = sodium
     this.config = Object.freeze({
       serverURL: config.serverURL,
-      serverPublicKey: this.decode(config.serverPublicKey),
+      serverSignaturePublicKey: this.decode(config.serverSignaturePublicKey),
       handleNotifications: config.handleNotifications ?? true,
       handleSessionRefresh: config.handleSessionRefresh ?? true,
       clientId:
@@ -264,7 +264,7 @@ export class Client {
     this.#mitt = mitt()
     this.#sync = new LocalStateSync({
       encryptionKey: 'e2esdk-client-localStateSync-encryptionKey8',
-      namespace: [config.serverURL, config.serverPublicKey].join(':'),
+      namespace: [config.serverURL, config.serverSignaturePublicKey].join(':'),
       onStateUpdated: incomingState => {
         if (incomingState.state === 'idle') {
           this.#clearState()
@@ -1448,7 +1448,7 @@ export class Client {
         // so the server will do the same thing for verification.
         // See packages/server/src/plugins/auth.ts
         url: url.toString(),
-        recipientPublicKey: this.config.serverPublicKey,
+        recipientPublicKey: this.config.serverSignaturePublicKey,
         userId: this.#state.identity.userId,
         clientId: this.config.clientId,
         deviceId: this.#state.deviceId,
@@ -1536,7 +1536,7 @@ export class Client {
       method,
       url,
       body: json,
-      recipientPublicKey: this.config.serverPublicKey,
+      recipientPublicKey: this.config.serverSignaturePublicKey,
       userId: this.#state.identity.userId,
       clientId: this.config.clientId,
       deviceId: this.#state.deviceId,
@@ -1614,7 +1614,7 @@ export class Client {
     }
     const verified = verifyServerSignature(
       this.sodium,
-      this.config.serverPublicKey,
+      this.config.serverSignaturePublicKey,
       signature,
       signatureArgs
     )
