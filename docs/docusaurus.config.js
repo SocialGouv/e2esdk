@@ -31,16 +31,6 @@ const config = {
     mermaid: true,
   },
   themes: ['@docusaurus/theme-mermaid'],
-  themeConfig: {
-    colorMode: {
-      defaultMode: 'light',
-      disableSwitch: false,
-      respectPrefersColorScheme: false,
-    },
-    mermaid: {
-      theme: { light: 'neutral', dark: 'forest' },
-    },
-  },
   presets: [
     [
       'classic',
@@ -92,6 +82,14 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      colorMode: {
+        defaultMode: 'light',
+        disableSwitch: false,
+        respectPrefersColorScheme: false,
+      },
+      mermaid: {
+        theme: { light: 'neutral', dark: 'forest' },
+      },
       navbar: {
         title: 'e2esdk',
         logo: {
