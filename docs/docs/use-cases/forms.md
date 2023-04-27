@@ -4,7 +4,7 @@ e2esdk provide dedicated features for forms submissions and sharing. The full-st
 
 ## Cover these scenarios
 
-- Random users can submit encrypted data and files to one or more recipients
+- Random users can submit encrypted data and files
 - The submitted data can be re-edited by submitter
 - Recipients can invite other recipients to read and interact on the data
 
@@ -17,7 +17,7 @@ While your web application is responsible of storing and distributing the encryp
 ```mermaid
 graph LR;
 
-subgraph Web Application
+subgraph Web client
     Form[Application Form]-->e2esdk-->Encrypted[Encrypted data]
 end
 
@@ -32,8 +32,8 @@ Encrypted-->|POST|app[Application API]-->appdb[Application DB]
 ```mermaid
 graph LR;
 
-subgraph Web Application
-    admin[Submissions interface]
+subgraph Web client
+    admin[Admin interface]
     e2esdk-->Decrypt[Decrypted data]
 end
 
@@ -45,18 +45,6 @@ e2esdkapi-->e2esdkdb[e2esdk DB]
 
 ## Implementation
 
-Example implementation using React, please read [React Integration](../getting-started/03-react.md) firsct.
+The example implementation use React, please read [React Integration](../getting-started/03-react.md) first.
 
-### Create the bucket to receive form submissions
-
-With dev tools or code
-
-### Create the client-side form
-
-### Encrypt and submit data
-
-### Encrypt and submit files
-
-### Decrypt submitted data
-
-### Share data with peers
+The full implementation example is available in the [contact-forms example](https://github.com/SocialGouv/e2esdk/tree/beta/examples/fullstack/contact-forms).
