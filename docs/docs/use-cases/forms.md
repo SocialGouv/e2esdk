@@ -1,18 +1,18 @@
 # Form submissions
 
-e2esdk provide dedicated features for forms submissions and sharing. The full-stack example demonstrates such a scenario
+e2esdk provides dedicated features for form submissions and sharing. The full-stack example demonstrates such a scenario.
 
 ## Cover these scenarios
 
 - Random users can submit encrypted data and files
-- The submitted data can be re-edited by submitter
+- The submitted data can be re-edited by the submitter
 - Recipients can invite other recipients to read and interact on the data
 
 ## Architecture
 
-While your web application is responsible of storing and distributing the encrypted data and files and provide the correct UI to users, the storing and distribution of decryption keys is entirely handled by e2esdk itself and only happens client-side.
+While your web application is responsible for storing and distributing the encrypted data and files and provide the correct UI to users, the storing and distribution of decryption keys is entirely handled by e2esdk itself and only happens client-side.
 
-### Random users can POST encrypted data
+### Anonymous users can POST encrypted data
 
 ```mermaid
 graph LR;
