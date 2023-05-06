@@ -4,7 +4,7 @@ e2esdk provides dedicated features for form submissions and sharing. The [full-s
 
 ## Cover these scenarios
 
-- Random users can submit encrypted data and files
+- Anonymous users can submit encrypted data and files
 - The submitted data can be re-edited by the submitter
 - Recipients can invite other recipients to read and interact on the data
 
