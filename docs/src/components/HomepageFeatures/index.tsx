@@ -26,7 +26,6 @@ const FeatureList: FeatureItem[] = [
     description: (
       <>
         Users can securely share decryption keys with other authenticated peers
-        or devices
       </>
     ),
   },
