@@ -27,6 +27,10 @@ const config = {
     locales: ['en'],
   },
 
+  markdown: {
+    mermaid: true,
+  },
+  themes: ['@docusaurus/theme-mermaid'],
   presets: [
     [
       'classic',
@@ -36,8 +40,7 @@ const config = {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/socialgouv/e2esdk/tree/main/docs/',
+          editUrl: 'https://github.com/socialgouv/e2esdk/tree/main/docs/',
         },
         // blog: {
         //   showReadingTime: true,
@@ -79,6 +82,14 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      colorMode: {
+        defaultMode: 'light',
+        disableSwitch: false,
+        respectPrefersColorScheme: false,
+      },
+      mermaid: {
+        theme: { light: 'neutral', dark: 'forest' },
+      },
       navbar: {
         title: 'e2esdk',
         logo: {
@@ -92,7 +103,7 @@ const config = {
             position: 'left',
             label: 'Docs',
           },
-       //   { to: '/blog', label: 'Blog', position: 'left' },
+          //   { to: '/blog', label: 'Blog', position: 'left' },
           {
             href: 'https://github.com/socialgouv/e2esdk',
             label: 'GitHub',

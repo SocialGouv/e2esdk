@@ -21,6 +21,6 @@ export const e2esdkClient = new Client({
   // Point it to where your server is listening
   serverURL: 'https://localhost:3001',
   // Pass the signature public key you configured for the server
-  serverPublicKey: 'gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE',
+  serverSignaturePublicKey: 'gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE',
 })
 ```

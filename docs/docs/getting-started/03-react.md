@@ -22,7 +22,7 @@ import { E2ESDKClientProvider } from '@socialgouv/e2esdk-react'
 
 const e2esdkClient = new Client({
   serverURL: 'https://localhost:3001',
-  serverPublicKey: 'gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE',
+  serverSignaturePublicKey: 'gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE',
 })
 
 function MyNextJsApp({ Component, pageProps }: AppProps) {
