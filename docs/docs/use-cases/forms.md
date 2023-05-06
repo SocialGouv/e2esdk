@@ -1,6 +1,6 @@
 # Form submissions
 
-e2esdk provides dedicated features for form submissions and sharing. The full-stack example demonstrates such a scenario.
+e2esdk provides dedicated features for form submissions and sharing. The [full-stack example](https://github.com/SocialGouv/e2esdk/tree/beta/examples/fullstack/contact-forms) demonstrates such a scenario.
 
 ## Cover these scenarios
 
