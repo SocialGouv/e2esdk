@@ -26,8 +26,8 @@ import HelloWorld from './components/HelloWorld.vue'
   <!-- <RouterView /> -->
   <div class="devtools-wrapper">
     <e2esdk-devtools
-      serverURL="https://localhost:3001"
-      serverPublicKey="gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE"
+      serverURL="http://localhost:3001"
+      serverSignaturePublicKey="gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE"
     />
   </div>
 </template>
