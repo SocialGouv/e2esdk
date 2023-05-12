@@ -63,7 +63,7 @@ export async function initializeEncryptedFormLocalState(
     const mainSecret = base64UrlDecode(serializedMainSecret)
     return deriveState(sodium, mainSecret, formPublicKey)
   } catch {
-    return generateEncryptedFormLocalState()
+    return generateEncryptedFormLocalState(formPublicKey)
   }
 }
 
