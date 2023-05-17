@@ -24,11 +24,21 @@ export type Cipher = BoxCipher | SealedBoxCipher | SecretBoxCipher
 
 // Factories --
 
+/**
+ * Generate an asymetric key pair for encryption, to be used with LibSodium's box cipher
+ * _(X25519-XSalsa20-Poly1305)_
+ */
 export function generateBoxKeyPair(sodium: Sodium) {
   const { publicKey, privateKey } = sodium.crypto_box_keypair()
   return { publicKey, privateKey }
 }
 
+/**
+ * Pack a Cipher object for two users using asymetric keys.
+ *
+ * This would allow user-to-user communications, using your own private key
+ * and a recipient's public key.
+ */
 export function generateBoxCipher(
   theirPublicKey: Uint8Array,
   yourPrivateKey: Uint8Array
@@ -40,6 +50,14 @@ export function generateBoxCipher(
   }
 }
 
+/**
+ * Generate a Cipher object using the sealed box pattern, to allow
+ * anonymous ephemeral communication with a known recipient.
+ *
+ * This would be used to ingest encrypted data from anonymous users
+ * (ie: without an e2esdk user identity) using a Box
+ *
+ */
 export function generateSealedBoxCipher(sodium: Sodium): SealedBoxCipher {
   const keyPair = sodium.crypto_box_keypair()
   return {
@@ -49,6 +67,9 @@ export function generateSealedBoxCipher(sodium: Sodium): SealedBoxCipher {
   }
 }
 
+/**
+ * Generate a Cipher object for symetric encryption.
+ */
 export function generateSecretBoxCipher(sodium: Sodium): SecretBoxCipher {
   return {
     algorithm: 'secretBox',
@@ -132,6 +153,12 @@ export function isSecretBoxCipher(cipher: Cipher): cipher is SecretBoxCipher {
 
 // Utility --
 
+/**
+ * Zero-fill the secret parts of Cipher objects.
+ *
+ * It's always a good idea to call this right after being done with a Cipher,
+ * so that freed memory does not retain sensitive data.
+ */
 export function memzeroCipher(sodium: Sodium, cipher: Cipher) {
   if (cipher.algorithm === 'box') {
     sodium.memzero(cipher.privateKey)
