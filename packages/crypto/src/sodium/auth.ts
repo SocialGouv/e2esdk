@@ -5,10 +5,29 @@ import {
 import type { Sodium } from './sodium'
 
 export type PublicKeyAuthArgs = {
+  /**
+   * ISO-8601 encoded timestamp (with UTC TZ), as obtained from
+   * `new Date().toISOString()`
+   */
   timestamp: string
+
+  /**
+   * HTTP method used for the API call (eg: GET, POST, PUT, DELETE)
+   */
   method: string
+
+  /**
+   * Full URL of the API endpoint, including the server FQDN.
+   * Example: https://e2esdk.example.com/v1/users/alice
+   */
   url: string
+
+  /**
+   * Optional HTTP request body as serialised JSON
+   */
   body?: string
+
+  // Authentication context
   userId: string
   clientId: string
   deviceId: string
@@ -21,6 +40,21 @@ export type PublicKeyAuthArgs = {
   recipientPublicKey: string | Uint8Array
 }
 
+/**
+ * Generate a digital signature for the given authentication arguments.
+ *
+ * This is used to mutually authenticate HTTP API calls.
+ * The client will sign the request parameters (method, URL, optional body,
+ * authentication context, timestamp).
+ * The server will sign the response, mirroring the request parameters where
+ * relevant, but signing its response body and timestamp.
+ *
+ * This prevents a man-in-the-middle that would already have bypassed the TLS
+ * transport layer encryption to meddle with messages without having access to
+ * either the client's or the server's signature private keys.
+ *
+ * @returns a base64url-encoded `multipartSignature` of the input arguments.
+ */
 export function signAuth(
   sodium: Sodium,
   privateKey: Uint8Array,
@@ -35,6 +69,17 @@ export function signAuth(
   )
 }
 
+/**
+ * Verify a digital signature for the given authentication arguments
+ *
+ * The e2esdk server would verify client-emitted signatures in API calls as
+ * part of the authentication middleware (see plugins/auth.ts in the server package).
+ *
+ * The client would also verify server-signed responses after authenticated API
+ * calls to detect tampering of the response.
+ *
+ * @returns true if the signature is verified
+ */
 export function verifyAuth(
   sodium: Sodium,
   publicKey: Uint8Array,

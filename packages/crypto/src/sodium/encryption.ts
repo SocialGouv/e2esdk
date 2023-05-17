@@ -25,7 +25,18 @@ type CipherWithOptionalNonce = Cipher & {
  *
  * @param input The data to encrypt
  * @param cipher The algorithm to use and its parameters
- * @param outputFormat The format to use
+ * @param additionalData Additional Authenticated Data (AAD) to bind to the authentication tag.
+ *   See https://en.wikipedia.org/wiki/Authenticated_encryption
+ * @param outputFormat The serialisation format to use
+ *
+ * ## Algorithms
+ * - with a SecretBoxCipher (no AAD):   [XSalsa20-Poly1305](https://doc.libsodium.org/secret-key_cryptography/secretbox)
+ * - with a SecretBoxCipher (with AAD): [XChaCha20-Poly1305](https://doc.libsodium.org/secret-key_cryptography/aead/chacha20-poly1305/xchacha20-poly1305_construction)
+ * - with a BoxCipher: [X25519-XSalsa20-Poly1305](https://doc.libsodium.org/public-key_cryptography/authenticated_encryption)
+ * - with a SealedBoxCipher: [X25519-XSalsa20-Poly1305](https://doc.libsodium.org/public-key_cryptography/sealed_boxes)
+ *
+ * Note: when using a Box cipher, make sure it contains your recipient's public key
+ * and your own private key. See `generateBoxCipher`.
  */
 export function encrypt<DataType>(
   sodium: Sodium,
@@ -43,7 +54,18 @@ export function encrypt<DataType>(
  *
  * @param input The data to encrypt
  * @param cipher The algorithm to use and its parameters
+ * @param additionalData Additional Authenticated Data (AAD) to bind to the authentication tag.
+ *   See https://en.wikipedia.org/wiki/Authenticated_encryption
  * @param outputFormat
+ *
+ * ## Algorithms
+ * - with a SecretBoxCipher (no AAD):   [XSalsa20-Poly1305](https://doc.libsodium.org/secret-key_cryptography/secretbox)
+ * - with a SecretBoxCipher (with AAD): [XChaCha20-Poly1305](https://doc.libsodium.org/secret-key_cryptography/aead/chacha20-poly1305/xchacha20-poly1305_construction)
+ * - with a BoxCipher: [X25519-XSalsa20-Poly1305](https://doc.libsodium.org/public-key_cryptography/authenticated_encryption)
+ * - with a SealedBoxCipher: [X25519-XSalsa20-Poly1305](https://doc.libsodium.org/public-key_cryptography/sealed_boxes)
+ *
+ * Note: when using a BoxCipher, make sure it contains your recipient's public key
+ * and your own private key. See `generateBoxCipher`.
  */
 export function encrypt(
   sodium: Sodium,
@@ -162,6 +184,17 @@ export function encrypt<DataType>(
 
 // --
 
+/**
+ * Decrypt binary data
+ *
+ * @param input Encrypted input data
+ * @param cipher The algorithm to use and its parameters
+ * @param additionalData Additional Authenticated Data (AAD) to use for authentication tag verification.
+ *   See https://en.wikipedia.org/wiki/Authenticated_encryption
+ *
+ * Note: if not using AAD, the `additionalData` parameter can be omitted
+ * or set to null (equivalent).
+ */
 export function decrypt(
   sodium: Sodium,
   input: Uint8Array,
@@ -169,6 +202,20 @@ export function decrypt(
   additionalData?: null | Uint8Array
 ): Uint8Array
 
+/**
+ * Decrypt serialised data
+ *
+ * @param input Encrypted input data
+ * @param cipher The algorithm to use and its parameters
+ * @param additionalData Additional Authenticated Data (AAD) to use for authentication tag verification.
+ *   See https://en.wikipedia.org/wiki/Authenticated_encryption
+ * @returns an `unknown` data type, as it depends on what the input data type was.
+ * You need to feed that to a parser, that will verify the expected type, shape,
+ * and meaning of the cleartext before it can be used in your application.
+ *
+ * Note: if not using AAD, the `additionalData` parameter can be omitted
+ * or set to null (equivalent).
+ */
 export function decrypt(
   sodium: Sodium,
   input: string,

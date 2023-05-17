@@ -1,6 +1,12 @@
 import type { SecretBoxCipher } from './ciphers'
 import type { Sodium } from './sodium'
 
+/**
+ * Device labels are end-to-end encrypted with an account-level key, derived
+ * from the keychainBased key.
+ *
+ * _Algorithm: Blake2b_
+ */
 export function getDeviceLabelCipher(
   sodium: Sodium,
   userId: string,
