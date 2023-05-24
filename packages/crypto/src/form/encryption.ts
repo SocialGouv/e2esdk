@@ -4,6 +4,7 @@ import {
   thirtyTwoBytesBase64Schema,
 } from '@socialgouv/e2esdk-api'
 import { z } from 'zod'
+import { numberToUint32LE } from '../shared/codec'
 import { SealedBoxCipher, SecretBoxCipher } from '../sodium/ciphers'
 import { decrypt, encrypt } from '../sodium/encryption'
 import {
@@ -133,6 +134,12 @@ export function encryptFormData<FormData extends object>(
   // Iteration over the input fields must be sorted to ensure the signature hash
   // is deterministic across runtimes or implementations.
   const entries = sortedEntries(input)
+  // Canonicalization attack prevention:
+  // First, we preload the hash with the number of fields we expect to hash
+  state.sodium.crypto_generichash_update(
+    hashState,
+    numberToUint32LE(entries.length)
+  )
   for (const [field, cleartext] of entries) {
     // To derive keys from a single key/secret using libsodium,
     // we need a subkey index, which is a 32 bit unsigned integer.
@@ -171,6 +178,12 @@ export function encryptFormData<FormData extends object>(
       .padStart(8, '0')
       .toLowerCase()
     encrypted[field] = `${subkeyIndexHex}:${ciphertext}`
+    // Update the hash, first with the field value length, to prevent
+    // canonicalization attacks, then with the value itself.
+    state.sodium.crypto_generichash_update(
+      hashState,
+      numberToUint32LE(encrypted[field].length)
+    )
     state.sodium.crypto_generichash_update(hashState, encrypted[field])
   }
   const sealedSecret = encrypt(
@@ -180,11 +193,14 @@ export function encryptFormData<FormData extends object>(
     null,
     'application/e2esdk.ciphertext.v1'
   )
+  state.sodium.crypto_generichash_update(
+    hashState,
+    numberToUint32LE(sealedSecret.length)
+  )
   state.sodium.crypto_generichash_update(hashState, sealedSecret)
   const signature = multipartSignature(
     state.sodium,
     state.identity.privateKey,
-    state.formPublicKey,
     state.sodium.crypto_generichash_final(
       hashState,
       state.sodium.crypto_generichash_BYTES
@@ -200,52 +216,84 @@ export function encryptFormData<FormData extends object>(
   }
 }
 
+/**
+ * Verify a complete submission's signature for authenticity validation.
+ *
+ * This mainly makes sense to be called on an application server receiving
+ * form submissions, to verify the authenticity of the submitter (eg: when editing),
+ * and the integrity of the data.
+ *
+ * Signature verification by form data recipients on the client side is possible
+ * only if the whole encrypted dataset is available, otherwise the internal
+ * hash calculation will mismatch.
+ *
+ * @param submission Encrypted form data and associated metadata
+ * @param formPublicKey Form public key this submission is associated to
+ * @returns true if the signature is valid, false otherwise
+ *
+ * Note: before implementing this function (on 2023-05-24), signature computation
+ * was a bit simpler: it did not involve defense against canonicalisation attacks,
+ * and it added the form public key as a multipart signature element, which is
+ * not necessary as the signed hash is already keyed by the form public key.
+ * Signature computation was updated in @socialgouv/e2esdk-crypto@1.0.0-beta.19
+ */
+export function verifyFormSubmissionSignature(
+  sodium: Sodium,
+  submission: EncryptedFormSubmission<any>,
+  formPublicKey: Uint8Array
+) {
+  const hashState = sodium.crypto_generichash_init(
+    formPublicKey,
+    sodium.crypto_generichash_BYTES
+  )
+  const entries = sortedEntries(submission.encrypted).filter(
+    ([encryptedField]) => Boolean(encryptedField)
+  )
+  sodium.crypto_generichash_update(hashState, numberToUint32LE(entries.length))
+  for (const [, encryptedField] of entries) {
+    sodium.crypto_generichash_update(
+      hashState,
+      numberToUint32LE(encryptedField.length)
+    )
+    sodium.crypto_generichash_update(hashState, encryptedField)
+  }
+  sodium.crypto_generichash_update(
+    hashState,
+    numberToUint32LE(submission.metadata.sealedSecret.length)
+  )
+  sodium.crypto_generichash_update(hashState, submission.metadata.sealedSecret)
+  return verifyMultipartSignature(
+    sodium,
+    sodium.from_base64(submission.metadata.publicKey),
+    sodium.from_base64(submission.metadata.signature),
+    sodium.crypto_generichash_final(hashState, sodium.crypto_generichash_BYTES)
+  )
+}
+
+/**
+ * Decrypt a bundle of encrypted data + metadata against a form private key.
+ *
+ * @param submission Encrypted form data and associated metadata
+ * @param cipher Sealed box cipher containing the form private key for decryption
+ * @returns an object with the same shape as the encrypted data, but with `unknown`
+ * values. A parser is required to make sure that data integrity is respected,
+ * especially when dealing with untrusted/unauthenticated submissions.
+ */
 export function decryptFormData<FormData extends object>(
   sodium: Sodium,
   submission: EncryptedFormSubmission<any>,
   cipher: SealedBoxCipher
 ) {
-  // Verify signature first
-  const hashState = sodium.crypto_generichash_init(
-    cipher.publicKey,
-    sodium.crypto_generichash_BYTES
-  )
-  for (const [_, encryptedField] of sortedEntries(submission.encrypted)) {
-    if (!encryptedField) {
-      continue
-    }
-    sodium.crypto_generichash_update(hashState, encryptedField)
-  }
-  sodium.crypto_generichash_update(hashState, submission.metadata.sealedSecret)
-  if (
-    !verifyMultipartSignature(
-      sodium,
-      sodium.from_base64(submission.metadata.publicKey),
-      sodium.from_base64(submission.metadata.signature),
-      cipher.publicKey,
-      sodium.crypto_generichash_final(
-        hashState,
-        sodium.crypto_generichash_BYTES
-      )
-    )
-  ) {
-    throw new Error('Failed to verify form submission signature')
-  }
   // Parse and validate internal representation
   const sub = encryptedFormSubmissionSchema.parse(submission)
   // Unseal the key derivation secret
-  const keyDerivationSecret = decrypt(
-    sodium,
-    sub.metadata.sealedSecret,
-    cipher,
-    null
-  ) as Uint8Array
-  if (
-    !(keyDerivationSecret instanceof Uint8Array) ||
-    keyDerivationSecret.byteLength !== sodium.crypto_kdf_KEYBYTES
-  ) {
-    throw new TypeError('Invalid form submission secret')
-  }
+  const keyDerivationSecret = z
+    .instanceof(Uint8Array)
+    .refine(
+      x => x.byteLength === sodium.crypto_kdf_KEYBYTES,
+      'Invalid form submission secret'
+    )
+    .parse(decrypt(sodium, sub.metadata.sealedSecret, cipher, null))
   const keyDerivationContext = sodium.to_base64(cipher.publicKey).slice(0, 8)
   const outputData: Record<string, unknown> = {}
   for (const [field, encryptedField] of Object.entries(sub.encrypted)) {
