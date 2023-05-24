@@ -13,6 +13,13 @@ import {
 import { Sodium } from '../sodium/sodium'
 import { EncryptedFormLocalState } from './state'
 
+/**
+ * Parser for the ciphertext of symmetrically encrypted form fields.
+ *
+ * Includes a context prefix and the ciphertext itself, separated with `:`
+ * The context prefix is used in the key derivation function to obtain the
+ * symmetric encryption key to decrypt the ciphertext.
+ */
 const encryptedFieldSchema = z
   .string()
   .regex(
@@ -26,9 +33,31 @@ const encryptedFieldSchema = z
     }
   })
 
+/**
+ * Along with the encrypted form data, we need to send the server some extra
+ * metadata to allow decryption, both by the form recipient(s) and the submitter
+ * in the case of edition.
+ */
 const encryptedFormSubmissionMetadataSchema = z.object({
+  /**
+   * Key derivation secret encrypted with the form public key in a sealed box
+   */
   sealedSecret: sealedBoxCiphertextV1Schema('bin'),
+
+  /**
+   * Digital signature of the hash of the encrypted items, for authentication.
+   *
+   * Note: this authentication only works if the whole dataset is available
+   * for verification, therefore it's only relevant for server-side validation
+   * of response submissions.
+   * If a subset of the form data is to be decrypted, signature verification is
+   * pointless, as not all the data is available to recompute the signed hash.
+   */
   signature: signatureSchema,
+
+  /**
+   * Client form state identity public key, to verify the signature against.
+   */
   publicKey: thirtyTwoBytesBase64Schema,
 })
 
@@ -39,6 +68,12 @@ const encryptedFormSubmissionSchema = z.object({
 
 export type EncryptedFormSubmission<FormData extends object> = {
   metadata: z.input<typeof encryptedFormSubmissionMetadataSchema>
+
+  /**
+   * The form data object keeps its properties when encrypted,
+   * but each value becomes a string.
+   * Optional properties remain optional in their encrypted counterparts.
+   */
   encrypted: {
     [Field in keyof FormData]: FormData[Field] extends undefined
       ? string | undefined
@@ -48,10 +83,35 @@ export type EncryptedFormSubmission<FormData extends object> = {
 
 // --
 
+/**
+ * To get a stable hash, we need the enumeration of entries (key-value tuples)
+ * to be stable. This sorts them by increasing lexicographic order of the keys.
+ */
 function sortedEntries(input: object) {
   return Object.entries(input).sort(([a], [b]) => (a > b ? 1 : a < b ? -1 : 0))
 }
 
+/**
+ * Encrypt form data against a given state
+ *
+ * This will perform the key derivation for each field,
+ * encrypt it symmetrically (AEAD) using the resulting field encryption key,
+ * with the field name as AAD to prevent key-value swaps.
+ * Once a field is encrypted, its ciphertext is appended to a running hash
+ * to compute the final authenticity signature.
+ * Finally, the key derivation secret is sealed using the form public key,
+ * and packed as metadata.
+ *
+ * @param input the form data to encrypt
+ * @param state the client local state to use for encryption
+ *
+ * Note: this does not handle files as-is. To add files to a form submission,
+ * their content must be encrypted and uploaded separately, and the
+ * resulting file metadata (containing the name, size and encryption key)
+ * must be placed in the input to be encrypted here.
+ * This allows recipients to only obtain the metadata for review,
+ * and choose to download and decrypt file contents on demand.
+ */
 export function encryptFormData<FormData extends object>(
   input: FormData,
   state: EncryptedFormLocalState
@@ -62,16 +122,24 @@ export function encryptFormData<FormData extends object>(
     privateKey: new Uint8Array(0), // not used here
   }
   const encrypted: Record<string, string> = {}
+  // As we go over the fields to encrypt, we keep a running hash of
+  // the generated ciphertexts, that will be signed at the end.
   const hashState = state.sodium.crypto_generichash_init(
+    // Keying the hash by the public key may not be necessary,
+    // but it further binds the signature of the submission.
     state.formPublicKey,
     state.sodium.crypto_generichash_BYTES
   )
-  for (const [field, cleartext] of sortedEntries(input)) {
+  // Iteration over the input fields must be sorted to ensure the signature hash
+  // is deterministic across runtimes or implementations.
+  const entries = sortedEntries(input)
+  for (const [field, cleartext] of entries) {
+    // To derive keys from a single key/secret using libsodium,
+    // we need a subkey index, which is a 32 bit unsigned integer.
+    // However, since JavaScript encodes numbers as float64,
+    // getting the whole range of unsigned 32 bits integers is not possible,
+    // so we clamp the random range to 31 bits (0x7f ff ff ff)
     const subkeyIndex = state.sodium.randombytes_uniform(0x7fffffff)
-    const subkeyIndexHex = subkeyIndex
-      .toString(16)
-      .padStart(8, '0')
-      .toLowerCase()
     const cipher: SecretBoxCipher = {
       algorithm: 'secretBox',
       key: state.sodium.crypto_kdf_derive_from_key(
@@ -96,6 +164,12 @@ export function encryptFormData<FormData extends object>(
       'application/e2esdk.ciphertext.v1'
     )
     state.sodium.memzero(cipher.key)
+    // The subkey index is hex-encoded and prepended to the ciphertext
+    // for later retrieval when decrypting (to derive the decryption key)
+    const subkeyIndexHex = subkeyIndex
+      .toString(16)
+      .padStart(8, '0')
+      .toLowerCase()
     encrypted[field] = `${subkeyIndexHex}:${ciphertext}`
     state.sodium.crypto_generichash_update(hashState, encrypted[field])
   }
@@ -178,6 +252,9 @@ export function decryptFormData<FormData extends object>(
     if (!encryptedField) {
       continue
     }
+    // Derive the symmetric decryption key based on the decrypted KDS,
+    // the derived KDC from the public key, and the subkey index
+    // encoded in the ciphertext prefix.
     const cipher: SecretBoxCipher = {
       algorithm: 'secretBox',
       key: sodium.crypto_kdf_derive_from_key(
