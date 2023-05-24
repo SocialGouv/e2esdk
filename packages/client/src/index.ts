@@ -1,63 +1,65 @@
 import initOpaqueClient, { Login, Registration } from '@47ng/opaque-client'
 import { wasmBase64 as opaqueWasm } from '@47ng/opaque-client/inline-wasm'
 import {
+  DeviceEnrollmentRecord,
+  GetKeychainResponseBody,
+  GetMultipleIdentitiesResponseBody,
+  GetParticipantsResponseBody,
+  GetSharedKeysResponseBody,
+  GetSingleIdentityResponseBody,
+  LoginFinal,
+  LoginRequest,
+  Optional,
+  PermissionFlags,
+  PostBanRequestBody,
+  PostKeychainItemRequestBody,
+  PostPermissionRequestBody,
+  PostSharedKeyBody,
+  SignupRecord,
+  WebSocketNotificationTypes,
+  identitySchema as apiIdentitySchema,
   base64Bytes,
   decodeDeviceRegistrationURI,
   deviceEnrolledResponse,
-  DeviceEnrollmentRecord,
   deviceEnrollmentResponse,
   deviceIdSchema,
   deviceSchema,
   encodeDeviceRegistrationURI,
   fingerprintSchema,
   getKeychainResponseBody,
-  GetKeychainResponseBody,
   getMultipleIdentitiesResponseBody,
-  GetMultipleIdentitiesResponseBody,
   getParticipantsResponseBody,
-  GetParticipantsResponseBody,
   getSharedKeysResponseBody,
-  GetSharedKeysResponseBody,
   getSingleIdentityResponseBody,
-  GetSingleIdentityResponseBody,
-  identitySchema as apiIdentitySchema,
   isFarFromCurrentTime,
   listDevicesResponseBody,
-  LoginFinal,
   loginFinalResponse,
-  LoginRequest,
   loginResponse as loginResponseSchema,
-  Optional,
   permissionFlags,
-  PermissionFlags,
-  PostBanRequestBody,
-  PostKeychainItemRequestBody,
-  PostPermissionRequestBody,
-  PostSharedKeyBody,
   responseHeaders,
   signatureSchema,
   signupCompleteResponse,
-  SignupRecord,
   signupResponse,
   sixtyFourBytesBase64Schema,
   thirtyTwoBytesBase64Schema,
   timestampSchema,
-  WebSocketNotificationTypes,
   websocketNotificationTypesSchema,
 } from '@socialgouv/e2esdk-api'
 import {
+  BoxCipher,
+  CIPHER_MAX_PADDED_LENGTH,
+  Cipher,
+  EncryptedFormSubmission,
+  SecretBoxCipher,
+  Sodium,
   base64UrlDecode,
   base64UrlEncode,
-  BoxCipher,
-  Cipher,
   cipherParser,
-  CIPHER_MAX_PADDED_LENGTH,
   decrypt,
   decryptFormData,
   deriveClientIdentity,
   encodedCiphertextFormatV1,
   encrypt,
-  EncryptedFormSubmission,
   fingerprint,
   generateSealedBoxCipher,
   generateSecretBoxCipher,
@@ -67,24 +69,63 @@ import {
   multipartSignature,
   numberToUint32LE,
   randomPad,
-  SecretBoxCipher,
   serializeCipher,
   signAuth as signClientRequest,
-  Sodium,
   sodium,
-  verifyAuth as verifyServerSignature,
   verifyClientIdentity,
   verifyMultipartSignature,
+  verifyAuth as verifyServerSignature,
 } from '@socialgouv/e2esdk-crypto'
 import { LocalStateSync } from 'local-state-sync'
 import mitt, { Emitter } from 'mitt'
 import secureJSON from 'secure-json-parse'
 import { z } from 'zod'
 
+/**
+ * Configuration object for the e2esdk client constructor
+ */
 export type ClientConfig<KeyType = string> = {
+  /**
+   * Fully qualified URL to the e2esdk server
+   *
+   * As found in the server's .env configuration, under `DEPLOYMENT_URL`.
+   */
   serverURL: string
+
+  /**
+   * Serialised server signature public key
+   *
+   * As found in the server's .env configuration, under `SIGNATURE_PUBLIC_KEY`
+   * This is used to establish mutual authentication of API calls,
+   * so that the client can verify authenticity of responses coming
+   * from the server, and detect MitM tampering.
+   */
   serverSignaturePublicKey: KeyType // todo: Make this an array to allow server key rotation
+
+  /**
+   * Enable real-time sync with WebSockets for this instance
+   *
+   * This defaults to `true` for most cases where there is a single client
+   * instance in the application.
+   * Devtools have it set to false when creating their own client instance,
+   * in order to avoid feedback loops when local-syncing with the main client.
+   */
   handleNotifications?: boolean
+
+  /**
+   * Enable automatic re-authentication on 401 Unauthorized API responses
+   *
+   * The default auth session TTL is short-lived (1 hour), so re-authentication
+   * is necessary, and can be automated using this flag.
+   * Upon reception of a 401 response status code, the client will attempt to
+   * login again to refresh its session, and retry the failed operation,
+   * up to 3 times, after which an error will be thrown.
+   *
+   * This defaults to true, and should follow the value of `handleNotifications`:
+   * true for one main client instance, and false for replicas.
+   *
+   * Devtools with their own client don't automatically re-authenticate on 401s.
+   */
   handleSessionRefresh?: boolean
 }
 
@@ -229,6 +270,23 @@ type HTTPMethod = 'GET' | 'POST' | 'DELETE'
 
 // --
 
+/**
+ * The main e2esdk client interface
+ *
+ * This performs all the cryptographic operations required to implement E2EE
+ * in your application, along with a deployed server for persistance and
+ * coordination with other clients.
+ *
+ * It requires a little configuration to connect it to a running e2esdk server,
+ * and enable public-key based mutual authentication of API calls.
+ *
+ * Multiple clients instanciated on the same origin will sync their state:
+ * a successfull login on one will enable the others to perform actions,
+ * making multi-tab applications seamless.
+ *
+ * Clients react in real-time to server-sent events, and sync their keystore
+ * automatically. You can subscribe to events using the .on() method.
+ */
 export class Client {
   public readonly sodium: Sodium
   public readonly config: Readonly<Config>
@@ -239,10 +297,19 @@ export class Client {
   #socketExponentialBackoffTimeout?: number
   #sessionRefreshRetryCount: number
 
+  /**
+   * Create a new instance of the e2esdk client
+   *
+   * This operation is generally safe to perform on the server in SSR contexts,
+   * however most other operations will require to run in a browser environment,
+   * and require authentication.
+   *
+   * @param config Client configuration object
+   */
   constructor(config: ClientConfig) {
     const tick = performance.now()
     initOpaqueClient(base64UrlDecode(opaqueWasm)).then(() =>
-      console.log(`OPAQUE initialized in ${performance.now() - tick} ms`)
+      console.debug(`OPAQUE initialized in ${performance.now() - tick} ms`)
     )
     this.sodium = sodium
     this.config = Object.freeze({
@@ -298,6 +365,27 @@ export class Client {
 
   // Event Emitter --
 
+  /**
+   * Subscribe to events
+   *
+   * @param event the event name to subscribe to, see available {@link Events}
+   * @param callback pass a callback function with the appropriate payload
+   * @returns an unsubscribe function, to be called to stop listening
+   *
+   * Example:
+   * ```ts
+   * // Subscribe to identity changes:
+   * const off = client.on('identityUpdated', identity => {
+   *   if (identity) {
+   *     console.log(identity.userId)
+   *   } else {
+   *     // logged out
+   *   }
+   * })
+   * // Unsubscribe
+   * off()
+   * ```
+   */
   public on<K extends keyof Events>(
     event: K,
     callback: (arg: Events[K]) => void
@@ -308,6 +396,22 @@ export class Client {
 
   // Auth --
 
+  /**
+   * Create an identity on e2esdk
+   *
+   * @param userId a unique, immutable identifier for a user in the application.
+   *   Ideally, this should be an automatically generated primary key in the
+   *   application database, like a UUID.
+   *
+   * This will do a couple of things:
+   * 1. Create an identity derived from a newly generated mainKey
+   * 2. Register a device pre-enrolled to this account
+   * 3. Persist those objects on the server
+   *
+   * Note that signup does not authenticate the user, you will need to call
+   * the `login` method after a successful signup to establish an authenticated
+   * session.
+   */
   public async signup(userId: string) {
     await this.sodium.ready
     if (this.#state.state !== 'idle') {
@@ -388,12 +492,38 @@ export class Client {
     }
   }
 
+  /**
+   * Authenticate using the local enrolled device authentication
+   *
+   * @param userId The user ID used at registration (signup) time
+   * @returns A Promise to the public user identity if the login succeeds,
+   *   or null if it fails.
+   *
+   * It may seem weird that only the userId is required to authenticate,
+   * but that's a side effect of using enrolled devices for access: the
+   * actual credentials are stored on each device, the user ID is only a
+   * way to handle multiple accounts on a single physical storage context
+   * (eg: alice & bob sharing the same Firefox browser).
+   *
+   * When logging in, the device credentials will be retrieved from
+   * local storage, and used to perform an OPAQUE authentication flow.
+   * Out of that, the OPAQUE export key will be used to unwrap the
+   * user account mainKey, from which the user identity will be derived.
+   * The OPAQUE key agreement also defines the session ID.
+   *
+   * Once the client is hydrated with an identity and a session ID, it can
+   * perform authenticated calls to the API.
+   */
   public async login(userId: string) {
     await this.sodium.ready
     // this.#clearState()
     const deviceId = localStorage.getItem(`e2esdk:${userId}:device:id`)
     const deviceSecret = localStorage.getItem(`e2esdk:${userId}:device:secret`)
-    if (!deviceId || !deviceSecret) {
+    if (
+      !deviceId ||
+      !deviceSecret ||
+      !deviceSecretSchema.safeParse(deviceSecret).success
+    ) {
       throw new Error('Device is not enrolled for this user')
     }
     const opaqueLogin = new Login()
@@ -467,6 +597,12 @@ export class Client {
     return this.publicIdentity
   }
 
+  /**
+   * Revoke the current authentication session
+   *
+   * This will clear all local state and lock up the client.
+   * A login step will be necessary to further resume authenticated operations.
+   */
   public logout() {
     // todo: Do an API call to revoke the sessionId
     this.#clearState()
@@ -475,6 +611,26 @@ export class Client {
 
   // Devices --
 
+  /**
+   * On an active device, prepare to enroll another device.
+   *
+   * This will retrieve the user account mainKey, generate a set of OPAQUE
+   * credentials for the new device, perform an OPAQUE registration to obtain
+   * an export key, and wrap the mainKey with it. The credentials are then
+   * returned to the application to be transmitted to the new device for
+   * final registration.
+   *
+   * @see {@link registerEnrolledDevice `registerEnrolledDevice`}, to be
+   * called on the new device with the registration URI string returned by
+   * this method. Transmission is left to the application, though an offline
+   * delivery method (eg: scanning a QR code) is recommended.
+   *
+   * @authenticated This method requires authentication
+   *
+   * @param label Optional name to give the device, for later identification.
+   *   Will be end-to-end encrypted when persisted on the server.
+   * @returns A Promise to a registration URI string to send to the enrolled device.
+   */
   public async enrollNewDevice(label?: string) {
     await this.sodium.ready
     if (this.#state.state !== 'loaded') {
@@ -591,7 +747,15 @@ export class Client {
 
   /**
    * Register this device and login
-   * @param uri device registration URI
+   *
+   * Registration means saving the given credentials into local storage,
+   * so that the login process can use them for authentication.
+   *
+   * In and out of itself, this method wouldn't do much, so it also attempts
+   * to login to establish a session, as it would be the next logical step.
+   *
+   * @param uri device registration URI, as obtained from a call to
+   *  {@link enrollNewDevice `enrollNewDevice`} on the originating device.
    */
   public async registerEnrolledDevice(uri: string) {
     const { userId, deviceId, deviceSecret } = decodeDeviceRegistrationURI(uri)
@@ -614,6 +778,13 @@ export class Client {
     return this.#state.deviceId
   }
 
+  /**
+   * Retrieve a list of currently enrolled devices for this account.
+   *
+   * Also includes active session information for each device.
+   *
+   * @authenticated This method requires authentication
+   */
   public async getEnrolledDevices() {
     await this.sodium.ready
     if (this.#state.state !== 'loaded') {
@@ -640,6 +811,11 @@ export class Client {
       this.sodium.memzero(deviceLabelCipher.key)
     }
   }
+
+  // todo: Devices & sessions APIs to implement:
+  // - revokeDevice - DELETE /v1/auth/devices/${deviceId}
+  // - revokeSession - DELETE /v1/auth/sessions/${sessionId}
+  // - revokeAllOtherSessions - DELETE /v1/auth/sessions
 
   // Key Ops --
 
