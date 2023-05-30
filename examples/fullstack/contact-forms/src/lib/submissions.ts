@@ -18,7 +18,7 @@ export function useSubmissionIdUrlParam() {
 
 export function useSubmissionsKey(submissionBucketId: string) {
   const client = useE2ESDKClient()
-  return client.findKeyByNameFingerprint(submissionBucketId)
+  return client.findKeyBykeychainFingerprint(submissionBucketId)
 }
 
 export const formSchema = z.object({
@@ -67,7 +67,7 @@ export function useContactFormSubmissions(
   const queryClient = useQueryClient()
   return useQuery({
     enabled: Boolean(currentKey),
-    queryKey: queryKeys.submissions(currentKey?.nameFingerprint ?? 'N.A.'),
+    queryKey: queryKeys.submissions(currentKey?.keychainFingerprint ?? 'N.A.'),
     queryFn: async ({ queryKey }) => {
       if (!currentKey) {
         return { decrypted: [], dropped: 0 }
@@ -90,7 +90,10 @@ export function useContactFormSubmissions(
             if (decrypted) {
               // Update individual submission query cache
               queryClient.setQueryData(
-                queryKeys.submission(currentKey.nameFingerprint, decrypted.id),
+                queryKeys.submission(
+                  currentKey.keychainFingerprint,
+                  decrypted.id
+                ),
                 decrypted
               )
             }
@@ -139,7 +142,7 @@ export function useContactFormSubmission(
   return useQuery({
     enabled: Boolean(currentKey),
     queryKey: queryKeys.submission(
-      currentKey?.nameFingerprint ?? 'N.A.',
+      currentKey?.keychainFingerprint ?? 'N.A.',
       submissionId
     ),
     queryFn: async ({ queryKey }) => {
@@ -210,7 +213,7 @@ function decryptSubmission(
       },
       encrypted: encryptedFields,
     },
-    key.nameFingerprint
+    key.keychainFingerprint
   )
   const res = formWithMetadata.safeParse({
     id,

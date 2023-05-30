@@ -4,7 +4,7 @@ import { identitySchema } from './schemas/identity'
 
 export const postBanRequestBody = z.object({
   userId: identitySchema.shape.userId,
-  nameFingerprint: fingerprintSchema,
+  keychainFingerprint: fingerprintSchema,
 })
 
 export type PostBanRequestBody = z.infer<typeof postBanRequestBody>

@@ -119,7 +119,7 @@ export const E2ESdkDevtoolsView: React.FC<BoxProps> = ({ ...props }) => {
                 </Tab>
                 <Tab>
                   <Icon as={FiKey} mr={2} />
-                  Keys
+                  Keychains
                 </Tab>
               </>
             ) : (

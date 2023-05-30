@@ -72,8 +72,8 @@ export default async function keychainRoutes(app: App) {
           app.sodium.from_string(req.body.createdAt),
           app.sodium.from_string(req.body.expiresAt ?? ''),
           numberToUint32LE(req.body.subkeyIndex),
-          app.sodium.from_base64(req.body.nameFingerprint),
-          app.sodium.from_base64(req.body.payloadFingerprint)
+          app.sodium.from_base64(req.body.keychainFingerprint),
+          app.sodium.from_base64(req.body.keyFingerprint)
         )
       ) {
         forbidden('Invalid key signature')
@@ -82,7 +82,7 @@ export default async function keychainRoutes(app: App) {
       if (!req.body.sharedBy) {
         const participants = await getKeyNameParticipants(
           app.db,
-          req.body.nameFingerprint
+          req.body.keychainFingerprint
         )
         const isKeyAuthor = participants.length === 0
         if (
@@ -101,23 +101,23 @@ export default async function keychainRoutes(app: App) {
         const { allowRotation } = await getPermission(
           app.db,
           req.identity.userId,
-          req.body.nameFingerprint
+          req.body.keychainFingerprint
         )
         const isRotation =
           !isKeyAuthor &&
           participants.every(
-            key => key.payloadFingerprint !== req.body.payloadFingerprint
+            key => key.keyFingerprint !== req.body.keyFingerprint
           )
         if (isRotation && !allowRotation) {
           forbidden('You are not allowed to rotate this key', { participants })
         }
         // Note: rotating back to an old key is prevented by the use of
-        // a compound primary key encompassing (userId, payload_fingerprint).
+        // a compound primary key encompassing (userId, keyFingerprint).
         await app.db.begin(async tx => {
           if (isKeyAuthor) {
             await createPermission(tx, {
               userId: req.identity.userId,
-              nameFingerprint: req.body.nameFingerprint,
+              keychainFingerprint: req.body.keychainFingerprint,
               allowManagement: true,
               allowRotation: true,
               allowDeletion: true,
@@ -134,8 +134,8 @@ export default async function keychainRoutes(app: App) {
         app.webhook.notifyKeyAdded(req, {
           createdAt: req.body.createdAt,
           expiresAt: req.body.expiresAt,
-          nameFingerprint: req.body.nameFingerprint,
-          payloadFingerprint: req.body.payloadFingerprint,
+          keychainFingerprint: req.body.keychainFingerprint,
+          keyFingerprint: req.body.keyFingerprint,
           ownerId: req.body.ownerId,
           sharedBy: req.body.sharedBy,
           subkeyIndex: req.body.subkeyIndex,
@@ -150,7 +150,7 @@ export default async function keychainRoutes(app: App) {
       const sharedKey = await getSharedKey(
         app.db,
         req.identity.userId,
-        req.body.payloadFingerprint
+        req.body.keyFingerprint
       )
       if (!sharedKey) {
         forbidden('Could not find associated shared key')
@@ -161,8 +161,8 @@ export default async function keychainRoutes(app: App) {
       for (const fieldToMatch of [
         'createdAt',
         'expiresAt',
-        'nameFingerprint',
-        'payloadFingerprint',
+        'keychainFingerprint',
+        'keyFingerprint',
       ] as const) {
         if (sharedKey[fieldToMatch] !== req.body[fieldToMatch]) {
           forbidden(`Mismatching field ${fieldToMatch} with shared key`, {
@@ -177,7 +177,7 @@ export default async function keychainRoutes(app: App) {
             tx,
             req.body.sharedBy!,
             req.identity.userId,
-            req.body.payloadFingerprint
+            req.body.keyFingerprint
           )
         }
       )
@@ -190,8 +190,8 @@ export default async function keychainRoutes(app: App) {
       app.webhook.notifyKeyAdded(req, {
         createdAt: req.body.createdAt,
         expiresAt: req.body.expiresAt,
-        nameFingerprint: req.body.nameFingerprint,
-        payloadFingerprint: req.body.payloadFingerprint,
+        keychainFingerprint: req.body.keychainFingerprint,
+        keyFingerprint: req.body.keyFingerprint,
         ownerId: req.body.ownerId,
         sharedBy: req.body.sharedBy,
         subkeyIndex: req.body.subkeyIndex,
@@ -227,15 +227,15 @@ export default async function keychainRoutes(app: App) {
   )
 
   const deleteKeychainEntryURLParams = keychainItemSchema.pick({
-    nameFingerprint: true,
-    payloadFingerprint: true,
+    keychainFingerprint: true,
+    keyFingerprint: true,
   })
 
   app.delete<{
     Headers: RequestHeaders
     Params: z.infer<typeof deleteKeychainEntryURLParams>
   }>(
-    '/keychain/:nameFingerprint/:payloadFingerprint',
+    '/keychain/:keychainFingerprint/:keyFingerprint',
     {
       preHandler: app.useAuth(),
       schema: {
@@ -254,8 +254,8 @@ export default async function keychainRoutes(app: App) {
       await deleteKeychainItem(
         app.db,
         req.identity.userId,
-        req.params.nameFingerprint,
-        req.params.payloadFingerprint
+        req.params.keychainFingerprint,
+        req.params.keyFingerprint
       )
       req.auditLog.trace({
         msg: 'deleteKeychainItem:success',

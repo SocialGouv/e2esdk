@@ -21,11 +21,11 @@ import { FiShare2, FiShield } from 'react-icons/fi'
 import { UserIdentityInput } from './UserIdentityInput'
 
 type ShareKeyPopupProps = ButtonProps & {
-  nameFingerprint: string
+  keychainFingerprint: string
 }
 
 export const ShareKeyPopup: React.FC<ShareKeyPopupProps> = ({
-  nameFingerprint,
+  keychainFingerprint,
   ...props
 }) => {
   const { isOpen, onClose, onToggle } = useDisclosure()
@@ -37,22 +37,22 @@ export const ShareKeyPopup: React.FC<ShareKeyPopupProps> = ({
     onClose()
   }, [onClose])
   const [shareCommentsKey, setShareCommentsKey] = React.useState(true)
-  const commentsKey = useSubmissionCommentsKey(nameFingerprint)
+  const commentsKey = useSubmissionCommentsKey(keychainFingerprint)
 
   const share = React.useCallback(async () => {
     if (!recipientIdentity) {
       return
     }
-    await client.shareKey(nameFingerprint, recipientIdentity)
+    await client.shareKey(keychainFingerprint, recipientIdentity)
     if (commentsKey && shareCommentsKey) {
-      await client.shareKey(commentsKey.nameFingerprint, recipientIdentity)
+      await client.shareKey(commentsKey.keychainFingerprint, recipientIdentity)
     }
     close()
   }, [
     client,
     close,
     commentsKey,
-    nameFingerprint,
+    keychainFingerprint,
     recipientIdentity,
     shareCommentsKey,
   ])

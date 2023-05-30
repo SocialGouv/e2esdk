@@ -14,10 +14,10 @@ export const sharedKeySchema = z.object({
   fromSharingPublicKey: z.string(),
   fromSignaturePublicKey: z.string(),
   fromProof: z.string(),
-  name: z.string(),
-  payload: z.string(),
-  nameFingerprint: z.string(),
-  payloadFingerprint: z.string(),
+  encryptedKeychainName: z.string(),
+  encryptedKey: z.string(),
+  keychainFingerprint: z.string(),
+  keyFingerprint: z.string(),
   signature: z.string(),
 })
 
@@ -35,13 +35,13 @@ export function storeSharedKey(
 export async function getSharedKey(
   sql: Sql,
   to: string,
-  payloadFingerprint: string
+  keyFingerprint: string
 ) {
   const results: SharedKeySchema[] = await sql`
     SELECT *
     FROM  ${sql(TABLE_NAME)}
     WHERE ${sql('toUserId')} = ${to}
-    AND   ${sql('payloadFingerprint')} = ${payloadFingerprint}
+    AND   ${sql('keyFingerprint')} = ${keyFingerprint}
     LIMIT 1
   `
   return getFirst(results)
@@ -80,14 +80,14 @@ export function deleteSharedKey(
   sql: Sql,
   from: string,
   to: string,
-  payloadFingerprint: string
+  keyFingerprint: string
 ) {
   return sql`
     DELETE
     FROM  ${sql(TABLE_NAME)}
     WHERE ${sql('fromUserId')}          = ${from}
     AND   ${sql('toUserId')}            = ${to}
-    AND   ${sql('payloadFingerprint')}  = ${payloadFingerprint}
+    AND   ${sql('keyFingerprint')}  = ${keyFingerprint}
     RETURNING *
   `
 }
@@ -95,12 +95,12 @@ export function deleteSharedKey(
 export function deleteSharedKeysByName(
   sql: Sql,
   to: string,
-  nameFingerprint: string
+  keychainFingerprint: string
 ) {
   return sql`
     DELETE
     FROM  ${sql(TABLE_NAME)}
     WHERE ${sql('toUserId')}        = ${to}
-    AND   ${sql('nameFingerprint')} = ${nameFingerprint}
+    AND   ${sql('keychainFingerprint')} = ${keychainFingerprint}
   `
 }

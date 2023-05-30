@@ -11,18 +11,18 @@ export function useShareKey() {
 
   return React.useCallback(
     async (
-      keyNameFingerprint: string | null,
+      keychainFingerprint: string | null,
       to: PublicUserIdentity | null
     ) => {
-      if (!keyNameFingerprint || !to) {
+      if (!keychainFingerprint || !to) {
         return
       }
       try {
-        await client.shareKey(keyNameFingerprint, to)
+        await client.shareKey(keychainFingerprint, to)
         toast({
           status: 'success',
           title: 'Key shared',
-          description: `Key ${keyNameFingerprint} was sent to ${to.userId}`,
+          description: `Key ${keychainFingerprint} was sent to ${to.userId}`,
         })
       } catch (error) {
         if (error instanceof APIError) {

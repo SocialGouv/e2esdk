@@ -9,7 +9,7 @@ export const permissionSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   userId: z.string(),
-  nameFingerprint: z.string(),
+  keychainFingerprint: z.string(),
   allowSharing: z.boolean(),
   allowRotation: z.boolean(),
   allowDeletion: z.boolean(),
@@ -44,13 +44,13 @@ export function createPermission(
 export async function getPermission(
   sql: Sql,
   userId: string,
-  nameFingerprint: string
+  keychainFingerprint: string
 ): Promise<PermissionFlags> {
   const results: PermissionFlags[] = await sql`
     SELECT ${sql(permissionFlags.keyof().options)}
     FROM   ${sql(TABLE_NAME)}
     WHERE  ${sql('userId')}          = ${userId}
-    AND    ${sql('nameFingerprint')} = ${nameFingerprint}
+    AND    ${sql('keychainFingerprint')} = ${keychainFingerprint}
   `
   const result = getFirst(results)
   return (
@@ -67,17 +67,17 @@ export function updatePermission(
   sql: Sql,
   {
     userId,
-    nameFingerprint,
+    keychainFingerprint,
     allowSharing,
     allowRotation,
     allowDeletion,
     allowManagement,
-  }: Pick<PermissionSchema, 'userId' | 'nameFingerprint'> &
+  }: Pick<PermissionSchema, 'userId' | 'keychainFingerprint'> &
     Partial<PermissionFlags>
 ) {
   const insert = {
     userId,
-    nameFingerprint,
+    keychainFingerprint,
     allowDeletion: allowDeletion ?? false,
     allowManagement: allowManagement ?? false,
     allowRotation: allowRotation ?? false,
@@ -98,7 +98,7 @@ export function updatePermission(
   }
   return sql`
     INSERT INTO  ${sql(TABLE_NAME)} ${sql(insert)}
-    ON CONFLICT (${sql('userId')}, ${sql('nameFingerprint')})
+    ON CONFLICT (${sql('userId')}, ${sql('keychainFingerprint')})
     DO UPDATE
     SET ${sql(update)}
   `
@@ -107,12 +107,12 @@ export function updatePermission(
 export function deletePermission(
   sql: Sql,
   userId: string,
-  nameFingerprint: string
+  keychainFingerprint: string
 ) {
   return sql`
     DELETE
     FROM   ${sql(TABLE_NAME)}
     WHERE  ${sql('userId')}          = ${userId}
-    AND    ${sql('nameFingerprint')} = ${nameFingerprint}
+    AND    ${sql('keychainFingerprint')} = ${keychainFingerprint}
   `
 }

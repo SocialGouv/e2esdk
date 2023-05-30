@@ -33,14 +33,10 @@ type CommentsQueryCacheType = {
   dropped: number
 }
 
-export function getSubmissionCommentsKeyLabel(submissionBucketId: string) {
-  return `contact-form:comments:${submissionBucketId}`
-}
-
 export function useSubmissionCommentsKey(submissionBucketId: string) {
   const client = useE2ESDKClient()
-  const label = getSubmissionCommentsKeyLabel(submissionBucketId)
-  return client.findKeyByLabel(label)
+  const purpose = `contact-form:comments:${submissionBucketId}`
+  return client.findKeyByPurpose(purpose)
 }
 
 export function useSubmissionCommentsQuery(
@@ -67,7 +63,7 @@ export function useSubmissionCommentsQuery(
           // todo: Add decryption error handling
           const decryptedMessage = client.decrypt(
             message,
-            currentKey!.nameFingerprint
+            currentKey!.keychainFingerprint
           )
           const res = decryptedComment.safeParse({
             ...comment,
@@ -122,7 +118,7 @@ export function useCreateCommentMutation(
       }
       const createdAt = new Date().toISOString()
       const author = client.publicIdentity!.userId
-      const message = client.encrypt(comment, key.nameFingerprint)
+      const message = client.encrypt(comment, key.keychainFingerprint)
       const signature = client.sign(
         submissionBucketId,
         submissionId.toFixed(),

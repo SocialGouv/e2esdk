@@ -10,6 +10,8 @@ import fp from 'fastify-plugin'
 import { env } from 'process'
 import type { App } from '../types'
 
+type EncryptedFields = 'encryptedKeychainName' | 'encryptedKey'
+
 type Decoration = {
   // Authorization
   authorizeSignup(req: FastifyRequest): Promise<boolean>
@@ -22,11 +24,11 @@ type Decoration = {
   notifySignup(req: FastifyRequest, identity: Identity): void
   notifyKeyAdded(
     req: FastifyRequest,
-    item: Omit<PostKeychainItemRequestBody, 'name' | 'payload'>
+    item: Omit<PostKeychainItemRequestBody, EncryptedFields>
   ): void
   notifyKeyShared(
     req: FastifyRequest,
-    item: Omit<PostSharedKeyBody, 'name' | 'payload'>
+    item: Omit<PostSharedKeyBody, EncryptedFields>
   ): void
 }
 

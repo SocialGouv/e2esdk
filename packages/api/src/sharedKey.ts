@@ -16,10 +16,10 @@ const sharedKey = z.object({
   fromSharingPublicKey: identitySchema.shape.sharingPublicKey,
   fromSignaturePublicKey: identitySchema.shape.signaturePublicKey,
   fromProof: identitySchema.shape.proof,
-  name: boxCiphertextV1Schema(PayloadType.string),
-  payload: boxCiphertextV1Schema(PayloadType.string),
-  nameFingerprint: fingerprintSchema,
-  payloadFingerprint: fingerprintSchema,
+  encryptedKeychainName: boxCiphertextV1Schema(PayloadType.string),
+  encryptedKey: boxCiphertextV1Schema(PayloadType.string),
+  keychainFingerprint: fingerprintSchema,
+  keyFingerprint: fingerprintSchema,
   signature: signatureSchema,
 })
 
