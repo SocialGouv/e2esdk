@@ -17,7 +17,7 @@ import type { App } from '../types'
 
 export default async function permissionsRoutes(app: App) {
   const getPermissionsUrlParams = z.object({
-    nameFingerprint: fingerprintSchema,
+    keychainFingerprint: fingerprintSchema,
   })
   type GetPermissionsUrlParams = z.infer<typeof getPermissionsUrlParams>
 
@@ -26,7 +26,7 @@ export default async function permissionsRoutes(app: App) {
     Headers: RequestHeaders
     Reply: PermissionFlags
   }>(
-    '/permissions/:nameFingerprint',
+    '/permissions/:keychainFingerprint',
     {
       preHandler: app.useAuth(),
       schema: {
@@ -43,7 +43,7 @@ export default async function permissionsRoutes(app: App) {
       const flags = await getPermission(
         app.db,
         req.identity.userId,
-        req.params.nameFingerprint
+        req.params.keychainFingerprint
       )
       req.auditLog.trace({
         msg: 'getPermissions:success',
@@ -77,7 +77,7 @@ export default async function permissionsRoutes(app: App) {
       const { allowManagement } = await getPermission(
         app.db,
         req.identity.userId,
-        req.body.nameFingerprint
+        req.body.keychainFingerprint
       )
       if (!allowManagement) {
         req.auditLog.warn({ msg: 'postPermission:forbidden', body: req.body })

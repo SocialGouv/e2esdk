@@ -41,7 +41,7 @@ export default async function banRoutes(app: App) {
         const { allowDeletion } = await getPermission(
           app.db,
           req.identity.userId,
-          req.body.nameFingerprint
+          req.body.keychainFingerprint
         )
         if (!allowDeletion) {
           req.auditLog.warn({ msg: 'ban:forbidden', body: req.body })
@@ -51,9 +51,13 @@ export default async function banRoutes(app: App) {
         }
       }
       await app.db.begin(tx => [
-        deletePermission(tx, req.body.userId, req.body.nameFingerprint),
-        deleteKeychainItems(tx, req.body.userId, req.body.nameFingerprint),
-        deleteSharedKeysByName(tx, req.body.userId, req.body.nameFingerprint),
+        deletePermission(tx, req.body.userId, req.body.keychainFingerprint),
+        deleteKeychainItems(tx, req.body.userId, req.body.keychainFingerprint),
+        deleteSharedKeysByName(
+          tx,
+          req.body.userId,
+          req.body.keychainFingerprint
+        ),
       ])
       req.auditLog.info({ msg: 'ban:success', body: req.body })
       return res.status(204).send()

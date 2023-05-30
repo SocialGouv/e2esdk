@@ -9,10 +9,10 @@ export const keychainItemSchema = z.object({
   createdAt: z.string(),
   expiresAt: z.string().nullable(),
   subkeyIndex: z.number().int(),
-  name: z.string(),
-  payload: z.string(),
-  nameFingerprint: z.string(),
-  payloadFingerprint: z.string(),
+  encryptedKeychainName: z.string(),
+  encryptedKey: z.string(),
+  keychainFingerprint: z.string(),
+  keyFingerprint: z.string(),
   ownerId: z.string(),
   sharedBy: z.string().nullable(),
   signature: z.string(),
@@ -44,55 +44,55 @@ export async function getKeychainItem(
   sql: Sql,
   {
     ownerId,
-    nameFingerprint,
-    payloadFingerprint,
+    keychainFingerprint,
+    keyFingerprint,
   }: Pick<
     KeychainItemSchema,
-    'ownerId' | 'nameFingerprint' | 'payloadFingerprint'
+    'ownerId' | 'keychainFingerprint' | 'keyFingerprint'
   >
 ) {
   const results: KeychainItemSchema[] = await sql`
     SELECT *
     FROM ${sql(TABLE_NAME)}
     WHERE ${sql('ownerId')} = ${ownerId}
-    -- Keep payloadFingerprint first for (theoretical) index performance
-    AND ${sql('payloadFingerprint')} = ${payloadFingerprint}
-    AND ${sql('nameFingerprint')}    = ${nameFingerprint}
+    -- Keep keyFingerprint first for (theoretical) index performance
+    AND ${sql('keyFingerprint')} = ${keyFingerprint}
+    AND ${sql('keychainFingerprint')}    = ${keychainFingerprint}
   `
   return getFirst(results)
 }
 
-export function getKeyNameParticipants(sql: Sql, nameFingerprint: string) {
+export function getKeyNameParticipants(sql: Sql, keychainFingerprint: string) {
   return sql<KeychainItemSchema[]>`SELECT *
   FROM ${sql(TABLE_NAME)}
-  WHERE ${sql('nameFingerprint')} = ${nameFingerprint}
+  WHERE ${sql('keychainFingerprint')} = ${keychainFingerprint}
   `
 }
 
 export function deleteKeychainItem(
   sql: Sql,
   ownerId: string,
-  nameFingerprint: string,
-  payloadFingerprint: string
+  keychainFingerprint: string,
+  keyFingerprint: string
 ) {
   return sql`
     DELETE
     FROM  ${sql(TABLE_NAME)}
     WHERE ${sql('ownerId')}            = ${ownerId}
-    AND   ${sql('payloadFingerprint')} = ${payloadFingerprint}
-    AND   ${sql('nameFingerprint')}    = ${nameFingerprint}
+    AND   ${sql('keyFingerprint')} = ${keyFingerprint}
+    AND   ${sql('keychainFingerprint')}    = ${keychainFingerprint}
   `
 }
 
 export function deleteKeychainItems(
   sql: Sql,
   ownerId: string,
-  nameFingerprint: string
+  keychainFingerprint: string
 ) {
   return sql`
     DELETE
     FROM  ${sql(TABLE_NAME)}
     WHERE ${sql('ownerId')}         = ${ownerId}
-    AND   ${sql('nameFingerprint')} = ${nameFingerprint}
+    AND   ${sql('keychainFingerprint')} = ${keychainFingerprint}
   `
 }

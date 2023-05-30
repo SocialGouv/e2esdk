@@ -13,7 +13,7 @@ export type PermissionFlags = z.infer<typeof permissionFlags>
 
 export const postPermissionRequestBody = permissionFlags.partial().extend({
   userId: identitySchema.shape.userId,
-  nameFingerprint: fingerprintSchema,
+  keychainFingerprint: fingerprintSchema,
 })
 
 export type PostPermissionRequestBody = z.infer<

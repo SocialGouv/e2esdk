@@ -11,8 +11,8 @@ import { getNamePayloadParticipantsWithPermissions } from '../database/models/pa
 import type { App } from '../types'
 
 const getParticipantsUrlParams = z.object({
-  nameFingerprint: fingerprintSchema,
-  payloadFingerprint: fingerprintSchema,
+  keychainFingerprint: fingerprintSchema,
+  keyFingerprint: fingerprintSchema,
 })
 
 export default async function participantsRoutes(app: App) {
@@ -21,7 +21,7 @@ export default async function participantsRoutes(app: App) {
     Headers: RequestHeaders
     Reply: GetParticipantsResponseBody
   }>(
-    '/participants/:nameFingerprint/:payloadFingerprint',
+    '/participants/:keychainFingerprint/:keyFingerprint',
     {
       preHandler: app.useAuth(),
       schema: {
@@ -41,8 +41,8 @@ export default async function participantsRoutes(app: App) {
     async function getNamePayloadParticipants(req, res) {
       const participants = await getNamePayloadParticipantsWithPermissions(
         app.db,
-        req.params.nameFingerprint,
-        req.params.payloadFingerprint
+        req.params.keychainFingerprint,
+        req.params.keyFingerprint
       )
       if (
         !participants.some(

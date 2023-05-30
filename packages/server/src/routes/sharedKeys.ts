@@ -59,8 +59,8 @@ export default async function sharedKeysRoutes(app: App) {
       // already have this key in their keychain
       const existingKeychainEntry = await getKeychainItem(app.db, {
         ownerId: req.body.toUserId,
-        nameFingerprint: req.body.nameFingerprint,
-        payloadFingerprint: req.body.payloadFingerprint,
+        keychainFingerprint: req.body.keychainFingerprint,
+        keyFingerprint: req.body.keyFingerprint,
       })
       const conflictMessage = 'The recipient already has a copy of this key'
       if (existingKeychainEntry) {
@@ -76,7 +76,7 @@ export default async function sharedKeysRoutes(app: App) {
       const existingSharedKey = await getSharedKey(
         app.db,
         req.body.toUserId,
-        req.body.payloadFingerprint
+        req.body.keyFingerprint
       )
       if (existingSharedKey) {
         // We use the same message as the previous check
@@ -93,7 +93,7 @@ export default async function sharedKeysRoutes(app: App) {
       const { allowSharing } = await getPermission(
         app.db,
         req.identity.userId,
-        req.body.nameFingerprint
+        req.body.keychainFingerprint
       )
       if (!allowSharing) {
         const reason = 'You are not allowed to share this key'
@@ -175,14 +175,14 @@ export default async function sharedKeysRoutes(app: App) {
 
   const deleteSharedKeyUrlParams = z.object({
     userId: identitySchema.shape.userId,
-    payloadFingerprint: fingerprintSchema,
+    keyFingerprint: fingerprintSchema,
   })
 
   app.delete<{
     Params: z.infer<typeof deleteSharedKeyUrlParams>
     Headers: RequestHeaders
   }>(
-    '/shared-keys/:userId/:payloadFingerprint',
+    '/shared-keys/:userId/:keyFingerprint',
     {
       preHandler: app.useAuth(),
       schema: {
@@ -202,7 +202,7 @@ export default async function sharedKeysRoutes(app: App) {
         app.db,
         req.identity.userId,
         req.params.userId,
-        req.params.payloadFingerprint
+        req.params.keyFingerprint
       )
       req.auditLog.info({
         msg: 'deletePendingSharedKey:success',

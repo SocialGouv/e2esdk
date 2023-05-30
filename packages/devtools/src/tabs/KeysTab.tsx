@@ -82,42 +82,41 @@ import { useLocalState } from '../hooks/useLocalState'
 
 export const KeysTab: React.FC = () => {
   const allKeys = useE2ESDKClientKeys()
-  const [selectedKeyFingerprint, setSelectedKeyFingerprint] = useLocalState<
-    string | null
-  >({
-    storageKey: 'e2esdk:devtools:keys:selectedKeyFingerprint',
-    defaultValue: null,
-  })
+  const [selectedKeychainFingerprint, setSelectedKeychainFingerprint] =
+    useLocalState<string | null>({
+      storageKey: 'e2esdk:devtools:keys:selectedKeychainFingerprint',
+      defaultValue: null,
+    })
   const [showCreateKeyPanel, setShowCreateKeyPanel] = React.useState(false)
 
   // Hide key creation panel when selecting a key
   React.useEffect(() => {
-    if (selectedKeyFingerprint) {
+    if (selectedKeychainFingerprint) {
       setShowCreateKeyPanel(false)
     }
-  }, [selectedKeyFingerprint])
+  }, [selectedKeychainFingerprint])
   React.useEffect(() => {
     if (showCreateKeyPanel) {
-      setSelectedKeyFingerprint(null)
+      setSelectedKeychainFingerprint(null)
     }
   }, [showCreateKeyPanel])
 
-  const selectedKeys = selectedKeyFingerprint
-    ? allKeys[selectedKeyFingerprint]
+  const selectedKeys = selectedKeychainFingerprint
+    ? allKeys[selectedKeychainFingerprint]
     : null
   return (
     <SectionContainer>
       <KeySelectorPanel
         allKeys={allKeys}
-        selectedKeyFingerprint={selectedKeyFingerprint}
-        setSelectedKeyFingerprint={setSelectedKeyFingerprint}
+        selectedKeychainFingerprint={selectedKeychainFingerprint}
+        setSelectedKeychainFingerprint={setSelectedKeychainFingerprint}
         onCreateKey={() => setShowCreateKeyPanel(true)}
       />
       <Section flex={1.5}>
         {showCreateKeyPanel ? (
           <CreateKeyPanel
             onClose={() => setShowCreateKeyPanel(false)}
-            onKeyCreated={setSelectedKeyFingerprint}
+            onKeyCreated={setSelectedKeychainFingerprint}
           />
         ) : selectedKeys ? (
           <KeyDetailsPanel keys={selectedKeys} />
@@ -135,21 +134,21 @@ export const KeysTab: React.FC = () => {
 
 type KeySelectorPanelProps = {
   allKeys: Record<string, KeychainItemMetadata[]>
-  selectedKeyFingerprint: string | null
-  setSelectedKeyFingerprint: (selected: string | null) => void
+  selectedKeychainFingerprint: string | null
+  setSelectedKeychainFingerprint: (selected: string | null) => void
   onCreateKey: () => void
 }
 
 const KeySelectorPanel: React.FC<KeySelectorPanelProps> = ({
   allKeys,
-  selectedKeyFingerprint,
-  setSelectedKeyFingerprint,
+  selectedKeychainFingerprint,
+  setSelectedKeychainFingerprint,
   onCreateKey,
 }) => {
   return (
     <Section display="flex" flexDirection="column">
       <SectionHeader mb={0} display="flex" alignItems="center">
-        Your keys
+        Your keychains
         <Button
           ml="auto"
           size="xs"
@@ -161,11 +160,11 @@ const KeySelectorPanel: React.FC<KeySelectorPanelProps> = ({
           leftIcon={<FiPlusCircle />}
           onClick={onCreateKey}
         >
-          Create new key
+          Create new keychain
         </Button>
       </SectionHeader>
       <Stack spacing={0} flex={1}>
-        {Object.entries(allKeys).map(([nameFingerprint, keys]) => (
+        {Object.entries(allKeys).map(([keychainFingerprint, keys]) => (
           <Flex
             px={4}
             py={2}
@@ -174,31 +173,31 @@ const KeySelectorPanel: React.FC<KeySelectorPanelProps> = ({
             _light={{
               borderBottomColor: 'gray.100',
               background:
-                selectedKeyFingerprint === nameFingerprint
+                selectedKeychainFingerprint === keychainFingerprint
                   ? 'gray.10'
                   : 'transparent',
             }}
             _dark={{
               borderBottomColor: 'gray.800',
               background:
-                selectedKeyFingerprint === nameFingerprint
+                selectedKeychainFingerprint === keychainFingerprint
                   ? 'gray.1000'
                   : 'transparent',
             }}
-            key={nameFingerprint + keys[0]?.createdAt.toISOString()}
+            key={keychainFingerprint + keys[0]?.createdAt.toISOString()}
             borderLeftWidth="3px"
             borderLeftColor={
-              selectedKeyFingerprint === nameFingerprint
+              selectedKeychainFingerprint === keychainFingerprint
                 ? `${algorithmColors[keys[0].algorithm]}.500`
                 : 'transparent'
             }
             gap={4}
             alignItems="center"
             onClick={() =>
-              setSelectedKeyFingerprint(
-                nameFingerprint === selectedKeyFingerprint
+              setSelectedKeychainFingerprint(
+                keychainFingerprint === selectedKeychainFingerprint
                   ? null
-                  : nameFingerprint
+                  : keychainFingerprint
               )
             }
           >
@@ -216,10 +215,10 @@ const KeySelectorPanel: React.FC<KeySelectorPanelProps> = ({
             />
             <Box flex={1}>
               <Text fontFamily="mono" fontSize="xs">
-                {keys[0].label}
+                {keys[0].purpose}
               </Text>
               <Text fontFamily="mono" fontSize="xs" color="gray.500">
-                {keys[0].nameFingerprint}
+                {keys[0].keychainFingerprint}
               </Text>
             </Box>
           </Flex>
@@ -252,9 +251,9 @@ const CreateKeyPanel: React.FC<CreateKeyPanelProps> = ({
   const [label, setLabel] = React.useState('')
   const [type, setType] = React.useState<CipherAlgorithm>('secretBox')
   const createKey = React.useCallback(async () => {
-    const key = await client.createKey(label, type)
+    const key = await client.createNewKeychain(label, type)
     setLabel('')
-    onKeyCreated(key.nameFingerprint)
+    onKeyCreated(key.keychainFingerprint)
   }, [client, label, type, onKeyCreated])
   return (
     <>
@@ -343,15 +342,15 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
   const { data: permissions } = useQuery({
     queryKey: queryKeys.permissions(currentKey),
     queryFn: ({ queryKey }) =>
-      client.getPermissions(queryKey[2].nameFingerprint),
+      client.getPermissions(queryKey[2].keychainFingerprint),
     enabled: Boolean(currentKey),
   })
   const { data: participants } = useQuery({
     queryKey: queryKeys.participants(currentKey),
     queryFn: ({ queryKey }) =>
       client.getParticipants(
-        queryKey[2].nameFingerprint,
-        queryKey[2].payloadFingerprint
+        queryKey[2].keychainFingerprint,
+        queryKey[2].keyFingerprint
       ),
     enabled: Boolean(currentKey),
   })
@@ -361,8 +360,8 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
       const outgoingSharedKeys = await client.getOutgoingSharedKeys()
       return outgoingSharedKeys.filter(
         key =>
-          key.nameFingerprint === queryKey[2].nameFingerprint &&
-          key.payloadFingerprint === queryKey[2].payloadFingerprint
+          key.keychainFingerprint === queryKey[2].keychainFingerprint &&
+          key.keyFingerprint === queryKey[2].keyFingerprint
       )
     },
     enabled: Boolean(currentKey),
@@ -370,7 +369,7 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
   const otherParticipants =
     participants?.filter(p => !!identity && p.userId !== identity.userId) ?? []
   const rotateKey = React.useCallback(() => {
-    client.rotateKey(currentKey.nameFingerprint)
+    client.rotateKey(currentKey.keychainFingerprint)
   }, [client, currentKey])
 
   if (!currentKey) {
@@ -406,8 +405,8 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
             leftIcon={<FiTrash2 />}
             onClick={() =>
               client.deleteKey(
-                currentKey.nameFingerprint,
-                currentKey.payloadFingerprint
+                currentKey.keychainFingerprint,
+                currentKey.keyFingerprint
               )
             }
           >
@@ -426,7 +425,7 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
         <AlgorithmBadge algorithm={currentKey.algorithm} />
         <Text fontWeight="semibold">Fingerprint</Text>
         <Text fontFamily="mono" color="gray.500">
-          {currentKey.payloadFingerprint}
+          {currentKey.keyFingerprint}
         </Text>
         {currentKey.publicKey && (
           <>
@@ -534,7 +533,10 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
                             colorScheme="red"
                             onClick={() =>
                               client
-                                .banUser(p.userId, currentKey.nameFingerprint)
+                                .banUser(
+                                  p.userId,
+                                  currentKey.keychainFingerprint
+                                )
                                 .then(() =>
                                   queryClient.invalidateQueries(
                                     queryKeys.participants(currentKey)
@@ -580,13 +582,13 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
                   <Tr
                     key={
                       key.toUserId +
-                      key.nameFingerprint +
-                      key.payloadFingerprint
+                      key.keychainFingerprint +
+                      key.keyFingerprint
                     }
                     fontFamily="mono"
                   >
                     <Td>{key.toUserId}</Td>
-                    <Td>{key.payloadFingerprint}</Td>
+                    <Td>{key.keyFingerprint}</Td>
                     <Td>
                       {key.expiresAt ? (
                         new Date(key.expiresAt).toLocaleString(['se-SE'])
@@ -606,7 +608,7 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
                           client
                             .deleteOutgoingSharedKey(
                               key.toUserId,
-                              key.payloadFingerprint
+                              key.keyFingerprint
                             )
                             .then(() =>
                               queryClient.invalidateQueries(
@@ -651,7 +653,7 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
               >
                 {keys.slice(1).map(key => (
                   <Tr key={key.createdAt.toISOString()} fontFamily="mono">
-                    <Td>{key.payloadFingerprint}</Td>
+                    <Td>{key.keyFingerprint}</Td>
                     {key.publicKey && <Td>{key.publicKey}</Td>}
                     <Td>{key.createdAt.toLocaleString(['se-SE'])}</Td>
                     <Td>
@@ -670,8 +672,8 @@ const KeyDetailsPanel: React.FC<KeyDetailsPanelProps> = ({ keys }) => {
                         rounded="full"
                         onClick={() =>
                           client.deleteKey(
-                            key.nameFingerprint,
-                            key.payloadFingerprint
+                            key.keychainFingerprint,
+                            key.keyFingerprint
                           )
                         }
                       />
@@ -760,7 +762,7 @@ const ShareKeyPopup: React.FC<ShareKeyPopupProps> = ({
 
   const share = useMutation({
     mutationFn: () =>
-      client.shareKey(currentKey.nameFingerprint, recipientIdentity!),
+      client.shareKey(currentKey.keychainFingerprint, recipientIdentity!),
     onSuccess: () => {
       queryClient.invalidateQueries(queryKeys.outgoing(currentKey))
       close()
@@ -877,12 +879,16 @@ const ManagePermissionsPopup: React.FC<ManagePermissionsPopupProps> = ({
 
   const setPermissions = useMutation({
     mutationFn: () =>
-      client.setPermissions(participant.userId, currentKey.nameFingerprint, {
-        allowSharing,
-        allowRotation,
-        allowDeletion,
-        allowManagement,
-      }),
+      client.setPermissions(
+        participant.userId,
+        currentKey.keychainFingerprint,
+        {
+          allowSharing,
+          allowRotation,
+          allowDeletion,
+          allowManagement,
+        }
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries(queryKeys.participants(currentKey))
       onClose()

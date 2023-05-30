@@ -39,16 +39,16 @@ const NewContactFormPage: NextPage = () => {
 
   const onSubmit = React.useCallback(async () => {
     await client.sodium.ready
-    const { nameFingerprint, publicKey } = await client.createKey(
+    const { keychainFingerprint, publicKey } = await client.createNewKeychain(
       `contact-form:answers:${label}`,
       'sealedBox'
     )
-    await client.createKey(
-      `contact-form:comments:${nameFingerprint}`,
+    await client.createNewKeychain(
+      `contact-form:comments:${keychainFingerprint}`,
       'secretBox'
     )
     setMeta({
-      submissionBucketId: nameFingerprint,
+      submissionBucketId: keychainFingerprint,
       publicKey: publicKey!,
     })
   }, [client, label])
@@ -72,7 +72,7 @@ const NewContactFormPage: NextPage = () => {
           </FormHelperText>
         </FormControl>
         <ShareAccess
-          keyNameFingerprint={meta?.submissionBucketId ?? 'N.A.'}
+          keychainFingerprint={meta?.submissionBucketId ?? 'N.A.'}
           mt={8}
         />
         <Divider my={12} />
@@ -99,11 +99,11 @@ export default NewContactFormPage
 // --
 
 type ShareAccessProps = StackProps & {
-  keyNameFingerprint: string
+  keychainFingerprint: string
 }
 
 export const ShareAccess: React.FC<ShareAccessProps> = ({
-  keyNameFingerprint,
+  keychainFingerprint,
   ...props
 }) => {
   const [to, setTo] = React.useState<PublicUserIdentity | null>(null)
@@ -115,7 +115,7 @@ export const ShareAccess: React.FC<ShareAccessProps> = ({
       </Heading>
       {/* <UserIdentity identity={to} onIdentityChange={setTo} /> */}
       <LoadingButton
-        onClick={() => shareKey(keyNameFingerprint, to)}
+        onClick={() => shareKey(keychainFingerprint, to)}
         leftIcon={<FiShare2 />}
         isDisabled
       >

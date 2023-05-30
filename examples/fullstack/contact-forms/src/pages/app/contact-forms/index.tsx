@@ -31,7 +31,7 @@ const ContactFormsPage: NextPage = () => {
           </Center>
         ) : (
           <Stack spacing={6}>
-            {buckets.map(({ label, submissionBucketId }) => (
+            {buckets.map(({ purpose, submissionBucketId }) => (
               <Link
                 as={NextLink}
                 key={submissionBucketId}
@@ -49,7 +49,7 @@ const ContactFormsPage: NextPage = () => {
               >
                 <Heading as="h2" fontSize="xl">
                   {' '}
-                  {label.replace(/^contact-form:answers:/, '')}
+                  {purpose.replace(/^contact-form:answers:/, '')}
                 </Heading>
               </Link>
             ))}
@@ -70,10 +70,10 @@ export default ContactFormsPage
 function useContactFormNames() {
   const keys = useE2ESDKClientKeys()
   const contactFormNames = Object.values(keys)
-    .filter(([{ label }]) => label.startsWith('contact-form:answers:'))
-    .map(([{ label, nameFingerprint }]) => ({
-      label,
-      submissionBucketId: nameFingerprint,
+    .filter(([{ purpose }]) => purpose.startsWith('contact-form:answers:'))
+    .map(([{ purpose, keychainFingerprint }]) => ({
+      purpose,
+      submissionBucketId: keychainFingerprint,
     }))
   return contactFormNames
 }

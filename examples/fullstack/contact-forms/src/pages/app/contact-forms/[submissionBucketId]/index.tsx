@@ -49,7 +49,7 @@ const ContactFormResultsPage: NextPage = () => {
   return (
     <>
       <Heading as="h1">
-        {currentKey.label.replace(/^contact-form:answers:/, '')}
+        {currentKey.purpose.replace(/^contact-form:answers:/, '')}
       </Heading>
       <Text fontSize="sm" color="gray.500">
         Contact form submissions
@@ -68,7 +68,7 @@ const ContactFormResultsPage: NextPage = () => {
         <ShareKeyPopup
           mt={8}
           ml="auto"
-          nameFingerprint={submissionBucketId}
+          keychainFingerprint={submissionBucketId}
         ></ShareKeyPopup>
       </Flex>
       <Box minH="xs" mt={8}>

@@ -17,14 +17,14 @@ export const webhookRoutes = {
   },
   '/notify/key-added': {
     body: postKeychainItemRequestBody.omit({
-      name: true,
-      payload: true,
+      encryptedKeychainName: true,
+      encryptedKey: true,
     }),
   },
   '/notify/key-shared': {
     body: postSharedKeyBody.omit({
-      name: true,
-      payload: true,
+      encryptedKeychainName: true,
+      encryptedKey: true,
     }),
   },
 } as const
