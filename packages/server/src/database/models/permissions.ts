@@ -63,7 +63,7 @@ export async function getPermission(
   )
 }
 
-export function updatePermission(
+export async function updatePermission(
   sql: Sql,
   {
     userId,
@@ -96,12 +96,18 @@ export function updatePermission(
   if (allowSharing !== undefined) {
     update.allowSharing = allowSharing
   }
-  return sql`
+  const results: PermissionFlags[] = await sql`
     INSERT INTO  ${sql(TABLE_NAME)} ${sql(insert)}
     ON CONFLICT (${sql('userId')}, ${sql('keychainFingerprint')})
     DO UPDATE
     SET ${sql(update)}
+    RETURNING
+      ${sql('allowSharing')},
+      ${sql('allowRotation')},
+      ${sql('allowDeletion')},
+      ${sql('allowManagement')}
   `
+  return getFirst(results)
 }
 
 export function deletePermission(

@@ -63,7 +63,7 @@ export default async function permissionsRoutes(app: App) {
       preHandler: app.useAuth(),
       schema: {
         tags: ['permissions'],
-        summary: 'Update permissions for a user & namespace',
+        summary: 'Update permissions for a user & keychain',
         headers: zodToJsonSchema(requestHeaders),
         body: zodToJsonSchema(postPermissionRequestBody),
         response: {
@@ -100,9 +100,18 @@ export default async function permissionsRoutes(app: App) {
         })
         throw app.httpErrors.badRequest(reason)
       }
-      await updatePermission(app.db, req.body)
-      // todo: Add before/after in audit log
-      req.auditLog.info({ msg: 'postPermission:success', body: req.body })
+      const before = await getPermission(
+        app.db,
+        req.body.userId,
+        req.body.keychainFingerprint
+      )
+      const after = await updatePermission(app.db, req.body)
+      req.auditLog.info({
+        msg: 'postPermission:success',
+        body: req.body,
+        before,
+        after,
+      })
       return res.status(204).send()
     }
   )
