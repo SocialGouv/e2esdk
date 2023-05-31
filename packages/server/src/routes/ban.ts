@@ -23,7 +23,7 @@ export default async function banRoutes(app: App) {
       preHandler: app.useAuth(),
       schema: {
         tags: ['permissions', 'sharedKeys', 'keychain'],
-        summary: 'Remove access to a namespace',
+        summary: 'Remove access to a keychain',
         description:
           'This will remove any pending shared keys, owned keychain items and associated permissions.',
         headers: zodToJsonSchema(requestHeaders),
@@ -46,10 +46,12 @@ export default async function banRoutes(app: App) {
         if (!allowDeletion) {
           req.auditLog.warn({ msg: 'ban:forbidden', body: req.body })
           throw app.httpErrors.forbidden(
-            'You are not allowed to ban members for this key'
+            'You are not allowed to ban members of this keychain'
           )
         }
       }
+      // todo: Return deleted objects and record them
+      // in the audit log for traceability and recovery.
       await app.db.begin(tx => [
         deletePermission(tx, req.body.userId, req.body.keychainFingerprint),
         deleteKeychainItems(tx, req.body.userId, req.body.keychainFingerprint),
