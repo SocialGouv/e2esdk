@@ -762,7 +762,11 @@ const ShareKeyPopup: React.FC<ShareKeyPopupProps> = ({
 
   const share = useMutation({
     mutationFn: () =>
-      client.shareKey(currentKey.keychainFingerprint, recipientIdentity!),
+      // todo: Provide more control over what to share
+      client.shareMostRecentKey(
+        currentKey.keychainFingerprint,
+        recipientIdentity!
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries(queryKeys.outgoing(currentKey))
       close()
