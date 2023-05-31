@@ -2,7 +2,7 @@
 
 ## Users identity
 
-If your application has a existing users, you have to explicitly login the `application user` to the `e2esdk user` **on the client**.
+If your application has existing users, you have to explicitly login the `application user` to the `e2esdk user` **on the client**.
 
 ```js
 import { useE2ESDKClient } from '@socialgouv/e2esdk-react'
