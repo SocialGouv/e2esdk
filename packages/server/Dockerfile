@@ -32,7 +32,7 @@ RUN pnpm fetch --frozen-lockfile
 COPY --from=slicer /app/docker-dist/json/ .
 
 # Install from in-memory cache
-RUN pnpm install --offline
+RUN pnpm install --prefer-offline
 
 # Build the project
 COPY --from=slicer /app/docker-dist/full/ .
