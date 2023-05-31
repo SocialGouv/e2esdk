@@ -3,9 +3,9 @@ import { Sql } from 'postgres'
 import { z } from 'zod'
 import { TABLE_NAME as IDENTITY_TABLE } from './identity.js'
 import { TABLE_NAME as KEYCHAIN_TABLE, keychainItemSchema } from './keychain.js'
-import { TABLE_NAME as PERMISSIONS_TABLE } from './permissions.js'
+import { TABLE_NAME as PERMISSION_TABLE } from './permissions.js'
 
-const getNamePayloadParticipantsQueryResult = identitySchema
+const getParticipantsQueryResult = identitySchema
   .merge(permissionFlags.partial())
   .merge(
     keychainItemSchema.pick({
@@ -14,16 +14,14 @@ const getNamePayloadParticipantsQueryResult = identitySchema
     })
   )
 
-type GetNamePayloadParticipantsQueryResult = z.infer<
-  typeof getNamePayloadParticipantsQueryResult
->
+type GetParticipantsQueryResult = z.infer<typeof getParticipantsQueryResult>
 
-export function getNamePayloadParticipantsWithPermissions(
+export function getParticipantsWithPermissions(
   sql: Sql,
   keychainFingerprint: string,
   keyFingerprint: string
 ) {
-  return sql<GetNamePayloadParticipantsQueryResult[]>`
+  return sql<GetParticipantsQueryResult[]>`
     SELECT
       -- Identity
       i.${sql('userId')},
@@ -43,12 +41,12 @@ export function getNamePayloadParticipantsWithPermissions(
     FROM ${sql(KEYCHAIN_TABLE)} AS k
     INNER JOIN ${sql(IDENTITY_TABLE)} AS i
       ON i.${sql('userId')} = k.${sql('ownerId')}
-    LEFT JOIN ${sql(PERMISSIONS_TABLE)} AS p
+    LEFT JOIN ${sql(PERMISSION_TABLE)} AS p
       ON  p.${sql('userId')} = k.${sql('ownerId')}
       AND p.${sql('keychainFingerprint')} = ${keychainFingerprint}
 
     -- Filter
-    WHERE k.${sql('keychainFingerprint')}    = ${keychainFingerprint}
+    WHERE k.${sql('keychainFingerprint')} = ${keychainFingerprint}
     AND   k.${sql('keyFingerprint')} = ${keyFingerprint}
 
     -- Sort

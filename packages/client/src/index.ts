@@ -321,7 +321,9 @@ export class Client {
     this.sodium = sodium
     this.config = Object.freeze({
       serverURL: config.serverURL,
-      serverSignaturePublicKey: this.decode(config.serverSignaturePublicKey),
+      serverSignaturePublicKey: base64UrlDecode(
+        config.serverSignaturePublicKey
+      ),
       handleNotifications: config.handleNotifications ?? true,
       handleSessionRefresh: config.handleSessionRefresh ?? true,
       clientId:
@@ -454,7 +456,7 @@ export class Client {
       const registrationRecord = base64UrlEncode(
         opaqueRegistration.finish(
           deviceSecret,
-          this.decode(registrationResponse)
+          base64UrlDecode(registrationResponse)
         )
       )
       const mainKeyWrappingCipher = getOpaqueExportCipher(
@@ -554,7 +556,7 @@ export class Client {
     const loginFinalBody: LoginFinal = {
       nonce,
       loginFinal: base64UrlEncode(
-        opaqueLogin.finish(deviceSecret, this.decode(loginResponse))
+        opaqueLogin.finish(deviceSecret, base64UrlDecode(loginResponse))
       ),
     }
     const res2 = await fetch(`${this.config.serverURL}/v1/auth/login/final`, {
@@ -641,7 +643,7 @@ export class Client {
   public async enrollNewDevice(label?: string) {
     await this.sodium.ready
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account locked: cannot enroll new device')
+      throwAccountIsLockedError('enroll new device')
     }
     // First, fetch and unwrap the main key as the current device
     const mainKeyUnwrappingCipher = getOpaqueExportCipher(
@@ -795,7 +797,7 @@ export class Client {
   public async getEnrolledDevices() {
     await this.sodium.ready
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account locked: cannot list enrolled devices')
+      throwAccountIsLockedError('list enrolled devices')
     }
     const devices = listDevicesResponseBody.parse(
       await this.#apiCall('GET', '/v1/auth/devices')
@@ -883,7 +885,7 @@ export class Client {
   public async rotateKey(keychainFingerprint: string, expiresAt?: Date) {
     await this.sodium.ready
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account is locked')
+      throwAccountIsLockedError('rotate key')
     }
     if (!this.#state.keychain.has(keychainFingerprint)) {
       throw new Error('Cannot rotate key: no previous key found in keychain')
@@ -918,7 +920,7 @@ export class Client {
   >): Promise<KeychainItemMetadata> {
     await this.sodium.ready
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account is locked')
+      throwAccountIsLockedError()
     }
     const keychainFingerprint = fingerprint(this.sodium, keychainName)
     const serializedCipher = serializeCipher(cipher)
@@ -936,7 +938,8 @@ export class Client {
       }
     }
     const subkeyIndex = this.sodium.randombytes_uniform(0x7fffffff) // Make it unsigned
-    const { nameCipher, payloadCipher } = this.#deriveKeychainKeys(subkeyIndex)
+    const { keychainNameCipher, keyWrappingCipher } =
+      this.#deriveKeys(subkeyIndex)
     const keyFingerprint = fingerprint(this.sodium, serializedCipher)
     const createdAtISO = createdAt.toISOString()
     const expiresAtISO = expiresAt?.toISOString() ?? null
@@ -948,15 +951,15 @@ export class Client {
       subkeyIndex,
       encryptedKeychainName: encrypt(
         this.sodium,
-        name,
-        nameCipher,
+        keychainName,
+        keychainNameCipher,
         null,
         encodedCiphertextFormatV1
       ),
       encryptedKey: encrypt(
         this.sodium,
         randomPad(serializedCipher, CIPHER_MAX_PADDED_LENGTH),
-        payloadCipher,
+        keyWrappingCipher,
         null,
         encodedCiphertextFormatV1
       ),
@@ -1037,7 +1040,7 @@ export class Client {
    * @authenticated This method requires authentication
    *   (will return `undefined` if unauthenticated)
    */
-  public findKeyBykeychainFingerprint(keychainFingerprint: string) {
+  public findKeyByKeychainFingerprint(keychainFingerprint: string) {
     if (this.#state.state !== 'loaded') {
       return undefined
     }
@@ -1073,7 +1076,7 @@ export class Client {
    */
   public async deleteKey(keychainFingerprint: string, keyFingerprint: string) {
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account is locked')
+      throwAccountIsLockedError('delete key')
     }
     const keys = this.#state.keychain.get(keychainFingerprint)
     if (!keys || keys.length === 0) {
@@ -1099,29 +1102,123 @@ export class Client {
 
   // Sharing --
 
-  public async shareKey(
+  /**
+   * Share only the most recent key in the given keychain with another e2esdk user.
+   *
+   * To share a specific key in a specific keychain, use {@link shareKey `shareKey`}.
+   * To share the whole keychain, use {@link shareCompleteKeychain `shareCompleteKeychain`}.
+   *
+   * @param keychainFingerprint keychain to share (only the latest key)
+   * @param shareWith Public identity of the user to share the key with
+   *  (only the user ID and sharing public key are required)
+   * @param options Optional bag of options (key expiration, etc..)
+   *
+   * @authenticated This method requires authentication
+   */
+  public shareMostRecentKey(
     keychainFingerprint: string,
-    to: PublicUserIdentity,
-    { expiresAt }: ShareKeyOptions = {}
+    shareWith: Pick<PublicUserIdentity, 'userId' | 'sharingPublicKey'>,
+    options: ShareKeyOptions = {}
   ) {
-    await this.sodium.ready
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account must be unlocked before sending keys')
+      throwAccountIsLockedError('share key')
     }
     const keychainItem = this.#state.keychain.get(keychainFingerprint)?.[0]
     if (!keychainItem) {
       throw new Error(
-        `No available key to share with fingerprint ${keychainFingerprint}`
+        `No available key to share in keychain ${keychainFingerprint}`
       )
+    }
+    return this.shareKey(
+      keychainFingerprint,
+      keychainItem.keyFingerprint,
+      shareWith,
+      options
+    )
+  }
+
+  /**
+   * Share all the keys available in a keychain with another e2esdk user.
+   *
+   * This may be useful to give complete access to a newcoming user in a
+   * shared workspace.
+   *
+   * Note however that only the keys you possess will be shared. If other users
+   * have a more extended keychain, their extra keys won't be shared.
+   *
+   * @param keychainFingerprint keychain to send to the user
+   * @param shareWith Public identity of the user to share the key with
+   *  (only the user ID and sharing public key are required)
+   * @param options Optional bag of options (key expiration, etc..)
+   *
+   * @authenticated This method requires authentication
+   */
+  public async shareCompleteKeychain(
+    keychainFingerprint: string,
+    shareWith: Pick<PublicUserIdentity, 'userId' | 'sharingPublicKey'>,
+    options: ShareKeyOptions = {}
+  ) {
+    if (this.#state.state !== 'loaded') {
+      throwAccountIsLockedError('share key')
+    }
+    // Make a copy of the keys before ordering by increasing `createdAt`,
+    // otherwise we'd change the order in the state keychain Map
+    const keys = [
+      ...(this.#state.keychain.get(keychainFingerprint) ?? []),
+    ].sort((a, b) => a.createdAt.valueOf() - b.createdAt.valueOf())
+    // todo: Implement a parallel encryption process and sending shared keys
+    // in a single batched call to the API.
+    for (const key of keys) {
+      await this.shareKey(
+        keychainFingerprint,
+        key.keyFingerprint,
+        shareWith,
+        options
+      )
+    }
+  }
+
+  /**
+   * Share a specific key in a specific keychain with a specific e2esdk user.
+   *
+   * To share the latest key in a specific keychain, use {@link shareMostRecentKey `shareMostRecentKey`}.
+   * To share the whole keychain, use {@link shareCompleteKeychain `shareCompleteKeychain`}.
+   *
+   * @param keychainFingerprint keychain where to find the key
+   * @param keyFingerprint fingerprint of the key to share
+   * @param shareWith Public identity of the user to share the key with
+   *  (only the user ID and sharing public key are required)
+   * @param options Optional bag of options (key expiration, etc..)
+   *
+   * @authenticated This method requires authentication
+   */
+  public async shareKey(
+    keychainFingerprint: string,
+    keyFingerprint: string,
+    shareWith: Pick<PublicUserIdentity, 'userId' | 'sharingPublicKey'>,
+    { expiresAt }: ShareKeyOptions = {}
+  ) {
+    await this.sodium.ready
+    if (this.#state.state !== 'loaded') {
+      throwAccountIsLockedError('share key')
+    }
+    const keychainItem = this.#state.keychain
+      .get(keychainFingerprint)
+      ?.find(key => key.keyFingerprint === keyFingerprint)
+    if (!keychainItem) {
+      throw new Error(
+        `No available key to share in keychain ${keychainFingerprint} with fingerprint ${keyFingerprint}`
+      )
+    }
+    const serializedCipher = serializeCipher(keychainItem.cipher)
+    if (keyFingerprint !== fingerprint(this.sodium, serializedCipher)) {
+      throw new Error('Mismatching key fingerprint')
     }
     const sendTo: BoxCipher = {
       algorithm: 'box',
       privateKey: this.#state.identity.sharing.privateKey,
-      publicKey: this.decode(to.sharingPublicKey),
+      publicKey: base64UrlDecode(shareWith.sharingPublicKey),
     }
-    const serializedCipher = serializeCipher(keychainItem.cipher)
-    // Remove padding for key fingerprint as it is not deterministic
-    const keyFingerprint = fingerprint(this.sodium, serializedCipher)
     const createdAtISO = keychainItem.createdAt.toISOString()
     const expiresAtISO =
       expiresAt?.toISOString() ?? keychainItem.expiresAt?.toISOString() ?? null
@@ -1134,7 +1231,7 @@ export class Client {
         this.#state.identity.signature.publicKey
       ),
       fromProof: this.#state.identity.proof,
-      toUserId: to.userId,
+      toUserId: shareWith.userId,
       createdAt: createdAtISO,
       expiresAt: expiresAtISO,
       encryptedKeychainName: encrypt(
@@ -1158,14 +1255,14 @@ export class Client {
           this.sodium,
           this.#state.identity.signature.privateKey,
           this.sodium.from_string(this.#state.identity.userId),
-          this.sodium.from_string(to.userId),
+          this.sodium.from_string(shareWith.userId),
           this.sodium.from_string(createdAtISO),
           this.sodium.from_string(expiresAtISO ?? ''),
-          this.decode(keychainFingerprint),
-          this.decode(keyFingerprint),
+          base64UrlDecode(keychainFingerprint),
+          base64UrlDecode(keyFingerprint),
           this.#state.identity.sharing.publicKey,
           this.#state.identity.signature.publicKey,
-          this.decode(this.#state.identity.proof)
+          base64UrlDecode(this.#state.identity.proof)
         )
       ),
     }
@@ -1180,7 +1277,7 @@ export class Client {
   public async getOutgoingSharedKeys() {
     await this.sodium.ready
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account is locked')
+      throwAccountIsLockedError('list outgoing shared keys')
     }
     return getSharedKeysResponseBody.parse(
       await this.#apiCall<GetSharedKeysResponseBody>(
@@ -1201,7 +1298,7 @@ export class Client {
   ) {
     await this.sodium.ready
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account is locked')
+      throwAccountIsLockedError('delete outgoing shared key')
     }
     await this.#apiCall(
       'DELETE',
@@ -1245,6 +1342,9 @@ export class Client {
     userId: string
   ): Promise<PublicUserIdentity | null> {
     await this.sodium.ready
+    if (this.#state.state !== 'loaded') {
+      throwAccountIsLockedError('get user identity')
+    }
     try {
       const identity = getSingleIdentityResponseBody.parse(
         await this.#apiCall<GetSingleIdentityResponseBody>(
@@ -1282,6 +1382,9 @@ export class Client {
     userIds: string[]
   ): Promise<PublicUserIdentity[]> {
     await this.sodium.ready
+    if (this.#state.state !== 'loaded') {
+      throwAccountIsLockedError('get user identities')
+    }
     try {
       const identities = getMultipleIdentitiesResponseBody.parse(
         await this.#apiCall<GetMultipleIdentitiesResponseBody>(
@@ -1308,12 +1411,17 @@ export class Client {
    * @param keychainFingerprint keychain fingerprint to lookup
    * @param keyFingerprint fingerprint of a particular key in the keychain
    * @returns an array of identities, permissions and other metadata
+   *
+   * @authenticated This method requires authentication
    */
   public async getParticipants(
     keychainFingerprint: string,
     keyFingerprint: string
   ) {
     await this.sodium.ready
+    if (this.#state.state !== 'loaded') {
+      throwAccountIsLockedError('list key participants')
+    }
     try {
       const participants = getParticipantsResponseBody.parse(
         await this.#apiCall<GetParticipantsResponseBody>(
@@ -1336,16 +1444,44 @@ export class Client {
 
   // Permissions --
 
-  public async getPermissions(nameFingerpint: string) {
-    const url = `/v1/permissions/${nameFingerpint}`
+  /**
+   * Get your own permissions for a given keychain
+   *
+   * @param keychainFingerprint keychain fingerprint to lookup
+   *
+   * @authenticated This method requires authentication
+   */
+  public async getPermissions(keychainFingerprint: string) {
+    if (this.#state.state !== 'loaded') {
+      throwAccountIsLockedError('get keychain permissions')
+    }
+    const url = `/v1/permissions/${keychainFingerprint}`
     return permissionFlags.parse(await this.#apiCall('GET', url))
   }
 
+  /**
+   * Change permissions for another participant of a keychain
+   *
+   * This call will succeed only if you have the `allowManagement` permission
+   * for the given keychain.
+   * Note that you may apply permissions to yourself as well, including
+   * revoking your `allowManagement` permission. If no other participant has
+   * this right, permissions won't be able to be changed!
+   *
+   * @param userId User ID for whom to set permissions
+   * @param keychainFingerprint Keychain fingerprint to apply the permissions to
+   * @param permissions Partial object with boolean permissions to apply
+   *
+   * @authenticated This method requires authentication
+   */
   public async setPermissions(
     userId: string,
     keychainFingerprint: string,
     permissions: Partial<PermissionFlags>
   ) {
+    if (this.#state.state !== 'loaded') {
+      throwAccountIsLockedError('set keychain permissions')
+    }
     const body: PostPermissionRequestBody = {
       userId,
       keychainFingerprint,
@@ -1354,6 +1490,31 @@ export class Client {
     await this.#apiCall('POST', '/v1/permissions', body)
   }
 
+  /**
+   * Revoke access to the given keychain for a user.
+   *
+   * This requires the `allowDeletion` permission on the keychain
+   * for the calling user.
+   *
+   * You can always ban yourself off of a keychain, regardless of permissions,
+   * to allow cleaning up. Use this to remove all traces of a keychain
+   * from your account.
+   *
+   * Note: banning does **not** perform key rotation.
+   * If banning a user for security reasons, it is recommended to rotate
+   * the current encryption key for all other remaining participants.
+   *
+   * The workflow is as such:
+   * 1. Ban the user from the keychain using this method
+   * 2. Rotate the key using {@link rotateKey}
+   * 3. Obtain the list of participants for the keychain with {@link getParticipants}
+   * 4. Share the latest key with the remaining participants using {@link shareMostRecentKey}
+   *
+   * @param userId user ID to ban
+   * @param keychainFingerprint keychain fingerprint to remove access to
+   *
+   * @authenticated This method requires authentication
+   */
   public async banUser(userId: string, keychainFingerprint: string) {
     const body: PostBanRequestBody = {
       userId,
@@ -1364,18 +1525,36 @@ export class Client {
 
   // Encryption / Decryption --
 
+  /**
+   * Encrypt arbitrary data
+   *
+   * The algorithm will depend upon the keychain type, though this is mostly
+   * useful for symmetric cryptography, using `secretBox` keys.
+   *
+   * @param input arbitrary data
+   *  (strings, numbers, objects, arrays, as long as it's JSON-serialisable)
+   * @param keychainFingerprint which keychain to use for encryption
+   *   (the most recent key will be used)
+   * @param additionalData Extra authenticated data that is not encrypted, but
+   *   that must be presented as-is for decryption to succeed.
+   *   This allows binding the ciphertext to a particular context.
+   *   See https://en.wikipedia.org/wiki/Authenticated_encryption
+   * @returns a string containing the encoded ciphertext and metadata
+   *
+   * @authenticated This method requires authentication
+   */
   public encrypt<DataType>(
     input: DataType,
     keychainFingerprint: string,
     additionalData?: string | Uint8Array
   ) {
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account is locked: cannot encrypt')
+      throwAccountIsLockedError('encrypt')
     }
     const currentKey = this.#state.keychain.get(keychainFingerprint)?.[0]
     if (!currentKey) {
       throw new Error(
-        `No key found with name fingerprint ${keychainFingerprint}`
+        `No key found with keychain fingerprint ${keychainFingerprint}`
       )
     }
     if ((currentKey.expiresAt?.valueOf() ?? Infinity) < Date.now()) {
@@ -1396,17 +1575,42 @@ export class Client {
     )
   }
 
+  /**
+   * Decrypt arbitrary data
+   *
+   * Note: to decrypt form data, use {@link unsealFormData `unsealFormData`}.
+   *
+   * This will try decrypting a given ciphertext string against all available
+   * keys in the specified keychain. If all keys are exhausted without success,
+   * an error will be thrown.
+   *
+   * @param input arbitrary data
+   *  (strings, numbers, objects, arrays, as long as it's JSON-serialisable)
+   * @param keychainFingerprint which keychain to use for encryption
+   *   (the most recent key will be used)
+   * @param additionalData Extra authenticated data that was not encrypted, but
+   *   that must be presented as-is for decryption to succeed.
+   *   This allows binding the ciphertext to a particular context.
+   *   See https://en.wikipedia.org/wiki/Authenticated_encryption
+   * @returns an unknown type: you must pass this through a parser that ensures
+   *   the clear text data conforms to a specific type, in order to prevent
+   *   from untrusted inputs.
+   *
+   * @authenticated This method requires authentication
+   */
   public decrypt(
     ciphertext: string,
-    nameFingerpint: string,
+    keychainFingerprint: string,
     additionalData?: string | Uint8Array
   ) {
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account is locked: cannot decrypt')
+      throwAccountIsLockedError('decrypt')
     }
-    const keys = this.#state.keychain.get(nameFingerpint) ?? []
+    const keys = this.#state.keychain.get(keychainFingerprint) ?? []
     if (keys.length === 0) {
-      throw new Error(`No key found with name fingerprint ${nameFingerpint}`)
+      throw new Error(
+        `No key found with keychain fingerprint ${keychainFingerprint}`
+      )
     }
     for (const key of keys) {
       try {
@@ -1427,16 +1631,29 @@ export class Client {
     throw new Error('Failed to decrypt: exhausted all available keys')
   }
 
+  /**
+   * Decrypt form data encrypted with `encryptFormData`.
+   *
+   * @param submission encrypted form data & associated cryptographic metadata
+   * @param keychainFingerprint keychain to use for decryption
+   * @returns a record of unknown values: you must pass the result through a
+   * parser that ensures form data conforms to a specific type, to avoid and
+   * reject untrusted / malformed data submissions.
+   *
+   * @authenticated This method requires authentication
+   */
   public unsealFormData<FormData extends object>(
     submission: EncryptedFormSubmission<FormData>,
-    nameFingerpint: string
+    keychainFingerprint: string
   ): Record<keyof FormData, unknown> {
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account is locked: cannot decrypt')
+      throwAccountIsLockedError('decrypt')
     }
-    const keys = this.#state.keychain.get(nameFingerpint) ?? []
+    const keys = this.#state.keychain.get(keychainFingerprint) ?? []
     if (keys.length === 0) {
-      throw new Error(`No key found with name fingerprint ${nameFingerpint}`)
+      throw new Error(
+        `No key found with keychain fingerprint ${keychainFingerprint}`
+      )
     }
     for (const key of keys) {
       try {
@@ -1454,9 +1671,23 @@ export class Client {
 
   // Signature --
 
+  /**
+   * Sign an arbitrary array of string items against the user's identity
+   *
+   * This should be used with care, especially if dealing with untrusted
+   * user-provided inputs, even though the underlying signature algorithm
+   * has protections against canonicalization attacks.
+   *
+   * Note: the order of items must be the same for signature and verification!
+   *
+   * @param items List of items to generate a signature for
+   * @returns a base64url-encoded signature string
+   *
+   * @authenticated This method requires authentication
+   */
   public sign(...items: string[]) {
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account is locked: cannot sign')
+      throwAccountIsLockedError('sign')
     }
     const signature = multipartSignature(
       this.sodium,
@@ -1466,20 +1697,36 @@ export class Client {
     return base64UrlEncode(signature)
   }
 
+  /**
+   * Verify the signature of an arbitrary array of string items
+   * against a given user's identity.
+   *
+   * This should be used with care, especially if dealing with untrusted
+   * user-provided inputs, even though the underlying signature algorithm
+   * has protections against canonicalization attacks.
+   *
+   * Note: the order of items must be the same for signature and verification!
+   *
+   * @param signature Signature string as obtained from {@link sign `sign`}.
+   * @param publicKey Signature public key of the alleged author
+   *  (part of the public identity). Can be provided as base64url or byte array.
+   * @param items List of items to verify the signature against
+   * @returns true if the signature is valid, false otherwise.
+   */
   public verifySignature(
     signature: string,
     publicKey: string | Uint8Array,
     ...items: string[]
   ) {
     if (this.#state.state !== 'loaded') {
-      throw new Error('Account is locked: cannot verify signature')
+      throwAccountIsLockedError('verify signature')
     }
     const pk =
-      typeof publicKey === 'string' ? this.decode(publicKey) : publicKey
+      typeof publicKey === 'string' ? base64UrlDecode(publicKey) : publicKey
     return verifyMultipartSignature(
       this.sodium,
       pk,
-      this.decode(signature),
+      base64UrlDecode(signature),
       ...items.map(str => this.sodium.from_string(str))
     )
   }
@@ -1488,10 +1735,16 @@ export class Client {
   // We're not using the sodium conversions because those need it
   // to be ready, and we want to be able to encode/decode at any time.
 
+  /**
+   * Encode the input byte array to base64url
+   */
   public encode(input: Uint8Array) {
     return base64UrlEncode(input)
   }
 
+  /**
+   * Decode a base64url-encoded string into a byte array
+   */
   public decode(input: string) {
     return base64UrlDecode(input)
   }
@@ -1535,7 +1788,7 @@ export class Client {
         !verifyMultipartSignature(
           this.sodium,
           this.#state.identity.signature.publicKey,
-          this.decode(lockedItem.signature),
+          base64UrlDecode(lockedItem.signature),
           this.sodium.from_string(this.#state.identity.userId),
           this.sodium.from_string(lockedItem.sharedBy ?? ''),
           this.sodium.from_string(lockedItem.createdAt),
@@ -1548,14 +1801,18 @@ export class Client {
         console.warn('Invalid keychain entry detected:', lockedItem)
         continue
       }
-      const { nameCipher, payloadCipher } = this.#deriveKeychainKeys(
+      const { keychainNameCipher, keyWrappingCipher } = this.#deriveKeys(
         lockedItem.subkeyIndex
       )
 
       // todo: Decryption error handling
       const item: KeychainItem = {
         keychainName: keychainNameSchema.parse(
-          decrypt(this.sodium, lockedItem.encryptedKeychainName, nameCipher)
+          decrypt(
+            this.sodium,
+            lockedItem.encryptedKeychainName,
+            keychainNameCipher
+          )
         ),
         keychainFingerprint: lockedItem.keychainFingerprint,
         keyFingerprint: lockedItem.keyFingerprint,
@@ -1563,7 +1820,7 @@ export class Client {
           secureJSON.parse(
             serializedCipherSchema
               .parse(
-                decrypt(this.sodium, lockedItem.encryptedKey, payloadCipher)
+                decrypt(this.sodium, lockedItem.encryptedKey, keyWrappingCipher)
               )
               .trim()
           )
@@ -1633,17 +1890,17 @@ export class Client {
         if (
           !verifyMultipartSignature(
             this.sodium,
-            this.decode(sharedKey.fromSignaturePublicKey),
-            this.decode(sharedKey.signature),
+            base64UrlDecode(sharedKey.fromSignaturePublicKey),
+            base64UrlDecode(sharedKey.signature),
             this.sodium.from_string(sharedKey.fromUserId),
             this.sodium.from_string(this.#state.identity.userId),
             this.sodium.from_string(sharedKey.createdAt),
             this.sodium.from_string(sharedKey.expiresAt ?? ''),
-            this.decode(sharedKey.keychainFingerprint),
-            this.decode(sharedKey.keyFingerprint),
-            this.decode(sharedKey.fromSharingPublicKey),
-            this.decode(sharedKey.fromSignaturePublicKey),
-            this.decode(sharedKey.fromProof)
+            base64UrlDecode(sharedKey.keychainFingerprint),
+            base64UrlDecode(sharedKey.keyFingerprint),
+            base64UrlDecode(sharedKey.fromSharingPublicKey),
+            base64UrlDecode(sharedKey.fromSignaturePublicKey),
+            base64UrlDecode(sharedKey.fromProof)
           )
         ) {
           throw new Error('Invalid shared key signature')
@@ -1661,7 +1918,7 @@ export class Client {
         const withSharedSecret: BoxCipher = {
           algorithm: 'box',
           privateKey: this.#state.identity.sharing.privateKey,
-          publicKey: this.decode(sharedKey.fromSharingPublicKey),
+          publicKey: base64UrlDecode(sharedKey.fromSharingPublicKey),
         }
         const item: KeychainItem = {
           keychainName: keychainNameSchema.parse(
@@ -1691,13 +1948,13 @@ export class Client {
           fingerprint(this.sodium, item.keychainName) !==
           item.keychainFingerprint
         ) {
-          throw new Error('Invalid shared key name fingerprint')
+          throw new Error('Invalid shared keychain fingerprint')
         }
         if (
           fingerprint(this.sodium, serializeCipher(item.cipher)) !==
           item.keyFingerprint
         ) {
-          throw new Error('Invalid shared key payload fingerprint')
+          throw new Error('Invalid shared key fingerprint')
         }
         await this.#addKey(item)
         this.#mitt.emit('keyReceived', getKeychainItemMetadata(item))
@@ -1932,31 +2189,31 @@ export class Client {
 
   // --
 
-  #deriveKeychainKeys(subkeyIndex: number) {
+  #deriveKeys(subkeyIndex: number) {
     if (this.#state.state !== 'loaded') {
       throw new Error('Account is locked')
     }
-    const nameCipher: SecretBoxCipher = {
+    const keychainNameCipher: SecretBoxCipher = {
       algorithm: 'secretBox',
       key: this.sodium.crypto_kdf_derive_from_key(
         sodium.crypto_secretbox_KEYBYTES,
         subkeyIndex,
-        'nameSubK',
+        'nameSubK', // name sub-key
         this.#state.identity.keychainBaseKey
       ),
     }
-    const payloadCipher: SecretBoxCipher = {
+    const keyWrappingCipher: SecretBoxCipher = {
       algorithm: 'secretBox',
       key: this.sodium.crypto_kdf_derive_from_key(
         sodium.crypto_secretbox_KEYBYTES,
         subkeyIndex,
-        'pyldSubK',
+        'pyldSubK', // payload sub-key
         this.#state.identity.keychainBaseKey
       ),
     }
     return {
-      nameCipher,
-      payloadCipher,
+      keychainNameCipher,
+      keyWrappingCipher,
     }
   }
 
@@ -2102,4 +2359,11 @@ export class APIError extends Error {
     this.statusCode = statusCode
     this.statusText = statusText
   }
+}
+
+// --
+
+function throwAccountIsLockedError(operation?: string): never {
+  const msg = `Account is locked` + (operation ? `: cannot ${operation}` : '')
+  throw new Error(msg)
 }

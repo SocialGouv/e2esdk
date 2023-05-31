@@ -226,7 +226,7 @@ const KeySelectorPanel: React.FC<KeySelectorPanelProps> = ({
         {Object.keys(allKeys).length === 0 && (
           <Center h="100%" as={Stack} py={4} spacing={4}>
             <Text fontSize="xs" color="gray.500">
-              Your keychain is empty
+              No keychains yet
             </Text>
           </Center>
         )}
@@ -248,18 +248,18 @@ const CreateKeyPanel: React.FC<CreateKeyPanelProps> = ({
 }) => {
   type CipherAlgorithm = 'secretBox' | 'sealedBox'
   const client = useE2ESDKClient()
-  const [label, setLabel] = React.useState('')
+  const [purpose, setPurpose] = React.useState('')
   const [type, setType] = React.useState<CipherAlgorithm>('secretBox')
   const createKey = React.useCallback(async () => {
-    const key = await client.createNewKeychain(label, type)
-    setLabel('')
+    const key = await client.createNewKeychain(purpose, type)
+    setPurpose('')
     onKeyCreated(key.keychainFingerprint)
-  }, [client, label, type, onKeyCreated])
+  }, [client, purpose, type, onKeyCreated])
   return (
     <>
       <SectionHeader mt={0} display="flex" alignItems="center">
         <Icon as={FiPlusCircle} mr={2} ml="2px" />
-        Create key
+        Create keychain
         <CloseButton
           marginLeft="auto"
           variant="ghost"
@@ -271,9 +271,9 @@ const CreateKeyPanel: React.FC<CreateKeyPanelProps> = ({
       </SectionHeader>
       <Stack spacing={4} px={4}>
         <FormControl>
-          <FormLabel>Label</FormLabel>
+          <FormLabel>Purpose</FormLabel>
           <InputGroup>
-            <Input value={label} onChange={e => setLabel(e.target.value)} />
+            <Input value={purpose} onChange={e => setPurpose(e.target.value)} />
             <InputRightElement>
               <Tooltip
                 label="Generate random UUIDv4"
@@ -287,12 +287,12 @@ const CreateKeyPanel: React.FC<CreateKeyPanelProps> = ({
                   variant="ghost"
                   rounded="full"
                   size="sm"
-                  onClick={() => setLabel(crypto.randomUUID())}
+                  onClick={() => setPurpose(crypto.randomUUID())}
                 />
               </Tooltip>
             </InputRightElement>
           </InputGroup>
-          <FormHelperText>What will the key be used for?</FormHelperText>
+          <FormHelperText>What will it be used for?</FormHelperText>
         </FormControl>
         <FormControl>
           <FormLabel>Type</FormLabel>

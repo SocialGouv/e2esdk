@@ -7,7 +7,7 @@ import {
 } from '@socialgouv/e2esdk-api'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
-import { getNamePayloadParticipantsWithPermissions } from '../database/models/participants.js'
+import { getParticipantsWithPermissions } from '../database/models/participants.js'
 import type { App } from '../types'
 
 const getParticipantsUrlParams = z.object({
@@ -38,8 +38,8 @@ export default async function participantsRoutes(app: App) {
         },
       },
     },
-    async function getNamePayloadParticipants(req, res) {
-      const participants = await getNamePayloadParticipantsWithPermissions(
+    async function getParticipants(req, res) {
+      const participants = await getParticipantsWithPermissions(
         app.db,
         req.params.keychainFingerprint,
         req.params.keyFingerprint
@@ -55,7 +55,7 @@ export default async function participantsRoutes(app: App) {
       ) {
         // We're not in the list of participants
         req.auditLog.warn({
-          msg: 'getNamePayloadParticipants:forbidden',
+          msg: 'getParticipants:forbidden',
           params: req.params,
           participants,
         })
@@ -64,7 +64,7 @@ export default async function participantsRoutes(app: App) {
         )
       }
       req.auditLog.trace({
-        msg: 'getNamePayloadParticipants:success',
+        msg: 'getParticipants:success',
         params: req.params,
         participants,
       })

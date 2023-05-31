@@ -18,7 +18,7 @@ export function useSubmissionIdUrlParam() {
 
 export function useSubmissionsKey(submissionBucketId: string) {
   const client = useE2ESDKClient()
-  return client.findKeyBykeychainFingerprint(submissionBucketId)
+  return client.findKeyByKeychainFingerprint(submissionBucketId)
 }
 
 export const formSchema = z.object({
