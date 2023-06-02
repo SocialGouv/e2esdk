@@ -21,9 +21,6 @@ subgraph Web client
     Form[Application Form]-->e2esdk-->Encrypted[Encrypted data]
 end
 
-e2esdk-->|fetch keys|e2esdkapi[e2esdk API]
-e2esdkapi-->e2esdkdb[e2esdk DB]
-
 Encrypted-->|POST|app[Application API]-->appdb[Application DB]
 ```
 
