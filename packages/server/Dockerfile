@@ -50,10 +50,14 @@ RUN pnpm install --offline --prod --ignore-scripts
 FROM node:18-alpine AS runner
 WORKDIR /app
 
+# We need curl to query the healthcheck endpoint (see HEALTHCHECK below)
 RUN apk add --no-cache curl
 
 RUN corepack enable
 
+# SCEAU_VERIFICATION_MODE can be either empty to allow unsigned images
+# (usually when running locally or in CI), or `--strict`
+# when built for production by the CD pipeline.
 ARG SCEAU_VERIFICATION_MODE
 ENV NODE_ENV production
 ENV PORT 3000

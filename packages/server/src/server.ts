@@ -101,6 +101,14 @@ export function createServer() {
       healthCheck: async function healthCheck(
         app: App
       ): Promise<HealthCheckReply | false> {
+        // The health check endpoint is queried every 5 seconds by
+        // the `under-pressure` Fastify plugin, and optionally by
+        // Docker's healthchecking mechanism.
+        // It checks for a valid connection to PostgreSQL and Redis,
+        // and reports system usage.
+        // Any error encountered here trigger 503 responses on incoming
+        // requests according to `under-pressure`'s configuration,
+        // until the healthcheck resolves without error again.
         try {
           let sizeUsedQuery = await app.db<
             { sizeUsed: string }[]

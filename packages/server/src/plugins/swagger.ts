@@ -5,6 +5,10 @@ import fp from 'fastify-plugin'
 import { env } from '../env.js'
 import type { App } from '../types'
 
+/**
+ * OpenAPI documentation for the e2esdk server is available
+ * under the /documentation endpoint.
+ */
 const swaggerPlugin: FastifyPluginAsync = async (app: App) => {
   await app.register(swagger, {
     openapi: {

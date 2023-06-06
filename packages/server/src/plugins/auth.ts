@@ -11,8 +11,8 @@ import {
   fingerprint,
   SecretBoxCipher,
   signAuth as signResponse,
-  verifyAuth as verifyClientSignature,
   verifyClientIdentity,
+  verifyAuth as verifyClientSignature,
 } from '@socialgouv/e2esdk-crypto'
 import type { FastifyPluginAsync, FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
@@ -22,7 +22,12 @@ import { zodToJsonSchema } from 'zod-to-json-schema'
 import { env } from '../env.js'
 import type { App } from '../types'
 
-const AUTH_SESSION_TTL = 60 * 60 // 1 hour
+/**
+ * Sessions are short-lived (1 hour), but can be automatically
+ * refreshed on 401 Unauthorized if the e2esdk client is configured
+ * to do so (it is the case by default).
+ */
+const AUTH_SESSION_TTL = 60 * 60 // seconds
 
 const sessionDataSchema = activeSessionSchema
   .pick({
@@ -36,14 +41,43 @@ const sessionDataSchema = activeSessionSchema
 type SessionData = z.infer<typeof sessionDataSchema>
 
 type AuthOptions = {
-  mode?: 'http' | 'websocket'
+  /**
+   * Most authenticated calls to the API go through the HTTP protocol,
+   * where authentication data is passed via request headers.
+   * However, since we can't use headers in a WebSocket upgrade request
+   * from the browser, auth data is then passed via the query string.
+   * This tells the authentication plugin where to look for auth data.
+   */
+  protocol?: 'http' | 'websocket'
 }
 
 type AuthDecoration = {
+  /**
+   * Derive the OPAQUE binary session key into a session ID string.
+   */
   getSessionId(opaqueSessionKey: Uint8Array): string
+
+  /**
+   * Redis keys for session storage are bound to a user and their session ID.
+   * This allows the server to enumerate all of a user's sessions (see `getRedisSessionKeys`).
+   */
   getRedisSessionKey(userId: string, sessionId: string): string
+
+  /**
+   * Query Redis for all of a user's active sessions, and return the
+   * correspondis Redis keys.
+   */
   getRedisSessionKeys(userId: string): Promise<string[]>
+
+  /**
+   * Save session data into Redis. Invoked at the end of the login process.
+   */
   saveSession(sessionId: string, sessionData: SessionData): Promise<'OK'>
+
+  /**
+   * JSON Schema for authentication headers, precomputed here
+   * and used when definining header parsers in route handlers.
+   */
   headers: ReturnType<typeof zodToJsonSchema>
 }
 
@@ -53,9 +87,25 @@ declare module 'fastify' {
     auth: AuthDecoration
   }
   interface FastifyRequest {
+    /**
+     * Public user identity of the authenticated user making the request
+     */
     identity: Readonly<Identity>
+
+    /**
+     * UUID of the e2esdk client instance making the request
+     */
     clientId: string
+
+    /**
+     * UUID of the device where the request originated
+     */
     deviceId: string
+
+    /**
+     * Session ID is derived from the OPAQUE key agreement established at login.
+     * It is agreed by both parties without being exchanged.
+     */
     sessionId: string
   }
 }
@@ -78,6 +128,10 @@ const authPlugin: FastifyPluginAsync = async (app: App) => {
         sessionData.identity.userId,
         sessionId
       )
+      // Session data is encrypted before being stored on Redis,
+      // using a symmetric cipher based on a provided secret.
+      // Multiple secrets are availble for decryption to allow rotation,
+      // but only the first secret in the list is used for encryption.
       const cipher = deriveSessionCipher(
         env.SESSION_SECRETS[0],
         app.sodium.from_base64(sessionId)
@@ -86,7 +140,7 @@ const authPlugin: FastifyPluginAsync = async (app: App) => {
         app.sodium,
         sessionData,
         cipher,
-        // Use the Redis key as authenticated data
+        // Use the Redis key as authenticated data (AEAD)
         // to ensure a strong key/value bond:
         app.sodium.from_string(redisKey),
         'application/e2esdk.ciphertext.v1'
@@ -102,6 +156,8 @@ const authPlugin: FastifyPluginAsync = async (app: App) => {
       const keyPattern = getRedisSessionKey(userId, '*')
       let keys: string[] = []
       let cursor = '0'
+      // Iterate through the keyspace in a streaming manner,
+      // rather than blocking the Redis client with a KEYS command.
       while (true) {
         const [newCursor, results] = await app.redis.client.scan(
           cursor,
@@ -121,10 +177,13 @@ const authPlugin: FastifyPluginAsync = async (app: App) => {
 
   app.decorate(
     'useAuth',
-    ({ mode = 'http' }: AuthOptions = {}) =>
+    ({ protocol = 'http' }: AuthOptions = {}) =>
       async function useAuth(req: FastifyRequest) {
+        // First, load and parse the authentication header data
         const headersOrQuery =
-          mode === 'http' ? req.headers : (req.query as Record<string, string>)
+          protocol === 'http'
+            ? req.headers
+            : (req.query as Record<string, string>)
         const parsedHeaders = requestHeaders.safeParse(headersOrQuery)
         if (!parsedHeaders.success) {
           req.log.warn({
@@ -145,6 +204,8 @@ const authPlugin: FastifyPluginAsync = async (app: App) => {
           'x-e2esdk-signature': signature,
         } = parsedHeaders.data
 
+        // Timestamp is here to prevent replay attacks,
+        // only queries made recently are allowed to go through.
         if (isFarFromCurrentTime(timestamp)) {
           throw req.server.httpErrors.forbidden(
             'Request timestamp is too far off current time'
@@ -152,7 +213,7 @@ const authPlugin: FastifyPluginAsync = async (app: App) => {
         }
         const sessionData = await decryptSession(req, userId, sessionId)
         const url = new URL(req.url, env.DEPLOYMENT_URL)
-        if (mode === 'websocket') {
+        if (protocol === 'websocket') {
           // When using the querystring as transport for
           // the public key authentication headers (websocket),
           // the client will have computed the signature on

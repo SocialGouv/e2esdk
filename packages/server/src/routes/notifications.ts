@@ -34,7 +34,7 @@ export default async function notificationsRoutes(app: App) {
     {
       websocket: true,
       preHandler: app.useAuth({
-        mode: 'websocket',
+        protocol: 'websocket',
       }),
       schema: {
         summary: 'WebSocket notifications',

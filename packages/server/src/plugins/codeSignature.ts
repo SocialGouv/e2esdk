@@ -3,9 +3,9 @@ import fp from 'fastify-plugin'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {
-  sceauSchema,
-  SceauVerificationSuccess,
   SCEAU_FILE_NAME,
+  SceauVerificationSuccess,
+  sceauSchema,
   verify,
 } from 'sceau'
 import { fileURLToPath } from 'url'
@@ -20,6 +20,9 @@ declare module 'fastify' {
   }
 }
 
+/**
+ * Code signature verification with [`sceau`](https://github.com/47ng/sceau)
+ */
 const codeSignaturePlugin: FastifyPluginAsync = async (app: App) => {
   const defaultDecoration: Decoration = {
     timestamp: 'unknown',

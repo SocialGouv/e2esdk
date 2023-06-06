@@ -8,6 +8,12 @@ declare module 'fastify' {
   }
 }
 
+/**
+ * To filter the audit log, search for the property { category: "audit" }
+ * in the NDJSON log stream.
+ * The auth plugin overwrites it to inject authentication information.
+ * It logs all outcomes to API calls for traceability.
+ */
 const auditLogPlugin: FastifyPluginCallback = (app: App, _, pluginReady) => {
   app.decorateRequest('auditLog', null)
   app.addHook('onRequest', (req, _, hookReady) => {
