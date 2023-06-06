@@ -15,6 +15,10 @@ declare module 'fastify' {
   }
 }
 
+/**
+ * Provide the app with access to Libsodium for cryptographic operations,
+ * as well as verifying the validity of the signature key pair.
+ */
 const sodiumPlugin: FastifyPluginAsync = async (app: App) => {
   const sodium = await initializeSodium()
   // Verify server signature key pair

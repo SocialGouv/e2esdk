@@ -26,7 +26,7 @@ import {
   getUserDevices,
 } from '../../database/models/devices.js'
 import { env } from '../../env.js'
-import { generateNonce } from '../../lib/opaque.js'
+import { generateNonce } from '../../lib/crypto.js'
 import { decryptSession } from '../../plugins/auth.js'
 import { App } from '../../types'
 

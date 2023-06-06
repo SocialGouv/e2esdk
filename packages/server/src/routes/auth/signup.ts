@@ -13,7 +13,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema'
 import { createDevice } from '../../database/models/devices.js'
 import { createIdentity } from '../../database/models/identity.js'
 import { env } from '../../env.js'
-import { generateNonce } from '../../lib/opaque.js'
+import { generateNonce } from '../../lib/crypto.js'
 import { App } from '../../types'
 
 export default async function signupRoutes(app: App) {
