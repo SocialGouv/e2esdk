@@ -1,3 +1,9 @@
+# This compose stack covers the backing services required for the e2esdk server
+# to run locally. They are bound to the host machine so the server can connect
+# to them directly without needing to run in a Docker context (makes for faster
+# and simpler development).
+# Volumes are persisted in the .volumes/docker/e2esdk-dev directory.
+
 version: '3'
 
 name: e2esdk-dev
