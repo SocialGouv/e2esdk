@@ -19,7 +19,7 @@ await client.signup(uuid)
 await client.login(uuid)
 ```
 
-The client is password-less thanks to the `localStorage` and once logged-in you can start encrypt/decrypt your payloads.
+The client is password-less thanks to devices storing their secrets in `localStorage`, and once logged-in you can start encrypting/decrypting your payloads.
 
 > The `uuid` must be stable for a given user, not an email because it could be changed by the user.
 
