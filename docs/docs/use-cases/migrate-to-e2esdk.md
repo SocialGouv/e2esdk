@@ -41,10 +41,12 @@ This is how you could read and decrypt a `firstName` field coming from your API 
 
 ```js
 import { useE2ESDKClient } from '@socialgouv/e2esdk-react'
-import { decrypt } from '@socialgouv/e2esdk-crypto'
 
 const client = useE2ESDKClient()
-const sodium = client.sodium // TODO
+
+// the encryption key fingerpint, ex: secret-database
+const keychainFingerprint = 'secret-database'
+
 const customers = await fetch('/api/customers', {
   method: 'GET',
 })
@@ -54,7 +56,7 @@ const customers = await fetch('/api/customers', {
     return collection.data.map(async customer => {
       // if data have been encrypted, decrypt it. if not, use cleartext value if any
       const firstName = await (customer.firstName_encrypted
-        ? decrypt(sodium, input, cipher)
+        ? client.decrypt(customer.firstName_encrypted, keychainFingerprint)
         : customer.firstName)
       return {
         ...customer,
