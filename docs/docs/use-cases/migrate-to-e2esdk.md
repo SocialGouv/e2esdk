@@ -45,7 +45,7 @@ import { useE2ESDKClient } from '@socialgouv/e2esdk-react'
 const client = useE2ESDKClient()
 
 // the encryption key fingerpint, ex: secret-database
-const keychainFingerprint = 'secret-database'
+const keychainFingerprint = await client.findKeyByPurpose('secret-database')?.keychainFingerprint
 
 const customers = await fetch('/api/customers', {
   method: 'GET',
