@@ -85,7 +85,7 @@ const keychainFingerprint = 'secret-database'
 
 // encrypt values
 const firstName_encrypted = await client.encrypt(firstName, keychainFingerprint)
-const lastName_encrypted = await client.encrypt(firstName, keychainFingerprint)
+const lastName_encrypted = await client.encrypt(lastName, keychainFingerprint)
 
 // POST encrypted data to your API
 await fetch(API_URL, {
