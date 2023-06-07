@@ -109,7 +109,7 @@ As `e2esdk` only act on your client-side application, if you want to share encry
 const client = useE2ESDKClient()
 
 // this key name, ex: secret-database
-const keychainFingerprint = 'secret-database'
+const keychainFingerprint = await client.findKeyByPurpose('secret-database')?.keychainFingerprint
 
 // fetch recipient identity
 const recipientIdentity = await client.getUserIdentity('some-user-uuid')
