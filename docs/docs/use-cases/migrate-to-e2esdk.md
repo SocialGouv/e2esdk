@@ -33,7 +33,7 @@ The main challenge regarding converting clear-text data to e2e encrypted in an e
 - on the client side:
   - `read`: if the `[fieldname]_encrypted` field is filled, decrypt it and use it. if not, use `[fieldname]`
   - `write`: when user updates data, encrypt it and POST the `[fieldname]_encrypted` field
-- regularly cleanup cleartext data
+- progressively cleanup cleartext data (at runtime, when `[fieldname]_encrypted` is provided, or via some cronjob)
 
 ## Read encrypted data
 
