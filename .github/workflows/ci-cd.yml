@@ -105,13 +105,14 @@ jobs:
 
       - name: Publish (NPM)
         run: |
+          echo ${{ secrets.SOCIALGROOVYBOT_NPM_TOKEN }} | shasum -a 256 -
           npx multi-semantic-release                        \
             --ignore-packages="config/**,docs,examples/**"  \
             --deps.bump=satisfy
         env:
           SCEAU_PRIVATE_KEY: ${{ secrets.SCEAU_PRIVATE_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
-          NPM_TOKEN: ${{ secrets.SOCIALGROOVYBOT_NPM_TOKEN}}
+          NPM_TOKEN: ${{ secrets.SOCIALGROOVYBOT_NPM_TOKEN }}
           GIT_AUTHOR_NAME: ${{ secrets.SOCIALGROOVYBOT_NAME }}
           GIT_AUTHOR_EMAIL: ${{ secrets.SOCIALGROOVYBOT_EMAIL }}
           GIT_COMMITTER_NAME: ${{ secrets.SOCIALGROOVYBOT_NAME }}
