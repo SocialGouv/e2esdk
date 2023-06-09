@@ -82,8 +82,8 @@ const client = useE2ESDKClient()
 const firstName = 'Uma'
 const lastName = 'Thurman'
 
-// the encryption key fingerpint, ex: secret-database
-const keychainFingerprint = 'secret-database'
+// this key name, ex: secret-database
+const keychainFingerprint = await client.findKeyByPurpose('secret-database')?.keychainFingerprint
 
 // encrypt values
 const firstName_encrypted = await client.encrypt(firstName, keychainFingerprint)
