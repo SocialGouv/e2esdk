@@ -23,7 +23,7 @@ async function main() {
 
   if (argv.help || !argv._[0]) {
     console.log(`
-  ${chalk.bold('Generate Sodium keys')}
+  ${chalk.bold('Generate keys and other cryptographic items for e2esdk')}
 
   Usage:
     ${chalk.dim('$')} keygen ${chalk.green('[algorithm]')} ${chalk.dim(

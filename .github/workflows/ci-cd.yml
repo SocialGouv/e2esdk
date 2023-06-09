@@ -17,7 +17,6 @@ jobs:
     name: Integration
     runs-on: ubuntu-latest
     steps:
-      - run: echo ${{ secrets.SOCIALGROOVYBOT_NPM_TOKEN }} | shasum -a 256 -
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2
         with:
