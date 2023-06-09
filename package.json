@@ -26,6 +26,7 @@
     "mkcert": "mkcert -cert-file ./config/certs/tls.crt -key-file ./config/certs/tls.key localhost 127.0.0.1 ::1"
   },
   "devDependencies": {
+    "@semantic-release/exec": "^6.0.3",
     "@socialgouv/e2esdk-semantic-release": "workspace:*",
     "@types/jest": "^29.5.0",
     "multi-semantic-release": "^3.0.2",
