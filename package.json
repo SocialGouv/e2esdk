@@ -67,6 +67,12 @@
         }
       ],
       "@semantic-release/release-notes-generator",
+      [
+        "@semantic-release/exec",
+        {
+          "publishCmd": "cat package.json 1>&2"
+        }
+      ],
       "@semantic-release/npm",
       "@socialgouv/e2esdk-semantic-release"
     ],
