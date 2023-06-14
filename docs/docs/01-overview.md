@@ -56,8 +56,8 @@ application server of certain events that may trigger domain-related actions.
 
 ## Forms
 
-e2esdk has a first-class integration to ingest data from forms filled by
-_anonymous_ users.
+e2esdk has a first-class integration to ingest encrypted data from forms filled
+by _anonymous_ users.
 
 Anonymity here means that whoever submits an encrypted form **does not require**
 a cryptographic identity on e2esdk.
@@ -101,7 +101,7 @@ for workspaces where users may wish to invite someone later on: sharing the
 workspace keys with a newcomer gives them access to all the encrypted content,
 and allows them to encrypt new content as well.
 
-A third key type, `box`, is reserved for a future update of the SDK allowing
+A third key type, `box`, is reserved for a future update of the SDK to allow
 direct data exchange between two users. This system is already in use to share
 keys, but may be extended in the future to implement secure messaging
 (using modern cryptographic guarantees like forward secrecy).
