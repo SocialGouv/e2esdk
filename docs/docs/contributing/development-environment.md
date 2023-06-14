@@ -30,14 +30,14 @@ Start the Docker compose stack:
 docker compose up -d
 ```
 
-Build the server and its dependencies to setup the database:
+Build the server and its dependencies:
 
 ```shell
 pnpm build:server
 ```
 
 Setup the database by applying pending migrations, and optionally seed the database
-with [the usual suspects](https://github.com/SocialGouv/e2esdk/blob/beta/packages/server/src/database/seeds/identities.ts).
+with [the usual suspects](#test-users).
 
 ```shell
 pnpm db migrations apply
@@ -66,3 +66,14 @@ The `dev` script will:
 - `3002` PostgreSQL database
 - `3003` Redis key/value store & cache
 - `3004` Docusaurus documentation
+
+## Test users
+
+A [list of sample identities](https://github.com/SocialGouv/e2esdk/blob/beta/packages/server/src/database/seeds/identities.ts)
+can be seeded to the development database.
+The seed provides an identity and a device for each user.
+
+To login as a particular user, you'll have to use their `deviceRegistrationURI`
+to save their credentials to your local development browser.
+This can be done with a call to the `registerEnrolledDevice` on the e2esdk
+client, or via the devtools.
