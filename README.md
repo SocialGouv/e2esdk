@@ -64,4 +64,15 @@ The only external requirement is a PostgreSQL database.
 - [How to setup a development environment](./docs/development-environment.md)
 - [Monorepo architecture](./docs/monorepo-architecture.md)
 
+## Beta disclaimer
+
+While e2esdk is in beta, all published packages will **not** follow semver,
+and be constrained to `1.0.0-beta.n` incremental version numbers on the `beta`
+channel on NPM.
+
+The server may also experience data breaking changes while in beta that requires
+resetting the database.
+
+---
+
 License: Apache-2.0
