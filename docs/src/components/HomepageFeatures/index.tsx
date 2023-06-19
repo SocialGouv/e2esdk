@@ -75,9 +75,6 @@ export default function HomepageFeatures(): JSX.Element {
             transferred from one end system or device to another. With e2esdk,
             the data is <strong>encrypted right in the user browser</strong> and
             only specific recipients can decrypt it.
-            <br />
-            <br />
-            [schema]
           </div>
         </div>
         <div className="row">
