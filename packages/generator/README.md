@@ -1,4 +1,4 @@
-# @socialgouv/e2esdk-keygen
+# @socialgouv/e2esdk-generator
 
 Cryptographic key generator for e2eSDK
 
@@ -7,11 +7,11 @@ Cryptographic key generator for e2eSDK
 Using your favourite package manager, install the following package:
 
 ```
-@socialgouv/e2esdk-keygen
+@socialgouv/e2esdk-generator
 ```
 
 ## Usage
 
 ```shell
-keygen --help
+generate --help
 ```

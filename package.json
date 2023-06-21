@@ -21,7 +21,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "keygen": "pnpm --filter @socialgouv/e2esdk-keygen run keygen",
+    "generate": "pnpm --filter @socialgouv/e2esdk-generator run generate",
     "db": "pnpm --filter @socialgouv/e2esdk-server run db",
     "mkcert": "mkcert -cert-file ./config/certs/tls.crt -key-file ./config/certs/tls.key localhost 127.0.0.1 ::1"
   },

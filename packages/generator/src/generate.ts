@@ -26,7 +26,7 @@ async function main() {
   ${chalk.bold('Generate keys and other cryptographic items for e2esdk')}
 
   Usage:
-    ${chalk.dim('$')} keygen ${chalk.green('[algorithm]')} ${chalk.dim(
+    ${chalk.dim('$')} generate ${chalk.green('[algorithm]')} ${chalk.dim(
       '(OPTIONS)'
     )}
 

@@ -1,9 +1,9 @@
 /**
  * Generated with:
- * pnpm keygen identity --userId alice  --mainKey jcef-s6GavZu_Pge5MzQW7e1R_kLgIYLTbCtTi0X8uA --deviceId be46ae93-ed96-408b-ab78-73188b47c46d --deviceSecret 7wr2X4EBz_LKWoeMwjPcQPd4IVeFzcuaG1Kd36HD-C8
- * pnpm keygen identity --userId bob    --mainKey 7d-0d8n5DDHbCpA46pGVbz9_Fdy3QEDC9AuPBbloygM --deviceId e7a0f071-5edf-484c-8868-6ba12f87a69c --deviceSecret EZRT0SkrW9dvTY445y4h_xEu--83320M8Gy0imM4ZH8
- * pnpm keygen identity --userId carol  --mainKey IihRh3WbEp8rPxC13WjPNC2Droqqc20Zv45O_4eqerQ --deviceId 4c81170c-abd2-45ab-b7e4-463690d9db2d --deviceSecret 26WjG4jlKQ-Hs9OjB6ia5SBFvbJQntV5muRghu1J92I
- * pnpm keygen identity --userId daniel --mainKey bkpg1y2AvkGP-M7P44YGm7ZWUexRSBR9qoYgYAGaW4Y --deviceId cc9f83b4-f550-497e-8922-96cbf976fdc3 --deviceSecret FOI_uwAsBpXZOZKfgdzVcrkt7ce-YL8R9avFJ65-x1Q
+ * pnpm generate identity --userId alice  --mainKey jcef-s6GavZu_Pge5MzQW7e1R_kLgIYLTbCtTi0X8uA --deviceId be46ae93-ed96-408b-ab78-73188b47c46d --deviceSecret 7wr2X4EBz_LKWoeMwjPcQPd4IVeFzcuaG1Kd36HD-C8
+ * pnpm generate identity --userId bob    --mainKey 7d-0d8n5DDHbCpA46pGVbz9_Fdy3QEDC9AuPBbloygM --deviceId e7a0f071-5edf-484c-8868-6ba12f87a69c --deviceSecret EZRT0SkrW9dvTY445y4h_xEu--83320M8Gy0imM4ZH8
+ * pnpm generate identity --userId carol  --mainKey IihRh3WbEp8rPxC13WjPNC2Droqqc20Zv45O_4eqerQ --deviceId 4c81170c-abd2-45ab-b7e4-463690d9db2d --deviceSecret 26WjG4jlKQ-Hs9OjB6ia5SBFvbJQntV5muRghu1J92I
+ * pnpm generate identity --userId daniel --mainKey bkpg1y2AvkGP-M7P44YGm7ZWUexRSBR9qoYgYAGaW4Y --deviceId cc9f83b4-f550-497e-8922-96cbf976fdc3 --deviceSecret FOI_uwAsBpXZOZKfgdzVcrkt7ce-YL8R9avFJ65-x1Q
  */
 
 export const SEED_USERS = [

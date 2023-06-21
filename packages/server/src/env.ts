@@ -29,7 +29,7 @@ const envSchema = z.object({
   /**
    * OPAQUE server secret setup
    *
-   * Generate one with `pnpm keygen opaque`
+   * Generate one with `pnpm generate opaque`
    */
   OPAQUE_SERVER_SETUP: base64Bytes(128).transform(str => {
     return ServerSetup.deserialize(base64UrlDecode(str))
@@ -38,7 +38,7 @@ const envSchema = z.object({
   /**
    * Session secrets
    *
-   * Generate one with `pnpm keygen secretBox`.
+   * Generate one with `pnpm generate secretBox`.
    *
    * You may pass multiple comma-separated values for rotation.
    * The first secret will be the one used for encrypting sessions,

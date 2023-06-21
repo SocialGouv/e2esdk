@@ -30,7 +30,7 @@ const sodiumPlugin: FastifyPluginAsync = async (app: App) => {
       description:
         'The public key given in the `SIGNATURE_PUBLIC_KEY` environment variable does not match the private key given in the `SIGNATURE_PRIVATE_KEY` environment variable',
       remediation:
-        'Generate a valid signature key pair with `keygen signature`',
+        'Generate a valid signature key pair with `pnpm generate signature`',
     })
     process.exit(1)
   }

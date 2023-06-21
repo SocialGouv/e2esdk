@@ -100,7 +100,7 @@ ${JSON.stringify(sceau, null, 2)}
   //   '@socialgouv/e2esdk-client',
   //   '@socialgouv/e2esdk-crypto',
   //   '@socialgouv/e2esdk-devtools',
-  //   '@socialgouv/e2esdk-keygen',
+  //   '@socialgouv/e2esdk-generator',
   //   '@socialgouv/e2esdk-react',
   //   '@socialgouv/e2esdk-server',
   // ]

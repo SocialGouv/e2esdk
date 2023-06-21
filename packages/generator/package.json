@@ -1,5 +1,5 @@
 {
-  "name": "@socialgouv/e2esdk-keygen",
+  "name": "@socialgouv/e2esdk-generator",
   "version": "0.0.0-semantically-released",
   "license": "Apache-2.0",
   "description": "Cryptographic key generator for e2eSDK",
@@ -17,14 +17,14 @@
     "sceau.json"
   ],
   "bin": {
-    "keygen": "dist/keygen.js"
+    "generate": "dist/generate.js"
   },
   "type": "module",
   "sideEffects": false,
-  "main": "dist/keygen.js",
+  "main": "dist/generate.js",
   "tsup": {
     "entry": [
-      "src/keygen.ts"
+      "src/generate.ts"
     ],
     "format": [
       "esm"
@@ -36,7 +36,7 @@
     "dev": "tsup --watch",
     "build:npm": "tsup --clean",
     "typecheck": "tsc",
-    "keygen": "zx ./dist/keygen.js",
+    "generate": "zx ./dist/generate.js",
     "prepack": "sceau sign"
   },
   "dependencies": {
