@@ -15,7 +15,7 @@ export const fileMetadataSchema = z.object({
   /** MIME type */
   type: z.string(),
 
-  /** SHA-512, hex-encoded */
+  /** SHA-512 of the ciphertext, hex-encoded */
   hash: z.string().regex(/^[0-9a-f]{128}$/i),
 
   /** Symmetric key to encrypt/decrypt file contents */
