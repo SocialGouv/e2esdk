@@ -91,7 +91,7 @@ You need to specify both the keychain **and** the specific key in that
 keychain to revoke:
 
 ```ts
-await e2esdk.deleteKey(keychainFingerprint, keyFingerprint)
+await e2esdkClient.deleteKey(keychainFingerprint, keyFingerprint)
 ```
 
 :::note

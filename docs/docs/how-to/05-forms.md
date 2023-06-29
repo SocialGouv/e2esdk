@@ -21,7 +21,7 @@ The public key will be used to encrypt form data, and the private key
 will be used to decrypt it.
 
 ```ts
-const { publicKey } = await e2esdk.createNewKeychain(
+const { publicKey } = await e2esdkClient.createNewKeychain(
   'my-encrypted-form', // purpose
   'sealedBox' // algorithm
 )
