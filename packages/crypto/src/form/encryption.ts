@@ -4,7 +4,7 @@ import {
   thirtyTwoBytesBase64Schema,
 } from '@socialgouv/e2esdk-api'
 import { z } from 'zod'
-import { numberToUint32LE } from '../shared/codec'
+import { base64UrlDecode, numberToUint32LE } from '../shared/codec'
 import { SealedBoxCipher, SecretBoxCipher } from '../sodium/ciphers'
 import { decrypt, encrypt } from '../sodium/encryption'
 import {
@@ -316,6 +316,25 @@ export function decryptFormForEdition<FormData extends object>(
   submission: EncryptedFormSubmission<FormData>,
   state: EncryptedFormLocalState
 ): Record<keyof FormData, unknown> {
+  if (
+    state.sodium.memcmp(
+      state.identity.publicKey,
+      base64UrlDecode(submission.metadata.publicKey)
+    ) === false
+  ) {
+    // This submission isn't one we generated
+    throw new Error('Cannot decrypt submission: incorrect author')
+  }
+  if (
+    !verifyFormSubmissionSignature(
+      state.sodium,
+      submission,
+      state.formPublicKey
+    )
+  ) {
+    // Submission bundle is incomplete or has been tampered with
+    throw new Error('Cannot decrypt submission: invalid signature')
+  }
   return _decryptFormData(
     state.sodium,
     submission,
