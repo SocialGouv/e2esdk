@@ -183,6 +183,45 @@ export function clearEncryptedFormLocalState(namespace: string) {
   window.localStorage.removeItem(storageKey(namespace))
 }
 
+/**
+ * List the namespaces available for retrieving encrypted form states.
+ *
+ * Warning: this method may be costly if there is a lot of items stored in
+ * the origin's localStorage (lots of keys, value sizes don't matter).
+ */
+export function listPersistedEncryptedFormLocalStates() {
+  if (typeof window !== 'object') {
+    return []
+  }
+  const numItems = window.localStorage.length
+  const namespaces: string[] = []
+  const storageKeyPrefix = storageKey('')
+  for (let i = 0; i < numItems; ++i) {
+    const key = window.localStorage.key(i)
+    if (key?.startsWith(storageKeyPrefix)) {
+      namespaces.push(key.slice(storageKeyPrefix.length))
+    }
+  }
+  return namespaces
+}
+
+/**
+ * Check if a form state can be retrieved for edition.
+ *
+ * Because {@link initializeEncryptedFormLocalState `initializeEncryptedFormLocalState`}
+ * will generate a new state if it fails to find one to retrieve,
+ * a way to check if edition is possible may be required beforehand.
+ *
+ * @param namespace The localStorage namespace to lookup
+ * @returns true if there is a persisted state, false otherwise.
+ */
+export function isEncryptedFormLocalStatePersisted(namespace: string) {
+  if (typeof window !== 'object') {
+    return false
+  }
+  return Boolean(window.localStorage.getItem(storageKey(namespace)))
+}
+
 // --
 
 function deriveState(
