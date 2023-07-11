@@ -40,6 +40,13 @@ const NUMBER_INPUTS = [
   0.1 + 0.2,
 ]
 
+const DATE_INPUTS = [
+  new Date(0), // Epoch
+  new Date('1912-04-15'), // Past, Titanic sinks
+  new Date(), // now
+  new Date('2063-04-05'), // Future, first contact day
+]
+
 describe('encryption', () => {
   describe('box', () => {
     describe.each(BUFFER_SIZES)('buffer input (size %d)', cleartextLength => {
@@ -307,6 +314,39 @@ describe('encryption', () => {
           ciphertext
         )
         expect(ciphertext.length).toEqual(115)
+      })
+
+      test('with additional data', () => {
+        const cipher = _generateSecretBoxCipher(sodium)
+        const ad = sodium.randombytes_buf(16)
+        const ciphertext = encrypt(
+          sodium,
+          input,
+          cipher,
+          ad,
+          encodedCiphertextFormatV1
+        )
+        const cleartext = decrypt(sodium, ciphertext, cipher, ad)
+        expect(cleartext).toEqual(input)
+      })
+    })
+
+    describe.each(DATE_INPUTS)('date input (%s)', input => {
+      test('-> encodedCiphertextFormatV1', async () => {
+        const cipher = _generateSecretBoxCipher(sodium)
+        const ciphertext = encrypt(
+          sodium,
+          input,
+          cipher,
+          null,
+          encodedCiphertextFormatV1
+        )
+        const cleartext = decrypt(sodium, ciphertext, cipher)
+        expect(cleartext).toEqual(input)
+        expect(ciphertext.slice(0, 18)).toBe('v1.secretBox.date.')
+        expect(secretBoxCiphertextV1Schema('date').parse(ciphertext)).toEqual(
+          ciphertext
+        )
       })
 
       test('with additional data', () => {

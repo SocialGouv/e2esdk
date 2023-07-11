@@ -24,7 +24,7 @@ import { EncryptedFormLocalState } from './state'
 const encryptedFieldSchema = z
   .string()
   .regex(
-    /^[0-7][0-9a-f]{7}:v1\.secretBox\.(bin|txt|num|bool|json)\.[\w-]{32}\.[\w-]{22,}$/
+    /^[0-7][0-9a-f]{7}:v1\.secretBox\.(bin|txt|num|bool|date|json)\.[\w-]{32}\.[\w-]{22,}$/
   )
   .transform(value => {
     const [context, ciphertext] = value.split(':')
