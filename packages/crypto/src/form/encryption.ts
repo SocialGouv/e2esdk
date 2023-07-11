@@ -281,9 +281,9 @@ export function verifyFormSubmissionSignature(
  */
 export function decryptFormData<FormData extends object>(
   sodium: Sodium,
-  submission: EncryptedFormSubmission<any>,
+  submission: EncryptedFormSubmission<FormData>,
   cipher: SealedBoxCipher
-) {
+): Record<keyof FormData, unknown> {
   // Parse and validate internal representation
   const sub = encryptedFormSubmissionSchema.parse(submission)
   // Unseal the key derivation secret
@@ -295,6 +295,45 @@ export function decryptFormData<FormData extends object>(
     )
     .parse(decrypt(sodium, sub.metadata.sealedSecret, cipher, null))
   const keyDerivationContext = sodium.to_base64(cipher.publicKey).slice(0, 8)
+  return _decryptFormData(
+    sodium,
+    submission,
+    keyDerivationContext,
+    keyDerivationSecret
+  )
+}
+
+/**
+ * Decrypt a bundle of encrypted data against a local state for edition.
+ *
+ * @param submission Encrypted form data
+ * @param state Local form encryption state containing the key derivation secret
+ * @returns an object with the same shape as the encrypted data, but with `unknown`
+ * values. A parser is required to make sure that data integrity is respected,
+ * especially when dealing with untrusted/unauthenticated submissions.
+ */
+export function decryptFormForEdition<FormData extends object>(
+  submission: EncryptedFormSubmission<FormData>,
+  state: EncryptedFormLocalState
+): Record<keyof FormData, unknown> {
+  return _decryptFormData(
+    state.sodium,
+    submission,
+    state.keyDerivationContext,
+    state.keyDerivationSecret
+  )
+}
+
+// Internal --
+
+function _decryptFormData<FormData extends object>(
+  sodium: Sodium,
+  submission: EncryptedFormSubmission<FormData>,
+  keyDerivationContext: string,
+  keyDerivationSecret: Uint8Array
+) {
+  // Parse and validate internal representation
+  const sub = encryptedFormSubmissionSchema.parse(submission)
   const outputData: Record<string, unknown> = {}
   for (const [field, encryptedField] of Object.entries(sub.encrypted)) {
     if (!encryptedField) {
