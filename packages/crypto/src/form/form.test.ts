@@ -124,4 +124,42 @@ describe('forms', () => {
     const decrypted = decryptFormForEdition(submission, state)
     expect(decrypted).toEqual(TEST_DATA)
   })
+
+  test("edition - refuse to edit other's submissions", async () => {
+    const pk = TEST_KEY_PAIR.publicKey
+    const stateA = await generateEncryptedFormLocalState(pk)
+    const stateB = await generateEncryptedFormLocalState(pk)
+    const subA = encryptFormData(TEST_DATA, stateA)
+    const subB = encryptFormData(TEST_DATA, stateB)
+    expect(() => decryptFormForEdition(subA, stateB)).toThrowError(
+      'Cannot decrypt submission: incorrect author'
+    )
+    expect(() => decryptFormForEdition(subB, stateA)).toThrowError(
+      'Cannot decrypt submission: incorrect author'
+    )
+  })
+
+  test('edition - refuse to edit incomplete bundles', async () => {
+    const state = await generateEncryptedFormLocalState(TEST_KEY_PAIR.publicKey)
+    const submission = encryptFormData(TEST_DATA, state)
+    // @ts-ignore
+    delete submission.encrypted.isAlive
+    expect(() => decryptFormForEdition(submission, state)).toThrowError(
+      'Cannot decrypt submission: invalid signature'
+    )
+  })
+
+  test('edition - detect tampering', async () => {
+    const state = await generateEncryptedFormLocalState(TEST_KEY_PAIR.publicKey)
+    const submission = encryptFormData(TEST_DATA, state)
+    const firstName = submission.encrypted.firstName
+    const lastName = submission.encrypted.lastName
+    // Note that this would also fail due to field name authentication,
+    // but here we're verifying that the signature check fails first.
+    submission.encrypted.firstName = lastName
+    submission.encrypted.lastName = firstName
+    expect(() => decryptFormForEdition(submission, state)).toThrowError(
+      'Cannot decrypt submission: invalid signature'
+    )
+  })
 })
