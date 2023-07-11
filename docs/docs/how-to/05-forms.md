@@ -188,12 +188,110 @@ example in the e2esdk repository.
 
 ## Editing responses
 
+On the submitter side, edition can be performed by:
+
+1. Rehydrating a local state from localStorage
+2. Obtaining the most recent submission from the application server
+3. Decrypting it and hydrating the form UI with decrypted values
+4. Encrypting edited values just as before
+
+```ts
+import {
+  initializeEncryptedFormLocalState,
+  persistEncryptedFormLocalState,
+  decryptFormForEdition,
+} from '@socialgouv/e2esdk-crypto'
+
+const NAMESPACE = 'my-form'
+
+async function onSubmit(formData) {
+  const state = await initializeEncryptedFormLocalState(NAMESPACE)
+  /* ... encrypt and send form data ... */
+
+  // Save state for later retrieval
+  persistEncryptedFormLocalState(state, NAMESPACE)
+}
+
+async function onLoad() {
+  if (!isEncryptedFormLocalStatePersisted(NAMESPACE)) {
+    // Cannot edit: no previous state available
+    return
+  }
+  const state = await initializeEncryptedFormLocalState()
+  const submission = await obtainSubmissionFromApplicationServer()
+  // Note: parsing after decryption is always recommended to avoid invalid data:
+  const decryptedFormData = formDataSchema.parse(
+    decryptFormForEdition(submission, state)
+  )
+  // How this is done depends on how you deal with forms:
+  hydrateFormStateWithInitialValues(decryptedFormData)
+}
+```
+
+:::tip
+
+The server can use the `signature` property of submissions metadata
+to check for authenticity, by making sure the signature is valid against
+the initial submission's public key.
+
+:::
+
 ## Use cases
 
-### Accepting a single response per submitter
+### Accepting a single, final response per submitter
 
 Example use-case: school assignments.
+
+This requires identifying the submitter somehow. How it's done is up
+to the application, but some form of ID or token should be distributed
+to the submitter.
+
+When submitting their answers, the submitter can then pass along this
+ID or token, in clear text. The application server can then check if
+there isn't already a submssion under that ID/token, and accept it,
+or reject editions or re-submssions.
 
 ### Allowing edits within a time frame
 
 Example use-case: tax returns report, progress-saving forms.
+
+Using the edition example above, the state of the form can be persisted
+for later retrieval. The latest submission serves as the source of
+truth for hydrating the form UI.
+
+Time-framing can be done on the application server upon reception of
+a submission, by checking against a hard deadline (eg: all submissions
+must be sent before 2024-01-01T00:00:00.000Z).
+
+If a relative acceptance window is required (eg: you have 24h to
+complete your assignment once you've started), then comparison may
+be done against a hard deadline computed after valid reception of a
+first (empty) submission.
+
+This initial submission both starts the clock and establishes the
+public key to authenticate further edits.
+
+### Versioning
+
+Example use-case: keeping track of document edition revisions
+
+Rather than overwriting submission entries in the application database,
+a record of received edits can be kept, along with a timestamp for identifying
+the latest record.
+
+This latest record can serve as the base for editing and submitting new records.
+
+:::caution
+
+The cryptography involved in authenticating submisions does not (yet) include
+authentication for ordering of edits.
+
+This may pose a problem if resistance to tampering is required to preserve
+the order of edits.
+
+This could be added with backwards compatibility in a later version by adding
+the signature of the previous submission into the computation of the next
+submission's signature, with the trade-off that edition may require to validate
+the whole edit chain, or keep a local copy of the last sent signature.
+
+:::
