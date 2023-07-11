@@ -25,6 +25,7 @@ export const PayloadType = {
   string: 'txt', // string
   number: 'num', // number
   boolean: 'bool', // boolean
+  date: 'date', // Date objects
   json: 'json', // other
 } as const
 

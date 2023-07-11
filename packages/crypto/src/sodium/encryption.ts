@@ -108,6 +108,11 @@ export function encrypt<DataType>(
         payloadType: PayloadType.boolean,
         payload: boolToBytes(input),
       }
+    : input instanceof Date
+    ? {
+        payloadType: PayloadType.date,
+        payload: input.toISOString(),
+      }
     : {
         payloadType: PayloadType.json,
         payload: sodium.from_string(JSON.stringify(input)),
@@ -301,6 +306,9 @@ function decodePayload(
   }
   if (payloadType === PayloadType.boolean) {
     return bytesToBool(plaintext)
+  }
+  if (payloadType === PayloadType.date) {
+    return new Date(sodium.to_string(plaintext))
   }
   if (payloadType === PayloadType.json) {
     return secureJSON.parse(sodium.to_string(plaintext).trim())
