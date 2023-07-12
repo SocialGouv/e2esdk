@@ -87,9 +87,14 @@ export type EncryptedFormSubmission<FormData extends object> = {
 /**
  * To get a stable hash, we need the enumeration of entries (key-value tuples)
  * to be stable. This sorts them by increasing lexicographic order of the keys.
+ *
+ * Also, we drop nullish-valued entries, as it makes little sense
+ * to encrypt those.
  */
 function sortedEntries(input: object) {
-  return Object.entries(input).sort(([a], [b]) => (a > b ? 1 : a < b ? -1 : 0))
+  return Object.entries(input)
+    .sort(([a], [b]) => (a > b ? 1 : a < b ? -1 : 0))
+    .filter(([, value]) => value !== null && value !== undefined)
 }
 
 /**
@@ -246,9 +251,7 @@ export function verifyFormSubmissionSignature(
     formPublicKey,
     sodium.crypto_generichash_BYTES
   )
-  const entries = sortedEntries(submission.encrypted).filter(
-    ([encryptedField]) => Boolean(encryptedField)
-  )
+  const entries = sortedEntries(submission.encrypted)
   sodium.crypto_generichash_update(hashState, numberToUint32LE(entries.length))
   for (const [, encryptedField] of entries) {
     sodium.crypto_generichash_update(
