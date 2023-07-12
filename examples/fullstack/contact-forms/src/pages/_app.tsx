@@ -10,7 +10,7 @@ import dynamic from 'next/dynamic'
 import Head from 'next/head'
 
 const e2esdkClient = new Client({
-  serverURL: 'http://localhost:4003',
+  serverURL: 'https://localhost:4003',
   serverSignaturePublicKey: 'gsE7B63ETtNDIzAwXEp3X1Hv12WCKGH6h7brV3U9NKE',
 })
 const reactQueryClient = new QueryClient()
