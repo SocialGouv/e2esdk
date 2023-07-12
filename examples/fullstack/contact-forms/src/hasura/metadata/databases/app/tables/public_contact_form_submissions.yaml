@@ -58,3 +58,26 @@ select_permissions:
         - proof_of_identity
         - identity_photo
       filter: {}
+update_permissions:
+  - role: public
+    permission:
+      columns:
+        - age
+        - contact_me
+        - email
+        - first_name
+        - last_name
+        - message
+        - phone_number
+        - subject
+        - created_at
+        - proof_of_identity
+        - identity_photo
+        - public_key
+        - sealed_secret
+        - signature
+      filter:
+        public_key:
+          _ceq:
+            - public_key
+      check: {}
