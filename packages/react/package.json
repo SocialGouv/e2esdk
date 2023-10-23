@@ -51,6 +51,6 @@
     "react": "^18.2.0",
     "sceau": "^1.3.0",
     "tsup": "^6.7.0",
-    "typescript": "^4.9.5"
+    "typescript": "^5.0.0"
   }
 }
