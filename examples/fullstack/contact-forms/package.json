@@ -22,7 +22,7 @@
     "@tanstack/react-query-devtools": "^4.28.0",
     "formidable": "^2.1.1",
     "framer-motion": "^7.10.3",
-    "graphql": "^16.6.0",
+    "graphql": "^16.8.1",
     "graphql-request": "^5.2.0",
     "next": "13.0.5",
     "pretty-bytes": "^6.1.0",
