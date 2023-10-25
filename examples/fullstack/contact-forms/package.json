@@ -24,7 +24,7 @@
     "framer-motion": "^7.10.3",
     "graphql": "^16.6.0",
     "graphql-request": "^5.2.0",
-    "next": "13.0.5",
+    "next": "13.5.0",
     "pretty-bytes": "^6.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
