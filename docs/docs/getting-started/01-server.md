@@ -70,9 +70,9 @@ services:
       # CORS configuration assumes your app runs on localhost:3000
       - CORS_ALLOWED_ORIGINS=https://localhost:3000
     links:
-      - e2esdk-db
+      - db
     depends_on:
-      app-db:
+      db:
         condition: service_healthy
       e2esdk-db-apply-migrations:
         # Wait for migrations be to applied before starting (see below)
@@ -86,9 +86,9 @@ services:
       - POSTGRESQL_URL=postgres://postgres:password@e2esdk-db:5432/e2esdk
     command: pnpm db migrations apply
     links:
-      - e2esdk-db
+      - db
     depends_on:
-      e2esdk-db:
+      db:
         condition: service_healthy
 ```
 
