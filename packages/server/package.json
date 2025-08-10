@@ -44,7 +44,7 @@
     "@socialgouv/e2esdk-crypto": "workspace:^",
     "dotenv": "^16.0.3",
     "fastify": "^4.15.0",
-    "fastify-micro": "4.0.0-beta.4",
+    "fastify-micro": "4.0.0-beta.7",
     "fastify-plugin": "^4.5.0",
     "ioredis": "^5.3.1",
     "mitt": "^3.0.0",
